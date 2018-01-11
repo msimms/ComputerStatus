@@ -22,16 +22,23 @@
 
 import argparse
 import psutil
+import signal
 import threading
 
 g_args = None
 g_gpu_statusing_enabled = False
+g_stop_flag = None
 
 try:
     import GPUtil
     g_gpu_statusing_enabled = True
 except:
     print "Error: Could not import import GPUtil. GPU Statusing will be disabled."
+
+def signal_handler(signal, frame):
+    print "Exiting..."
+    if g_stop_flag:
+        g_stop_flag.set()
 
 class MonitorThread(threading.Thread):
     def __init__(self, event):
@@ -50,7 +57,7 @@ class MonitorThread(threading.Thread):
 
     def check_cpu(self):
         cpu_percent = psutil.cpu_percent()
-        print cpu_percent
+        print cpu_percent + "% CPU"
         virt_mem = psutil.virtual_memory()
         cpu_times = psutil.cpu_times()
 
@@ -61,20 +68,24 @@ class MonitorThread(threading.Thread):
             self.check_cpu()
             self.check_gpu()
 
-# Parse command line options.
-parser = argparse.ArgumentParser()
-parser.add_argument("--interval", type=int, default=60, help="Frequency (in seconds) in which to sample.", required=False)
-parser.add_argument("--cpu", action="store_true", default=True, help="TRUE if sampling the CPU", required=False)
-parser.add_argument("--gpu", action="store_true", default=False, help="TRUE if sampling the GPU (Nvidia only)", required=False)
+if __name__ == "__main__":
+    
+    signal.signal(signal.SIGINT, signal_handler)
 
-try:
-    g_args = parser.parse_args()
-except IOError as e:
-    parser.error(e)
-    sys.exit(1)
+    # Parse command line options.
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--interval", type=int, default=60, help="Frequency (in seconds) in which to sample.", required=False)
+    parser.add_argument("--cpu", action="store_true", default=True, help="TRUE if sampling the CPU", required=False)
+    parser.add_argument("--gpu", action="store_true", default=False, help="TRUE if sampling the GPU (Nvidia only)", required=False)
+    parser.add_argument("--server", type=str, action="store", default="", help="Remote logging server (optional)", required=False)
 
-# Start the monitor thread.
-stop_flag = threading.Event()
-monitor_thread = MonitorThread(stop_flag)
-monitor_thread.start()
-#stop_flag.set()
+    try:
+        g_args = parser.parse_args()
+    except IOError as e:
+        parser.error(e)
+        sys.exit(1)
+
+    # Start the monitor thread.
+    g_stop_flag = threading.Event()
+    monitor_thread = MonitorThread(g_stop_flag)
+    monitor_thread.start()
