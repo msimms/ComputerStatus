@@ -21,11 +21,11 @@
 # SOFTWARE.
 
 import argparse
-import psutil
 import signal
+import sys
 import threading
+import psutil
 
-g_args = None
 g_gpu_statusing_enabled = False
 g_stop_flag = None
 
@@ -36,16 +36,27 @@ except:
     print "Error: Could not import import GPUtil. GPU Statusing will be disabled."
 
 def signal_handler(signal, frame):
+    global g_stop_flag
     print "Exiting..."
     if g_stop_flag:
         g_stop_flag.set()
 
 class MonitorThread(threading.Thread):
-    def __init__(self, event):
+    def __init__(self, event, interval, server, verbose, do_cpu_check, do_mem_check, do_gpu_check):
         threading.Thread.__init__(self)
         self.stopped = event
+        self.interval = interval
+        self.server = server
+        self.verbose = verbose
+        self.do_cpu_check = do_cpu_check
+        self.do_mem_check = do_mem_check
+        self.do_gpu_check = do_gpu_check
 
-    def check_gpu(self):
+    def send_to_server(self, values):
+        pass
+
+    # Appends GPU values to the 'values' dictionary.
+    def check_gpu(self, values):
         global g_gpu_statusing_enabled
 
         if not g_gpu_statusing_enabled:
@@ -55,37 +66,52 @@ class MonitorThread(threading.Thread):
         except:
             pass
 
-    def check_cpu(self):
+    # Appends current CPU values to the 'values' dictionary.
+    def check_cpu(self, values):
         cpu_percent = psutil.cpu_percent()
-        print cpu_percent + "% CPU"
-        virt_mem = psutil.virtual_memory()
+        values['cpu - percent'] = cpu_percent
         cpu_times = psutil.cpu_times()
+        values['cpu - user times'] = cpu_times.user
+
+    # Appends current memory values to the 'values' dictionary.
+    def check_mem(self, values):
+        virt_mem = psutil.virtual_memory()
+        values['virtual memory - total'] = virt_mem.total
+        values['virtual memory - percent'] = virt_mem.percent
 
     def run(self):
-        global g_args
-
-        while not self.stopped.wait(g_args.interval):
-            self.check_cpu()
-            self.check_gpu()
+        while not self.stopped.wait(self.interval):
+            values = {}
+            if self.do_cpu_check:
+                self.check_cpu(values)
+            if self.do_mem_check:
+                self.check_mem(values)
+            if self.do_gpu_check:
+                self.check_gpu(values)
+            if self.server:
+                self.send_to_server(values)
+            if self.verbose:
+                print values
 
 if __name__ == "__main__":
-    
     signal.signal(signal.SIGINT, signal_handler)
 
     # Parse command line options.
     parser = argparse.ArgumentParser()
-    parser.add_argument("--interval", type=int, default=60, help="Frequency (in seconds) in which to sample.", required=False)
-    parser.add_argument("--cpu", action="store_true", default=True, help="TRUE if sampling the CPU", required=False)
-    parser.add_argument("--gpu", action="store_true", default=False, help="TRUE if sampling the GPU (Nvidia only)", required=False)
+    parser.add_argument("--interval", type=int, default=60, help="Frequency (in seconds) at which to sample.", required=False)
     parser.add_argument("--server", type=str, action="store", default="", help="Remote logging server (optional)", required=False)
+    parser.add_argument("--verbose", action="store_true", default=True, help="TRUE to enable verbose mode", required=False)
+    parser.add_argument("--cpu", action="store_true", default=True, help="TRUE if sampling the CPU", required=False)
+    parser.add_argument("--mem", action="store_true", default=True, help="TRUE if sampling memory", required=False)
+    parser.add_argument("--gpu", action="store_true", default=False, help="TRUE if sampling the GPU (Nvidia only)", required=False)
 
     try:
-        g_args = parser.parse_args()
+        args = parser.parse_args()
     except IOError as e:
         parser.error(e)
         sys.exit(1)
 
     # Start the monitor thread.
     g_stop_flag = threading.Event()
-    monitor_thread = MonitorThread(g_stop_flag)
+    monitor_thread = MonitorThread(g_stop_flag, args.interval, args.server, args.verbose, args.cpu, args.mem, args.gpu)
     monitor_thread.start()
