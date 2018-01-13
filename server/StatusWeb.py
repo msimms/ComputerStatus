@@ -25,7 +25,11 @@ import cherrypy
 import mako
 import os
 import signal
+import sys
 import StatusDb
+
+from cherrypy import tools
+from cherrypy.process.plugins import Daemonizer
 
 ACCESS_LOG = 'access.log'
 ERROR_LOG = 'error.log'
