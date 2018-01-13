@@ -25,6 +25,7 @@ import cherrypy
 import mako
 import os
 import signal
+import StatusDb
 
 ACCESS_LOG = 'access.log'
 ERROR_LOG = 'error.log'
