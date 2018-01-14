@@ -27,6 +27,7 @@ import mako
 import os
 import signal
 import sys
+import StatusApi
 import StatusDb
 
 from cherrypy import tools
@@ -53,6 +54,7 @@ class StatusWeb(object):
     def terminate(self):
         print "Terminating"
 
+    # Page for displaying graphs about a particular device.
     @cherrypy.expose
     def device(self, device_id, *args, **kw):
         try:
@@ -61,6 +63,7 @@ class StatusWeb(object):
             cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
         return ""
 
+    # Default landing page.
     @cherrypy.expose
     def index(self, *args, **kw):
         try:
@@ -68,6 +71,15 @@ class StatusWeb(object):
         except:
             cherrypy.log.error('Unhandled exception in index', 'EXEC', logging.WARNING)
         return ""
+
+    # Endpoint for API calls.
+    @cherrypy.expose
+    def api(self, *args, **kw):
+        if len(args) > 0:
+            api_version = args[0]
+            if api_version == '1.0':
+                api = StatusApi()
+                api.handle_api_1_0_request(args[1:])
 
 # Parse command line options.
 parser = argparse.ArgumentParser()
