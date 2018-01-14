@@ -22,6 +22,7 @@
 
 import argparse
 import cherrypy
+import logging
 import mako
 import os
 import signal
@@ -49,10 +50,29 @@ class StatusWeb(object):
     def __init__(self):
         super(StatusWeb, self).__init__()
 
+    def terminate(self):
+        print "Terminating"
+
+    @cherrypy.expose
+    def device(self, device_id, *args, **kw):
+        try:
+            return ""
+        except:
+            cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
+        return ""
+
+    @cherrypy.expose
+    def index(self, *args, **kw):
+        try:
+            return ""
+        except:
+            cherrypy.log.error('Unhandled exception in index', 'EXEC', logging.WARNING)
+        return ""
+
 # Parse command line options.
 parser = argparse.ArgumentParser()
 parser.add_argument("--debug", action="store_true", default=False, help="Prevents the app from going into the background", required=False)
-parser.add_argument("--port", type=int, default=8080, help="Port on which to listen", required=False)
+parser.add_argument("--port", type=int, default=8282, help="Port on which to listen", required=False)
 parser.add_argument("--https", action="store_true", default=False, help="Runs the app as HTTPS", required=False)
 parser.add_argument("--cert", default="cert.pem", help="Certificate file for HTTPS", required=False)
 parser.add_argument("--privkey", default="privkey.pem", help="Private Key file for HTTPS", required=False)
@@ -94,10 +114,7 @@ g_app = StatusWeb()
 conf = {
     '/':
     {
-        'tools.staticdir.root': g_root_dir,
-        'tools.my_auth.on': True,
-        'tools.sessions.on': True,
-        'tools.sessions.name': 'my_auth'
+        'tools.staticdir.root': g_root_dir
     },
     '/css':
     {

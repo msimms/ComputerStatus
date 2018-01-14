@@ -54,6 +54,8 @@ class MongoDatabase(Database.Database):
 
         try:
             post = {}
+            for status_item in status:
+                post[status_item] = status[status_item]
             self.status_collection.insert(post)
             return True
         except:
@@ -63,7 +65,7 @@ class MongoDatabase(Database.Database):
 
     def retrieve_status(self, device):
         if device is None:
-            self.log_error(MongoDatabase.retrieve_user.__name__ + "Unexpected empty object: device")
+            self.log_error(MongoDatabase.retrieve_status.__name__ + "Unexpected empty object: device")
             return None
 
         try:
