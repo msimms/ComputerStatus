@@ -27,9 +27,11 @@ class StatusApi(object):
         super(StatusApi, self).__init__()
         self.db = StatusDb.MongoDatabase(root_dir)
 
-    def handle_api_1_0_request(self, args):
+    def handle_api_1_0_request(self, args, values):
         if len(args) > 0:
             request = args[0]
             if request == 'upload':
-                print args
-                
+                if "device_id" in values:
+                    print values
+                    return True
+        return False

@@ -21,11 +21,13 @@
 # SOFTWARE.
 
 import argparse
+import os
 import requests
 import signal
 import sys
 import threading
 import psutil
+import uuid
 
 g_gpu_statusing_enabled = False
 g_stop_flag = None
@@ -53,9 +55,21 @@ class MonitorThread(threading.Thread):
         self.do_mem_check = do_mem_check
         self.do_gpu_check = do_gpu_check
 
+        if self.server:
+            # Look for device ID file; generate one if not found.
+            self.device_id = None
+            if os.path.isfile('device_id.txt'):
+                with open('device_id.txt', 'r') as device_id_file:
+                    self.device_id = device_id_file.read()
+            if self.device_id is None:
+                self.device_id = str(uuid.uuid4())
+                with open('device_id.txt', 'w') as device_id_file:
+                    device_id_file.write(self.device_id)
+
     # Sends the values to the server for archival.
     def send_to_server(self, values):
         try:
+            values['device_id'] = self.device_id
             url = self.server + "/api/1.0/upload"
             r = requests.post(url, data=values)
             print r
