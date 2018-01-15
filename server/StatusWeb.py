@@ -78,7 +78,7 @@ class StatusWeb(object):
         if len(args) > 0:
             api_version = args[0]
             if api_version == '1.0':
-                api = StatusApi()
+                api = StatusApi.StatusApi(g_root_dir)
                 api.handle_api_1_0_request(args[1:])
 
 # Parse command line options.

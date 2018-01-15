@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import argparse
+import requests
 import signal
 import sys
 import threading
@@ -52,8 +53,14 @@ class MonitorThread(threading.Thread):
         self.do_mem_check = do_mem_check
         self.do_gpu_check = do_gpu_check
 
+    # Sends the values to the server for archival.
     def send_to_server(self, values):
-        pass
+        try:
+            url = self.server + "/api/1.0/upload"
+            r = requests.post(url, data=values)
+            print r
+        except:
+            pass
 
     # Appends GPU values to the 'values' dictionary.
     def check_gpu(self, values):

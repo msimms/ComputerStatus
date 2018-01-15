@@ -20,13 +20,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import StatusDb
+
 class StatusApi(object):
-    def __init__(self):
+    def __init__(self, root_dir):
         super(StatusApi, self).__init__()
+        self.db = StatusDb.MongoDatabase(root_dir)
 
     def handle_api_1_0_request(self, args):
         if len(args) > 0:
             request = args[0]
             if request == 'upload':
-                pass
+                print args
                 
