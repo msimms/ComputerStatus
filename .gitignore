@@ -12,3 +12,6 @@ tempmod/*
 
 # Log files
 *.log
+
+# Created files
+client/device_id.txt
