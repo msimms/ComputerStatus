@@ -32,6 +32,6 @@ class StatusApi(object):
             request = args[0]
             if request == 'upload':
                 if "device_id" in values:
-                    print values
+                    self.db.create_status(values)
                     return True
         return False
