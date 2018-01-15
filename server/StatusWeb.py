@@ -79,7 +79,13 @@ class StatusWeb(object):
             api_version = args[0]
             if api_version == '1.0':
                 api = StatusApi.StatusApi(g_root_dir)
-                api.handle_api_1_0_request(args[1:])
+                handled = api.handle_api_1_0_request(args[1:], kw)
+                if not handled:
+                    cherrypy.response.status = 400
+            else:
+                cherrypy.response.status = 400
+        else:
+            cherrypy.response.status = 400
 
 # Parse command line options.
 parser = argparse.ArgumentParser()
