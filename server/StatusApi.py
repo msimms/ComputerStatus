@@ -31,7 +31,7 @@ class StatusApi(object):
         if len(args) > 0:
             request = args[0]
             if request == 'upload':
-                if "device_id" in values:
+                if "device_id" in values and "datetime" in values:
                     self.db.create_status(values)
                     return True
         return False
