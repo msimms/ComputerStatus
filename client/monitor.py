@@ -26,11 +26,12 @@ import requests
 import signal
 import sys
 import threading
+import time
 import psutil
 import uuid
 
 g_gpu_statusing_enabled = False
-g_stop_flag = None
+g_monitor_thread = None
 
 try:
     import GPUtil
@@ -39,15 +40,16 @@ except:
     print "Error: Could not import import GPUtil. GPU Statusing will be disabled."
 
 def signal_handler(signal, frame):
-    global g_stop_flag
+    global g_monitor_thread
+
     print "Exiting..."
-    if g_stop_flag:
-        g_stop_flag.set()
+    if g_monitor_thread:
+        g_monitor_thread.terminate()
 
 class MonitorThread(threading.Thread):
-    def __init__(self, event, interval, server, verbose, do_cpu_check, do_mem_check, do_gpu_check):
+    def __init__(self, interval, server, verbose, do_cpu_check, do_mem_check, do_gpu_check):
         threading.Thread.__init__(self)
-        self.stopped = event
+        self.stopped = threading.Event()
         self.interval = interval
         self.server = server
         self.verbose = verbose
@@ -65,6 +67,10 @@ class MonitorThread(threading.Thread):
                 self.device_id = str(uuid.uuid4())
                 with open('device_id.txt', 'w') as device_id_file:
                     device_id_file.write(self.device_id)
+
+    def terminate(self):
+        print "Terminating..."
+        self.stopped.set()
 
     # Sends the values to the server for archival.
     def send_to_server(self, values):
@@ -133,6 +139,10 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Start the monitor thread.
-    g_stop_flag = threading.Event()
-    monitor_thread = MonitorThread(g_stop_flag, args.interval, args.server, args.verbose, args.cpu, args.mem, args.gpu)
-    monitor_thread.start()
+    g_monitor_thread = MonitorThread(args.interval, args.server, args.verbose, args.cpu, args.mem, args.gpu)
+    g_monitor_thread.start()
+
+    # Wait for it to finish. We do it like this so that the main thread isn't blocked and can execute the signal handler.
+    while (g_monitor_thread.isAlive()):
+        time.sleep(1)
+    g_monitor_thread.join()
