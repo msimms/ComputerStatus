@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+
+<title>${product} - Login</title>
+
+<link rel="stylesheet" href="${root_url}/css/normalize.css">
+<link rel="stylesheet" href="${root_url}/css/unauth_style.css">
+
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+
+</head>
+
+<link rel="shortcut icon" href="${root_url}/media/favicon.ico" >
+
+<body>
+	<section class="loginform cf" style="width: 480px">
+		<form name="login" action="${root_url}/submit_login" method="post" accept-charset="utf-8">
+			<ul>
+				<li>
+					<label for="username" style="width: 440px">Email</label>
+					<input type="email" name="email" style="width: 440px" placeholder="yourname@email.com" required>
+				</li>
+				<li>
+					<label for="password" style="width: 440px">Password</label>
+					<input type="password" name="password"  style="width: 440px" placeholder="password" required>
+				</li>
+				<li>
+					<input type="submit" value="Login">
+					<a href="${root_url}/create_login">Create Login</a>
+				</li>
+			</ul>
+		</form>
+	</section>
+</body>
+
+</html>
