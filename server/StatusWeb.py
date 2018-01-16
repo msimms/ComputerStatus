@@ -32,12 +32,16 @@ import StatusDb
 
 from cherrypy import tools
 from cherrypy.process.plugins import Daemonizer
+from mako.lookup import TemplateLookup
+from mako.template import Template
 
 ACCESS_LOG = 'access.log'
 ERROR_LOG = 'error.log'
 
 g_root_dir = os.path.dirname(os.path.abspath(__file__))
 g_root_url = ''
+g_tempmod_dir = os.path.join(g_root_dir, 'tempmod')
+g_device_html_file = os.path.join(g_root_dir, 'html', 'device.html')
 
 def signal_handler(signal, frame):
     global g_app
@@ -50,15 +54,40 @@ def signal_handler(signal, frame):
 class StatusWeb(object):
     def __init__(self):
         super(StatusWeb, self).__init__()
+        self.database = StatusDb.MongoDatabase(g_root_dir)
 
     def terminate(self):
         print "Terminating"
+
+    # Helper function for building the navigation bar.
+    @staticmethod
+    def create_navbar():
+        navbar_str = "<nav>\n" \
+            "\t<ul>\n" \
+            "\t</ul>\n" \
+            "</nav>"
+        return navbar_str
 
     # Page for displaying graphs about a particular device.
     @cherrypy.expose
     def device(self, device_id, *args, **kw):
         try:
-            return ""
+            cpu_str = ""
+            memory_str = ""
+            gpu_str = ""
+
+            statuses = self.database.retrieve_status(device_id)
+            if statuses is not None:
+                for status in statuses:
+                    if "datetime" in status:
+                        datetime_str = str(status["datetime"])
+                        if "cpu - percent" in status:
+                            cpu_percent = status["cpu - percent"]
+                            cpu_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(cpu_percent) + " },\n"
+
+            print cpu_str
+            my_template = Template(filename=g_device_html_file, module_directory=g_tempmod_dir)
+            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, device_id=device_id, cpu=cpu_str, memory=memory_str, gpu=gpu_str)
         except:
             cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
         return ""

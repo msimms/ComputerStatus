@@ -8,7 +8,7 @@ dist/
 build/
 
 # Mako template files
-tempmod/*
+server/tempmod/*
 
 # Log files
 *.log
