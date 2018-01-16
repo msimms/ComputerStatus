@@ -22,6 +22,7 @@
 
 import argparse
 import cherrypy
+import datetime
 import logging
 import mako
 import os
@@ -67,12 +68,24 @@ class StatusWeb(object):
             "</nav>"
         return navbar_str
 
+    # Renders the error page.
+    @cherrypy.expose
+    def error(self, error_str=None):
+        try:
+            cherrypy.response.status = 500
+            my_template = Template(filename=g_error_html_file, module_directory=g_tempmod_dir)
+            if error_str is None:
+                error_str = "Internal Error."
+        except:
+            pass
+        return my_template.render(root_url=g_root_url, error=error_str)
+
     # Page for displaying graphs about a particular device.
     @cherrypy.expose
     def device(self, device_id, *args, **kw):
         try:
             cpu_str = ""
-            memory_str = ""
+            ram_str = ""
             gpu_str = ""
 
             statuses = self.database.retrieve_status(device_id)
@@ -83,10 +96,13 @@ class StatusWeb(object):
                         if "cpu - percent" in status:
                             cpu_percent = status["cpu - percent"]
                             cpu_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(cpu_percent) + " },\n"
+                        if "virtual memory - percent" in status:
+                            ram_percent = status["virtual memory - percent"]
+                            ram_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(ram_percent) + " },\n"
 
             device_html_file = os.path.join(g_root_dir, 'html', 'device.html')
             my_template = Template(filename=device_html_file, module_directory=g_tempmod_dir)
-            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, device_id=device_id, cpu=cpu_str, memory=memory_str, gpu=gpu_str)
+            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, device_id=device_id, cpu=cpu_str, memory=ram_str, gpu=gpu_str)
         except:
             cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
         return ""
