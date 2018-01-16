@@ -159,7 +159,7 @@ parser.add_argument("--port", type=int, default=8282, help="Port on which to lis
 parser.add_argument("--https", action="store_true", default=False, help="Runs the app as HTTPS", required=False)
 parser.add_argument("--cert", default="cert.pem", help="Certificate file for HTTPS", required=False)
 parser.add_argument("--privkey", default="privkey.pem", help="Private Key file for HTTPS", required=False)
-parser.add_argument("--url", default="", help="URL of the server on which this is being run", required=False)
+parser.add_argument("--url", default="homecomputerstatus.com", help="URL of the server on which this is being run", required=False)
 
 try:
     args = parser.parse_args()
