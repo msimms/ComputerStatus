@@ -99,6 +99,9 @@ class StatusWeb(object):
                         if "virtual memory - percent" in status:
                             ram_percent = status["virtual memory - percent"]
                             ram_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(ram_percent) + " },\n"
+                        if "gpu - percent" in status:
+                            gpu_percent = status["gpu - percent"]
+                            gpu_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(gpu_percent) + " },\n"
 
             device_html_file = os.path.join(g_root_dir, 'html', 'device.html')
             my_template = Template(filename=device_html_file, module_directory=g_tempmod_dir)
