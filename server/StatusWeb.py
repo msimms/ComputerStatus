@@ -92,7 +92,8 @@ class StatusWeb(object):
             if statuses is not None:
                 for status in statuses:
                     if "datetime" in status:
-                        datetime_str = str(status["datetime"])
+                        datetime_num = int(status["datetime"]) * 1000
+                        datetime_str = str(datetime_num)
                         if "cpu - percent" in status:
                             cpu_percent = status["cpu - percent"]
                             cpu_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(cpu_percent) + " },\n"
