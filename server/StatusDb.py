@@ -41,11 +41,59 @@ class MongoDatabase(Database.Database):
         try:
             self.conn = pymongo.MongoClient('localhost:27017')
             self.db = self.conn['statusdb']
+            self.users_collection = self.db['users']
             self.status_collection = self.db['status']
             return True
         except pymongo.errors.ConnectionFailure, e:
             self.log_error("Could not connect to MongoDB: %s" % e)
         return False
+
+    def create_user(self, username, realname, hash):
+        if username is None:
+            self.log_error(MongoDatabase.create_user.__name__ + "Unexpected empty object: username")
+            return False
+        if realname is None:
+            self.log_error(MongoDatabase.create_user.__name__ + "Unexpected empty object: realname")
+            return False
+        if hash is None:
+            self.log_error(MongoDatabase.create_user.__name__ + "Unexpected empty object: hash")
+            return False
+        if len(username) == 0:
+            self.log_error(MongoDatabase.create_user.__name__ + "username too short")
+            return False
+        if len(realname) == 0:
+            self.log_error(MongoDatabase.create_user.__name__ + "realname too short")
+            return False
+        if len(hash) == 0:
+            self.log_error(MongoDatabase.create_user.__name__ + "hash too short")
+            return False
+
+        try:
+            post = {"username": username, "realname": realname, "hash": hash, "devices": [], "following": [], "followed by": []}
+            self.users_collection.insert(post)
+            return True
+        except:
+            traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return False
+
+    def retrieve_user(self, username):
+        if username is None:
+            self.log_error(MongoDatabase.retrieve_user.__name__ + "Unexpected empty object: username")
+            return None, None, None
+        if len(username) == 0:
+            self.log_error(MongoDatabase.retrieve_user.__name__ + "username is empty")
+            return None, None, None
+
+        try:
+            user = self.users_collection.find_one({"username": username})
+            if user is not None:
+                return str(user['_id']), user['hash'], user['realname']
+            return None, None, None
+        except:
+            traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return None, None, None
 
     def create_status(self, status):
         if status is None:
