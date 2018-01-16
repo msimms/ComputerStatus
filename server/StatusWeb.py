@@ -41,7 +41,6 @@ ERROR_LOG = 'error.log'
 g_root_dir = os.path.dirname(os.path.abspath(__file__))
 g_root_url = ''
 g_tempmod_dir = os.path.join(g_root_dir, 'tempmod')
-g_device_html_file = os.path.join(g_root_dir, 'html', 'device.html')
 
 def signal_handler(signal, frame):
     global g_app
@@ -85,21 +84,39 @@ class StatusWeb(object):
                             cpu_percent = status["cpu - percent"]
                             cpu_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(cpu_percent) + " },\n"
 
-            print cpu_str
-            my_template = Template(filename=g_device_html_file, module_directory=g_tempmod_dir)
+            device_html_file = os.path.join(g_root_dir, 'html', 'device.html')
+            my_template = Template(filename=device_html_file, module_directory=g_tempmod_dir)
             return my_template.render(nav=self.create_navbar(), root_url=g_root_url, device_id=device_id, cpu=cpu_str, memory=memory_str, gpu=gpu_str)
         except:
             cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
         return ""
 
-    # Default landing page.
+    # Renders the login page.
     @cherrypy.expose
-    def index(self, *args, **kw):
+    def login(self):
         try:
-            return ""
+            login_html_file = os.path.join(g_root_dir, 'html', 'login.html')
+            my_template = Template(filename=login_html_file, module_directory=g_tempmod_dir)
+            result = my_template.render(root_url=g_root_url)
         except:
-            cherrypy.log.error('Unhandled exception in index', 'EXEC', logging.WARNING)
-        return ""
+            result = self.error()
+        return result
+
+    # Renders the create login page.
+    @cherrypy.expose
+    def create_login(self):
+        try:
+            create_login_html_file = os.path.join(g_root_dir, 'html', 'create_login.html')
+            my_template = Template(filename=create_login_html_file, module_directory=g_tempmod_dir)
+            result = my_template.render(root_url=g_root_url)
+        except:
+            result = self.error()
+        return result
+
+    # Renders the index (default) page.
+    @cherrypy.expose
+    def index(self):
+        return self.login()
 
     # Endpoint for API calls.
     @cherrypy.expose
