@@ -71,7 +71,7 @@ class MonitorThread(threading.Thread):
     def send_to_server(self, values):
         try:
             values['device_id'] = self.device_id
-            values['datetime'] = datetime.datetime.utcnow().strftime("%s")
+            values['datetime'] = str(int(time.time()))
             url = self.server + "/api/1.0/upload"
             r = requests.post(url, data=values)
             print r
