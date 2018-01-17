@@ -34,12 +34,6 @@ import uuid
 g_gpu_statusing_enabled = False
 g_monitor_thread = None
 
-try:
-    import GPUtil
-    g_gpu_statusing_enabled = True
-except:
-    print "Error: Could not import import GPUtil. GPU Statusing will be disabled."
-
 def signal_handler(signal, frame):
     global g_monitor_thread
 
@@ -136,6 +130,12 @@ if __name__ == "__main__":
     parser.add_argument("--cpu", action="store_true", default=True, help="TRUE if sampling the CPU", required=False)
     parser.add_argument("--mem", action="store_true", default=True, help="TRUE if sampling memory", required=False)
     parser.add_argument("--gpu", action="store_true", default=False, help="TRUE if sampling the GPU (Nvidia only)", required=False)
+
+    try:
+        import GPUtil
+        g_gpu_statusing_enabled = True
+    except:
+        print "Error: Could not import import GPUtil. GPU Statusing will be disabled."
 
     try:
         args = parser.parse_args()
