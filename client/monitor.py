@@ -88,7 +88,7 @@ class MonitorThread(threading.Thread):
         try:
             all_gpus = GPUtil.getGPUs()
             for g in all_gpus:
-                values['gpu - percent'] = g.usage
+                values['gpu - percent'] = g.load
         except:
             pass
 
