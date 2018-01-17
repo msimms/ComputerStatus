@@ -73,7 +73,8 @@ class StatusWeb(object):
     def error(self, error_str=None):
         try:
             cherrypy.response.status = 500
-            my_template = Template(filename=g_error_html_file, module_directory=g_tempmod_dir)
+            error_html_file = os.path.join(g_root_dir, 'html', 'error.html')
+            my_template = Template(filename=error_html_file, module_directory=g_tempmod_dir)
             if error_str is None:
                 error_str = "Internal Error."
         except:
