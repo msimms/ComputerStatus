@@ -76,7 +76,7 @@ class MonitorThread(threading.Thread):
             r = requests.post(url, data=values)
             print r
         except:
-            pass
+            print "Error sending to the server."
 
     # Appends GPU values to the 'values' dictionary.
     def check_gpu(self, values):
@@ -90,20 +90,26 @@ class MonitorThread(threading.Thread):
             for g in all_gpus:
                 values['gpu - percent'] = g.load * 100.0
         except:
-            pass
+            print "Error collecting GPU stats."
 
     # Appends current CPU values to the 'values' dictionary.
     def check_cpu(self, values):
-        cpu_percent = psutil.cpu_percent()
-        values['cpu - percent'] = cpu_percent
-        cpu_times = psutil.cpu_times()
-        values['cpu - user times'] = cpu_times.user
+        try:
+            cpu_percent = psutil.cpu_percent()
+            values['cpu - percent'] = cpu_percent
+            cpu_times = psutil.cpu_times()
+            values['cpu - user times'] = cpu_times.user
+        except:
+            print "Error collecting CPU stats."
 
     # Appends current memory values to the 'values' dictionary.
     def check_mem(self, values):
-        virt_mem = psutil.virtual_memory()
-        values['virtual memory - total'] = virt_mem.total
-        values['virtual memory - percent'] = virt_mem.percent
+        try:
+            virt_mem = psutil.virtual_memory()
+            values['virtual memory - total'] = virt_mem.total
+            values['virtual memory - percent'] = virt_mem.percent
+        except:
+            print "Error collecting memory stats."
 
     def run(self):
         while not self.stopped.wait(self.interval):
