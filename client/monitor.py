@@ -90,8 +90,11 @@ class MonitorThread(threading.Thread):
 
         if not g_gpu_statusing_enabled:
             return
+
         try:
-            GPUtil.showUtilization()
+            all_gpus = GPUtil.getGPUs()
+            for g in all_gpus:
+                values['gpu - percent'] = g.usage
         except:
             pass
 
