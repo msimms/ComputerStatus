@@ -84,6 +84,10 @@ class StatusWeb(object):
             pass
         return my_template.render(root_url=g_root_url, error=error_str)
 
+    def format_graph_point(self, datetime_str, value):
+        graph_str = "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(value) + " },\n"
+        return graph_str
+
     # Page for displaying graphs about a particular device.
     @cherrypy.expose
     def device(self, device_id, *args, **kw):
@@ -93,6 +97,11 @@ class StatusWeb(object):
             gpu_str = ""
             gpu_temp_str = ""
 
+            show_cpu = False
+            show_ram = False
+            show_gpu = False
+            show_gpu_temp = False
+
             statuses = self.database.retrieve_status(device_id)
             if statuses is not None:
                 for status in statuses:
@@ -100,17 +109,34 @@ class StatusWeb(object):
                         datetime_num = int(status["datetime"]) * 1000
                         datetime_str = str(datetime_num)
                         if "cpu - percent" in status:
-                            value = status["cpu - percent"]
-                            cpu_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(value) + " },\n"
+                            show_cpu = True
+                            cpu_str += self.format_graph_point(datetime_str, status["cpu - percent"])
+                        else:
+                            cpu_str += self.format_graph_point(datetime_str, 0)
                         if "virtual memory - percent" in status:
-                            value = status["virtual memory - percent"]
-                            ram_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(value) + " },\n"
+                            show_ram = True
+                            ram_str += self.format_graph_point(datetime_str, status["virtual memory - percent"])
+                        else:
+                            ram_str += self.format_graph_point(datetime_str, 0)
                         if "gpu - percent" in status:
-                            value = status["gpu - percent"]
-                            gpu_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(value) + " },\n"
+                            show_gpu = True
+                            gpu_str += self.format_graph_point(datetime_str, status["gpu - percent"])
+                        else:
+                            gpu_str += self.format_graph_point(datetime_str, 0)
                         if "gpu - temperature" in status:
-                            value = status["gpu - temperature"]
-                            gpu_temp_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(value) + " },\n"
+                            show_gpu_temp = True
+                            gpu_temp_str += self.format_graph_point(datetime_str, status["gpu - temperature"])
+                        else:
+                            gpu_temp_str += self.format_graph_point(datetime_str, 0)
+
+            if not show_cpu:
+                cpu_str = ""
+            if not show_ram:
+                ram_str = ""
+            if not show_gpu:
+                gpu_str = ""
+            if not show_gpu_temp:
+                gpu_temp_str = ""
 
             device_html_file = os.path.join(g_root_dir, 'html', 'device.html')
             my_template = Template(filename=device_html_file, module_directory=g_tempmod_dir)
