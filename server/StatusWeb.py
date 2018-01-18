@@ -97,10 +97,10 @@ class StatusWeb(object):
             gpu_str = ""
             gpu_temp_str = ""
 
-            show_cpu = False
-            show_ram = False
-            show_gpu = False
-            show_gpu_temp = False
+            last_cpu_value = ""
+            last_ram_value = ""
+            last_gpu_value = ""
+            last_gpu_temp_value = ""
 
             statuses = self.database.retrieve_status(device_id)
             if statuses is not None:
@@ -109,38 +109,48 @@ class StatusWeb(object):
                         datetime_num = int(status["datetime"]) * 1000
                         datetime_str = str(datetime_num)
                         if "cpu - percent" in status:
-                            show_cpu = True
-                            cpu_str += self.format_graph_point(datetime_str, status["cpu - percent"])
+                            last_cpu_value = status["cpu - percent"]
+                            cpu_str += self.format_graph_point(datetime_str, last_cpu_value)
                         else:
                             cpu_str += self.format_graph_point(datetime_str, 0)
                         if "virtual memory - percent" in status:
-                            show_ram = True
-                            ram_str += self.format_graph_point(datetime_str, status["virtual memory - percent"])
+                            last_ram_value = status["virtual memory - percent"]
+                            ram_str += self.format_graph_point(datetime_str, last_ram_value)
                         else:
                             ram_str += self.format_graph_point(datetime_str, 0)
                         if "gpu - percent" in status:
-                            show_gpu = True
-                            gpu_str += self.format_graph_point(datetime_str, status["gpu - percent"])
+                            last_gpu_value = status["gpu - percent"]
+                            gpu_str += self.format_graph_point(datetime_str, last_gpu_value)
                         else:
                             gpu_str += self.format_graph_point(datetime_str, 0)
                         if "gpu - temperature" in status:
-                            show_gpu_temp = True
-                            gpu_temp_str += self.format_graph_point(datetime_str, status["gpu - temperature"])
+                            last_gpu_temp_value = status["gpu - temperature"]
+                            gpu_temp_str += self.format_graph_point(datetime_str, last_gpu_temp_value)
                         else:
                             gpu_temp_str += self.format_graph_point(datetime_str, 0)
 
-            if not show_cpu:
+            table_str  = "\t<table>\n"
+            if len(last_cpu_value) > 0:
+                table_str += "\t\t<td>Current CPU Utilization</td><td>" + str(last_cpu_value) + "%</td><tr>\n"
+            else:
                 cpu_str = ""
-            if not show_ram:
+            if len(last_ram_value) > 0:
+                table_str += "\t\t<td>Current RAM Utilization</td><td>" + str(last_ram_value) + "</td><tr>\n"
+            else:
                 ram_str = ""
-            if not show_gpu:
+            if len(last_gpu_value) > 0:
+                table_str += "\t\t<td>Current GPU Utilization</td><td>" + str(last_gpu_value) + "%</td><tr>\n"
+            else:
                 gpu_str = ""
-            if not show_gpu_temp:
+            if len(last_gpu_temp_value) > 0:
+                table_str += "\t\t<td>Current GPU Temperature</td><td>" + str(last_gpu_temp_value) + "</td><tr>\n"
+            else:
                 gpu_temp_str = ""
+            table_str += "\t</table>\n"
 
             device_html_file = os.path.join(g_root_dir, 'html', 'device.html')
             my_template = Template(filename=device_html_file, module_directory=g_tempmod_dir)
-            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, device_id=device_id, graph1=cpu_str, graph2=ram_str, graph3=gpu_str, graph4=gpu_temp_str)
+            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, device_id=device_id, graph1=cpu_str, graph2=ram_str, graph3=gpu_str, graph4=gpu_temp_str, table=table_str)
         except:
             cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
         return ""
