@@ -25,13 +25,13 @@ import datetime
 import os
 import requests
 import signal
+import subprocess
 import sys
 import threading
 import time
 import psutil
 import uuid
 
-g_gpu_statusing_enabled = False
 g_monitor_thread = None
 
 def signal_handler(signal, frame):
@@ -80,15 +80,14 @@ class MonitorThread(threading.Thread):
 
     # Appends GPU values to the 'values' dictionary.
     def check_gpu(self, values):
-        global g_gpu_statusing_enabled
-
-        if not g_gpu_statusing_enabled:
-            return
-
         try:
-            all_gpus = GPUtil.getGPUs()
-            for g in all_gpus:
-                values['gpu - percent'] = g.load * 100.0
+            process = subprocess.Popen(['nvidia-smi', '--query-gpu=name,pci.bus_id,driver_version,pstate,pcie.link.gen.max,pcie.link.gen.current,temperature.gpu,utilization.gpu,utilization.memory,memory.total,memory.free,memory.used', '--format=csv'], stdout=subprocess.PIPE)
+            out_str, err_str = process.communicate()
+            out_str = out_str.split('\n')[1]
+            out = out_str.split(',')
+            values['gpu - name'] = out[0].strip(' \t\n\r')
+            values['gpu - temperature'] = int(out[6].strip(' \t\n\r'))
+            values['gpu - percent'] = int(out[7].strip(' \t\n\r%%s'))
         except:
             print "Error collecting GPU stats."
 
@@ -136,12 +135,6 @@ if __name__ == "__main__":
     parser.add_argument("--cpu", action="store_true", default=True, help="TRUE if sampling the CPU", required=False)
     parser.add_argument("--mem", action="store_true", default=True, help="TRUE if sampling memory", required=False)
     parser.add_argument("--gpu", action="store_true", default=False, help="TRUE if sampling the GPU (Nvidia only)", required=False)
-
-    try:
-        import GPUtil
-        g_gpu_statusing_enabled = True
-    except:
-        print "Error: Could not import import GPUtil. GPU Statusing will be disabled."
 
     try:
         args = parser.parse_args()
