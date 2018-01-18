@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import argparse
+import bcrypt
 import cherrypy
 import datetime
 import logging
@@ -38,6 +39,8 @@ from mako.template import Template
 
 ACCESS_LOG = 'access.log'
 ERROR_LOG = 'error.log'
+SESSION_KEY = '_computerstatus_username'
+MIN_PASSWORD_LEN = 8
 
 g_root_dir = os.path.dirname(os.path.abspath(__file__))
 g_root_url = ''
@@ -111,6 +114,98 @@ class StatusWeb(object):
         except:
             cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
         return ""
+
+    # Page for displaying the devices owned by a particular user.
+    @cherrypy.expose
+    def dashboard(self, email, *args, **kw):
+        try:
+            pass
+        except:
+            cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
+        return ""
+
+    def authenticate_user(self, email, password):
+        if self.database is None:
+            return False, "No database."
+        if len(email) == 0:
+            return False, "An email address was not provided."
+        if len(password) < MIN_PASSWORD_LEN:
+            return False, "The password is too short."
+
+        user_id, db_hash1, user_name = self.database.retrieve_user(email)
+        if db_hash1 is None:
+            return False, "The user could not be found."
+        db_hash2 = bcrypt.hashpw(password.encode('utf-8'), db_hash1.encode('utf-8'))
+        if db_hash1 == db_hash2:
+            return True, "The user has been logged in."
+        return False, "The password is invalid."
+
+    def create_user(self, email, realname, password1, password2):
+        if self.database is None:
+            return False, "No database."
+        if len(email) == 0:
+            return False, "Email address not provided."
+        if len(realname) == 0:
+            return False, "Name not provided."
+        if len(password1) < MIN_PASSWORD_LEN:
+            return False, "The password is too short."
+        if password1 != password2:
+            return False, "The passwords do not match."
+        if self.database.retrieve_user(email) is None:
+            return False, "The user already exists."
+
+        salt = bcrypt.gensalt()
+        hash = bcrypt.hashpw(password1.encode('utf-8'), salt)
+        if not self.database.create_user(email, realname, hash):
+            return False, "An internal error was encountered when creating the user."
+
+        return True, "The user was created."
+
+    # Processes a login.
+    @cherrypy.expose
+    def submit_login(self, *args, **kw):
+        try:
+            email = cherrypy.request.params.get("email")
+            password = cherrypy.request.params.get("password")
+
+            if email is None or password is None:
+                return self.error("An email address and password were not provided.")
+            else:
+                user_logged_in, info_str = self.authenticate_user(email, password)
+                if user_logged_in:
+                    cherrypy.session.regenerate()
+                    cherrypy.session[SESSION_KEY] = cherrypy.request.login = email
+                    result = self.dashboard(email, None, None)
+                else:
+                    error_msg = "Unable to authenticate the user."
+                    if len(info_str) > 0:
+                        error_msg += " "
+                        error_msg += info_str
+                    result = self.error(error_msg)
+            return result
+        except:
+            cherrypy.log.error('Unhandled exception in submit_login', 'EXEC', logging.WARNING)
+        return self.error()
+
+    # Creates a new login.
+    @cherrypy.expose
+    def submit_new_login(self, email, realname, password1, password2, *args, **kw):
+        try:
+            user_created, info_str = self.create_user(email, realname, password1, password2)
+            if user_created:
+                cherrypy.session.regenerate()
+                cherrypy.session[SESSION_KEY] = cherrypy.request.login = email
+                result = self.dashboard(email, *args, **kw)
+            else:
+                error_msg = "Unable to create the user."
+                if len(info_str) > 0:
+                    error_msg += " "
+                    error_msg += info_str
+                result = self.error(error_msg)
+            return result
+        except:
+            cherrypy.log.error('Unhandled exception in submit_new_login', 'EXEC', logging.WARNING)
+        return self.error()
 
     # Renders the login page.
     @cherrypy.expose

@@ -69,7 +69,7 @@ class MongoDatabase(Database.Database):
             return False
 
         try:
-            post = {"username": username, "realname": realname, "hash": hash, "devices": [], "following": [], "followed by": []}
+            post = {"username": username, "realname": realname, "hash": hash, "devices": []}
             self.users_collection.insert(post)
             return True
         except:
