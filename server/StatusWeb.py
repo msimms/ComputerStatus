@@ -91,6 +91,7 @@ class StatusWeb(object):
             cpu_str = ""
             ram_str = ""
             gpu_str = ""
+            gpu_temp_str = ""
 
             statuses = self.database.retrieve_status(device_id)
             if statuses is not None:
@@ -99,18 +100,21 @@ class StatusWeb(object):
                         datetime_num = int(status["datetime"]) * 1000
                         datetime_str = str(datetime_num)
                         if "cpu - percent" in status:
-                            cpu_percent = status["cpu - percent"]
-                            cpu_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(cpu_percent) + " },\n"
+                            value = status["cpu - percent"]
+                            cpu_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(value) + " },\n"
                         if "virtual memory - percent" in status:
-                            ram_percent = status["virtual memory - percent"]
-                            ram_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(ram_percent) + " },\n"
+                            value = status["virtual memory - percent"]
+                            ram_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(value) + " },\n"
                         if "gpu - percent" in status:
-                            gpu_percent = status["gpu - percent"]
-                            gpu_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(gpu_percent) + " },\n"
+                            value = status["gpu - percent"]
+                            gpu_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(value) + " },\n"
+                        if "gpu - temperature" in status:
+                            value = status["gpu - temperature"]
+                            gpu_temp_str += "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(value) + " },\n"
 
             device_html_file = os.path.join(g_root_dir, 'html', 'device.html')
             my_template = Template(filename=device_html_file, module_directory=g_tempmod_dir)
-            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, device_id=device_id, cpu=cpu_str, memory=ram_str, gpu=gpu_str)
+            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, device_id=device_id, graph1=cpu_str, graph2=ram_str, graph3=gpu_str, graph4=gpu_temp_str)
         except:
             cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
         return ""

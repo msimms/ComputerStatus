@@ -102,22 +102,27 @@ ${nav}
 			.text(title);
 	}
 
-	var cpu = [
-${cpu}
+	var graph1 = [
+${graph1}
 	];
-	var memory = [
-${memory}
+	var graph2 = [
+${graph2}
 	];
-	var gpu = [
-${gpu}
+	var graph3 = [
+${graph3}
+	];
+	var graph4 = [
+${graph4}
 	];
 
-	if (cpu.length > 0)
-		$(function() { drawChart(cpu, "CPU", "DodgerBlue") });
-	if (memory.length > 0)
-		$(function() { drawChart(memory, "Memory", "FireBrick") });
-	if (gpu.length > 0)
-		$(function() { drawChart(gpu, "GPU", "ForestGreen") });
+	if (graph1.length > 0)
+		$(function() { drawChart(graph1, "CPU Util", "DodgerBlue") });
+	if (graph2.length > 0)
+		$(function() { drawChart(graph2, "Memory", "FireBrick") });
+	if (graph3.length > 0)
+		$(function() { drawChart(graph3, "GPU Util", "ForestGreen") });
+	if (graph4.length > 0)
+		$(function() { drawChart(graph4, "GPU Temp", "ForestGreen") });
 </script>
 
 </div>
