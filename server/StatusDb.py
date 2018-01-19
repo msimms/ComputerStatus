@@ -95,6 +95,21 @@ class MongoDatabase(Database.Database):
             self.log_error(sys.exc_info()[0])
         return None, None, None
 
+    def claim_device(self, username, device_id):
+        if username is None:
+            self.log_error(MongoDatabase.claim_device.__name__ + "Unexpected empty object: username")
+            return False
+        if len(username) == 0:
+            self.log_error(MongoDatabase.claim_device.__name__ + "username is empty")
+            return False
+
+        try:
+            print device_id
+        except:
+            traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return False
+
     def create_status(self, status):
         if status is None:
             self.log_error(MongoDatabase.create_status.__name__ + "Unexpected empty object: status")

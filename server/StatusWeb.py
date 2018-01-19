@@ -192,6 +192,23 @@ class StatusWeb(object):
             cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
         return ""
 
+    @cherrypy.expose
+    def claim_device(self, device_id):
+        try:
+            # Get the logged in user.
+            username = cherrypy.session.get(SESSION_KEY)
+            if username is None:
+                raise cherrypy.HTTPRedirect("/login")
+
+            # Add the device id to the database.
+            self.database.claim_device(self, username, device_id)
+
+            # Refresh the dashboard page.
+            raise cherrypy.HTTPRedirect("/dashboard")
+        except:
+            cherrypy.log.error('Unhandled exception in dashboard', 'EXEC', logging.WARNING)
+        return ""
+
     # Page for displaying the devices owned by a particular user.
     @cherrypy.expose
     @require()
