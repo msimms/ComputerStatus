@@ -158,9 +158,12 @@ class StatusWeb(object):
 
     # Page for displaying the devices owned by a particular user.
     @cherrypy.expose
-    def dashboard(self, email, *args, **kw):
+    def dashboard(self, *args, **kw):
         try:
-            pass
+            device_table_str = ""
+            dashboard_html_file = os.path.join(g_root_dir, 'html', 'dashboard.html')
+            my_template = Template(filename=dashboard_html_file, module_directory=g_tempmod_dir)
+            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, devices=device_table_str)
         except:
             cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
         return ""
