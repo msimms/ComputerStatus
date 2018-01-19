@@ -67,6 +67,7 @@ class StatusWeb(object):
     def create_navbar():
         navbar_str = "<nav>\n" \
             "\t<ul>\n" \
+            "\t\t<li><a href=\"" + g_root_url + "/dashboard/\">Dashboard</a></li>\n" \
             "\t</ul>\n" \
             "</nav>"
         return navbar_str
