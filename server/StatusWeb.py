@@ -45,6 +45,7 @@ MIN_PASSWORD_LEN = 8
 g_root_dir = os.path.dirname(os.path.abspath(__file__))
 g_root_url = ''
 g_tempmod_dir = os.path.join(g_root_dir, 'tempmod')
+g_app = None
 
 def signal_handler(signal, frame):
     global g_app
@@ -53,6 +54,41 @@ def signal_handler(signal, frame):
     if g_app is not None:
         g_app.terminate()
     sys.exit(0)
+
+def check_auth(*args, **kwargs):
+    # A tool that looks in config for 'auth.require'. If found and it is not None, a login
+    # is required and the entry is evaluated as a list of conditions that the user must fulfill
+    conditions = cherrypy.request.config.get('auth.require', None)
+    if conditions is not None:
+        requested_url = cherrypy.request.request_line.split()[1]
+        requested_url_parts = requested_url.split('/')
+        requested_url_parts = filter(lambda part: part != '', requested_url_parts)
+
+        # If the user is trying to view an activity then make sure they have permissions
+        # to view it. First check to see if it's a public activity.
+        if requested_url_parts[0] == "device":
+            pass
+
+        username = cherrypy.session.get(SESSION_KEY)
+        if username:
+            cherrypy.request.login = username
+            for condition in conditions:
+                # A condition is just a callable that returns true or false
+                if not condition():
+                    raise cherrypy.HTTPRedirect("/login")
+        else:
+            raise cherrypy.HTTPRedirect("/login")
+
+def require(*conditions):
+    # A decorator that appends conditions to the auth.require config variable.
+    def decorate(f):
+        if not hasattr(f, '_cp_config'):
+            f._cp_config = dict()
+        if 'auth.require' not in f._cp_config:
+            f._cp_config['auth.require'] = []
+        f._cp_config['auth.require'].extend(conditions)
+        return f
+    return decorate
 
 class StatusWeb(object):
     def __init__(self):
@@ -158,14 +194,24 @@ class StatusWeb(object):
 
     # Page for displaying the devices owned by a particular user.
     @cherrypy.expose
+    @require()
     def dashboard(self, *args, **kw):
         try:
+            # Get the logged in user.
+            username = cherrypy.session.get(SESSION_KEY)
+            if username is None:
+                raise cherrypy.HTTPRedirect("/login")
+
+            # Get the details of the logged in user.
+            user_id, user_hash, user_realname = self.database.retrieve_user(username)
+
+            # Render the dashboard page.
             device_table_str = ""
             dashboard_html_file = os.path.join(g_root_dir, 'html', 'dashboard.html')
             my_template = Template(filename=dashboard_html_file, module_directory=g_tempmod_dir)
             return my_template.render(nav=self.create_navbar(), root_url=g_root_url, devices=device_table_str)
         except:
-            cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
+            cherrypy.log.error('Unhandled exception in dashboard', 'EXEC', logging.WARNING)
         return ""
 
     def authenticate_user(self, email, password):
@@ -335,10 +381,15 @@ mako.directories = "templates"
 
 g_app = StatusWeb()
 
+cherrypy.tools.statusweb_auth = cherrypy.Tool('before_handler', check_auth)
+
 conf = {
     '/':
     {
-        'tools.staticdir.root': g_root_dir
+        'tools.staticdir.root': g_root_dir,
+        'tools.statusweb_auth.on': True,
+        'tools.sessions.on': True,
+        'tools.sessions.name': 'statusweb_auth'
     },
     '/css':
     {
