@@ -208,6 +208,8 @@ class StatusWeb(object):
 
             # Refresh the dashboard page.
             raise cherrypy.HTTPRedirect("/dashboard")
+        except cherrypy.HTTPRedirect as e:
+            raise e
         except:
             cherrypy.log.error('Unhandled exception in dashboard', 'EXEC', logging.WARNING)
         return ""
@@ -239,6 +241,8 @@ class StatusWeb(object):
             dashboard_html_file = os.path.join(g_root_dir, 'html', 'dashboard.html')
             my_template = Template(filename=dashboard_html_file, module_directory=g_tempmod_dir)
             return my_template.render(nav=self.create_navbar(), root_url=g_root_url, devices=device_table_str)
+        except cherrypy.HTTPRedirect as e:
+            raise e
         except:
             cherrypy.log.error('Unhandled exception in dashboard', 'EXEC', logging.WARNING)
         return ""
