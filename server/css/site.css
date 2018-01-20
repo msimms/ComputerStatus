@@ -126,3 +126,7 @@ tr:hover {
 	float: left;
 	padding-bottom: .25cm;
 }
+
+div {
+	margin: 10px;
+}
