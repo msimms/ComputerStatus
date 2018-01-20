@@ -172,7 +172,7 @@ class StatusWeb(object):
             else:
                 cpu_str = ""
             if len(last_ram_value) > 0:
-                table_str += "\t\t<td>Current RAM Utilization</td><td>" + str(last_ram_value) + "</td><tr>\n"
+                table_str += "\t\t<td>Current RAM Utilization</td><td>" + str(last_ram_value) + "%</td><tr>\n"
             else:
                 ram_str = ""
             if len(last_gpu_value) > 0:
