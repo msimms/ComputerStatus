@@ -232,9 +232,10 @@ class StatusWeb(object):
 
             # Render a table containing the user's devices.
             device_table_str  = "\t<table>\n"
+            device_table_str += "\t\t<td><b>Name</b></td><td><b>Device ID</b></td><tr>\n"
             if devices is not None:
                 for device in devices:
-                    device_table_str += "\t\t<td><a href=\"" + g_root_url + "/device/" + str(device) + "\">" + str(device) + "</a></td><tr>\n"
+                    device_table_str += "\t\t<td></td><td><a href=\"" + g_root_url + "/device/" + str(device) + "\">" + str(device) + "</a></td><tr>\n"
             device_table_str += "\t<table>\n"
 
             # Render the dashboard page.

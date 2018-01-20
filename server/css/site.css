@@ -77,7 +77,7 @@ section {
 
 table {
 	font-family: arial, sans-serif;
-	background: linear-gradient(to right, #FFFFFF , #BBBBBB);
+	background: linear-gradient(to left, #FFFFFF , #BBBBBB);
 	margin-left: auto;
 	margin-right: auto;
 }
@@ -86,7 +86,7 @@ th {
 	padding: 5px;
 	border-bottom: 5px solid #000000;
 	border-radius: 10px 10px 0px 0px;
-	background: linear-gradient(to right, #779900 , #777713);
+	background: linear-gradient(to left, #779900 , #777713);
 	background-color: #777713;
 	font-color: #FFFFFF;
 	text-transform: uppercase;
@@ -100,7 +100,7 @@ td {
 	border: 1px solid #FFFFFF;
 	padding: 4px;
 	font-color: #FFFFFF;
-	background-color: #E4F5D4;
+	background-color: rgba(119, 122, 116, 0.452);
 	border-radius: 2px;
 	text-shadow: 1px 1px #FFFFFF;
 	text-align: center;
@@ -125,6 +125,12 @@ tr:hover {
 	display: inline;
 	float: left;
 	padding-bottom: .25cm;
+}
+
+.claim_device ul {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
 }
 
 div {
