@@ -200,8 +200,11 @@ class StatusWeb(object):
             if username is None:
                 raise cherrypy.HTTPRedirect("/login")
 
+            # Get the details of the logged in user.
+            user_id, user_hash, user_realname = self.database.retrieve_user(username)
+
             # Add the device id to the database.
-            self.database.claim_device(self, username, device_id)
+            self.database.claim_device(user_id, device_id)
 
             # Refresh the dashboard page.
             raise cherrypy.HTTPRedirect("/dashboard")
@@ -222,8 +225,17 @@ class StatusWeb(object):
             # Get the details of the logged in user.
             user_id, user_hash, user_realname = self.database.retrieve_user(username)
 
+            # Get the user's devices.
+            devices = self.database.retrieve_user_devices(user_id)
+
+            # Render a table containing the user's devices.
+            device_table_str  = "\t<table>\n"
+            if devices is not None:
+                for device in devices:
+                    device_table_str += "\t\t<td><a href=\"" + g_root_url + "/device/" + str(device) + "\">" + str(device) + "</a></td><tr>\n"
+            device_table_str += "\t<table>\n"
+
             # Render the dashboard page.
-            device_table_str = ""
             dashboard_html_file = os.path.join(g_root_dir, 'html', 'dashboard.html')
             my_template = Template(filename=dashboard_html_file, module_directory=g_tempmod_dir)
             return my_template.render(nav=self.create_navbar(), root_url=g_root_url, devices=device_table_str)

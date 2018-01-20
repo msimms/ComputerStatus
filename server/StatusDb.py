@@ -95,16 +95,39 @@ class MongoDatabase(Database.Database):
             self.log_error(sys.exc_info()[0])
         return None, None, None
 
-    def claim_device(self, username, device_id):
-        if username is None:
-            self.log_error(MongoDatabase.claim_device.__name__ + "Unexpected empty object: username")
-            return False
-        if len(username) == 0:
-            self.log_error(MongoDatabase.claim_device.__name__ + "username is empty")
+    def retrieve_user_devices(self, user_id):
+        if user_id is None:
+            self.log_error(MongoDatabase.claim_device.__name__ + "Unexpected empty object: user_id")
+            return None
+
+        try:
+            user_id_obj = ObjectId(user_id)
+            user = self.users_collection.find_one({"_id": user_id_obj})
+            if user is not None:
+                if 'devices' in user:
+                    return user['devices']
+        except:
+            traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return None
+
+    def claim_device(self, user_id, device_id):
+        if user_id is None:
+            self.log_error(MongoDatabase.claim_device.__name__ + "Unexpected empty object: user_id")
             return False
 
         try:
-            print device_id
+            user_id_obj = ObjectId(user_id)
+            user = self.users_collection.find_one({"_id": user_id_obj})
+            if user is not None:
+                user_list = []
+                if 'devices' in user:
+                    user_list = user['devices']
+                if device_id not in user_list:
+                    user_list.append(device_id)
+                    user['devices'] = user_list
+                    self.users_collection.save(user)
+            return True
         except:
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])
