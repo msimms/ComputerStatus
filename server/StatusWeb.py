@@ -102,10 +102,9 @@ class StatusWeb(object):
     @staticmethod
     def create_navbar(logged_in=True):
         navbar_str = "<nav>\n\t<ul>\n"
+        navbar_str += "\t\t<li><a href=\"" + g_root_url + "/about/\">About</a></li>\n"
         if logged_in is True:
             navbar_str += "\t\t<li><a href=\"" + g_root_url + "/dashboard/\">Dashboard</a></li>\n"
-        else:
-            navbar_str += "\t\t<li><a href=\"" + g_root_url + "/about/\">About</a></li>\n"
         navbar_str += "\t</ul>\n</nav>"
         return navbar_str
 
