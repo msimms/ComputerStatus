@@ -100,12 +100,13 @@ class StatusWeb(object):
 
     # Helper function for building the navigation bar.
     @staticmethod
-    def create_navbar():
-        navbar_str = "<nav>\n" \
-            "\t<ul>\n" \
-            "\t\t<li><a href=\"" + g_root_url + "/dashboard/\">Dashboard</a></li>\n" \
-            "\t</ul>\n" \
-            "</nav>"
+    def create_navbar(logged_in=True):
+        navbar_str = "<nav>\n\t<ul>\n"
+        if logged_in is True:
+            navbar_str += "\t\t<li><a href=\"" + g_root_url + "/dashboard/\">Dashboard</a></li>\n"
+        else:
+            navbar_str += "\t\t<li><a href=\"" + g_root_url + "/about/\">About</a></li>\n"
+        navbar_str += "\t</ul>\n</nav>"
         return navbar_str
 
     # Renders the error page.
@@ -166,7 +167,7 @@ class StatusWeb(object):
                         else:
                             gpu_temp_str += self.format_graph_point(datetime_str, 0)
 
-            table_str  = "\t<table>\n"
+            table_str = "\t<table>\n"
             if len(last_cpu_value) > 0:
                 table_str += "\t\t<td>Current CPU Utilization</td><td>" + str(last_cpu_value) + "%</td><tr>\n"
             else:
@@ -231,7 +232,7 @@ class StatusWeb(object):
             devices = self.database.retrieve_user_devices(user_id)
 
             # Render a table containing the user's devices.
-            device_table_str  = "\t<table>\n"
+            device_table_str = "\t<table>\n"
             device_table_str += "\t\t<td><b>Name</b></td><td><b>Device ID</b></td><tr>\n"
             if devices is not None:
                 for device in devices:
@@ -337,7 +338,7 @@ class StatusWeb(object):
         try:
             login_html_file = os.path.join(g_root_dir, 'html', 'login.html')
             my_template = Template(filename=login_html_file, module_directory=g_tempmod_dir)
-            result = my_template.render(root_url=g_root_url)
+            result = my_template.render(nav=self.create_navbar(False), root_url=g_root_url)
         except:
             result = self.error()
         return result
@@ -348,7 +349,18 @@ class StatusWeb(object):
         try:
             create_login_html_file = os.path.join(g_root_dir, 'html', 'create_login.html')
             my_template = Template(filename=create_login_html_file, module_directory=g_tempmod_dir)
-            result = my_template.render(root_url=g_root_url)
+            result = my_template.render(nav=self.create_navbar(False), root_url=g_root_url)
+        except:
+            result = self.error()
+        return result
+
+    # Renders the about page.
+    @cherrypy.expose
+    def about(self):
+        try:
+            create_login_html_file = os.path.join(g_root_dir, 'html', 'about.html')
+            my_template = Template(filename=create_login_html_file, module_directory=g_tempmod_dir)
+            result = my_template.render(nav=self.create_navbar(False), root_url=g_root_url)
         except:
             result = self.error()
         return result

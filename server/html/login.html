@@ -7,6 +7,7 @@
 
 <link rel="stylesheet" href="${root_url}/css/normalize.css">
 <link rel="stylesheet" href="${root_url}/css/unauth_style.css">
+<link rel="stylesheet" href="${root_url}/css/site.css">
 
 <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
 <meta content="utf-8" http-equiv="encoding">
@@ -16,6 +17,10 @@
 <link rel="shortcut icon" href="${root_url}/media/favicon.ico" >
 
 <body>
+	<section class="nav">
+	${nav}
+	</section>
+
 	<section class="loginform cf" style="width: 480px">
 		<form name="login" action="${root_url}/submit_login" method="post" accept-charset="utf-8">
 			<ul>
