@@ -130,11 +130,13 @@ class StatusWeb(object):
     def device(self, device_id, *args, **kw):
         try:
             cpu_str = ""
+            cpu_temp_str = ""
             ram_str = ""
             gpu_str = ""
             gpu_temp_str = ""
 
             last_cpu_value = ""
+            last_cpu_temp_value = ""
             last_ram_value = ""
             last_gpu_value = ""
             last_gpu_temp_value = ""
@@ -148,6 +150,11 @@ class StatusWeb(object):
                         if "cpu - percent" in status:
                             last_cpu_value = status["cpu - percent"]
                             cpu_str += self.format_graph_point(datetime_str, last_cpu_value)
+                        else:
+                            cpu_str += self.format_graph_point(datetime_str, 0)
+                        if "cpu - temperature" in status:
+                            last_cpu_temp_value = status["cpu - temperature"]
+                            cpu_str += self.format_graph_point(datetime_str, last_cpu_temp_value)
                         else:
                             cpu_str += self.format_graph_point(datetime_str, 0)
                         if "virtual memory - percent" in status:
@@ -171,6 +178,10 @@ class StatusWeb(object):
                 table_str += "\t\t<td>Current CPU Utilization</td><td>" + str(last_cpu_value) + "%</td><tr>\n"
             else:
                 cpu_str = ""
+            if len(last_cpu_temp_value) > 0:
+                table_str += "\t\t<td>Current CPU Temperature</td><td>" + str(last_cpu_temp_value) + "%</td><tr>\n"
+            else:
+                cpu_temp_str = ""
             if len(last_ram_value) > 0:
                 table_str += "\t\t<td>Current RAM Utilization</td><td>" + str(last_ram_value) + "%</td><tr>\n"
             else:
@@ -187,7 +198,7 @@ class StatusWeb(object):
 
             device_html_file = os.path.join(g_root_dir, 'html', 'device.html')
             my_template = Template(filename=device_html_file, module_directory=g_tempmod_dir)
-            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, device_id=device_id, graph1=cpu_str, graph2=ram_str, graph3=gpu_str, graph4=gpu_temp_str, table=table_str)
+            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, device_id=device_id, graph1=cpu_str, graph2=ram_str, graph3=gpu_str, graph4=gpu_temp_str, graph5=cpu_temp_str, table=table_str)
         except:
             cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
         return ""

@@ -114,15 +114,20 @@ ${graph3}
 	var graph4 = [
 ${graph4}
 	];
+	var graph5 = [
+${graph5}
+	];
 
 	if (graph1.length > 0)
 		$(function() { drawChart(graph1, "CPU Utilization", "DodgerBlue") });
 	if (graph2.length > 0)
-		$(function() { drawChart(graph2, "Memory Utilization", "FireBrick") });
+		$(function() { drawChart(graph2, "Memory Utilization", "Black") });
 	if (graph3.length > 0)
 		$(function() { drawChart(graph3, "GPU Utilization", "ForestGreen") });
 	if (graph4.length > 0)
-		$(function() { drawChart(graph4, "GPU Temp", "ForestGreen") });
+		$(function() { drawChart(graph4, "GPU Temperature", "FireBrick") });
+	if (graph5.length > 0)
+		$(function() { drawChart(graph5, "CPU Temperature", "FireBrick") });
 </script>
 
 </div>
