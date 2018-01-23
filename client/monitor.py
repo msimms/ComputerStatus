@@ -43,7 +43,7 @@ def signal_handler(signal, frame):
         g_monitor_thread.terminate()
 
 class MonitorThread(threading.Thread):
-    def __init__(self, interval, server, verbose, do_cpu_check, do_mem_check, do_gpu_check):
+    def __init__(self, interval, server, verbose, do_cpu_check, do_mem_check, do_net_check, do_gpu_check):
         threading.Thread.__init__(self)
         self.stopped = threading.Event()
         self.interval = interval
@@ -51,6 +51,7 @@ class MonitorThread(threading.Thread):
         self.verbose = verbose
         self.do_cpu_check = do_cpu_check
         self.do_mem_check = do_mem_check
+        self.do_net_check = do_net_check
         self.do_gpu_check = do_gpu_check
 
         if self.server:
@@ -118,6 +119,15 @@ class MonitorThread(threading.Thread):
         except:
             print "Error collecting memory stats."
 
+    # Appends current network stats to the 'values' dictionary.
+    def check_net(self, values):
+        try:
+            net_io = psutil.net_io_counters()
+            values['network - bytes sent'] = net_io.bytes_sent
+            values['network - bytes received'] = net_io.bytes_recv
+        except:
+            print "Error collecting network stats."
+
     def run(self):
         while not self.stopped.wait(self.interval):
             values = {}
@@ -125,6 +135,8 @@ class MonitorThread(threading.Thread):
                 self.check_cpu(values)
             if self.do_mem_check:
                 self.check_mem(values)
+            if self.do_net_check:
+                self.check_net(values)
             if self.do_gpu_check:
                 self.check_gpu(values)
             if self.server:
@@ -141,6 +153,7 @@ if __name__ == "__main__":
     parser.add_argument("--server", type=str, action="store", default="", help="Remote logging server (optional)", required=False)
     parser.add_argument("--verbose", action="store_true", default=True, help="TRUE to enable verbose mode", required=False)
     parser.add_argument("--cpu", action="store_true", default=True, help="TRUE if sampling the CPU", required=False)
+    parser.add_argument("--net", action="store_true", default=True, help="TRUE if sampling network I/O", required=False)
     parser.add_argument("--mem", action="store_true", default=True, help="TRUE if sampling memory", required=False)
     parser.add_argument("--gpu", action="store_true", default=False, help="TRUE if sampling the GPU (Nvidia only)", required=False)
 
@@ -151,7 +164,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Start the monitor thread.
-    g_monitor_thread = MonitorThread(args.interval, args.server, args.verbose, args.cpu, args.mem, args.gpu)
+    g_monitor_thread = MonitorThread(args.interval, args.server, args.verbose, args.cpu, args.mem, args.net, args.gpu)
     g_monitor_thread.start()
 
     # Wait for it to finish. We do it like this so that the main thread isn't blocked and can execute the signal handler.
