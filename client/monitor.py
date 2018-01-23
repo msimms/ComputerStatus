@@ -31,6 +31,7 @@ import threading
 import time
 import psutil
 import uuid
+import cpu_status
 
 g_monitor_thread = None
 
@@ -100,6 +101,13 @@ class MonitorThread(threading.Thread):
             values['cpu - user times'] = cpu_times.user
         except:
             print "Error collecting CPU stats."
+
+        try:
+            cpu_temp = cpu_status.cpu_temperature()
+            if cpu_temp > 0:
+                values['cpu - temperature'] = cpu_temp
+        except:
+            pass
 
     # Appends current memory values to the 'values' dictionary.
     def check_mem(self, values):
