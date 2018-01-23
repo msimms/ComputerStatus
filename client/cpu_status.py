@@ -24,19 +24,29 @@ import subprocess
 import platform
 
 def win_cpu_temperature():
-    import wmi
+    try:
+        import wmi
 
-    w = wmi.WMI(namespace="root\wmi")
-    temperature_info = w.MSAcpi_ThermalZoneTemperature()[0]
-    return float(temperature_info.CurrentTemperature) / 10.0 - 273.15
+        w = wmi.WMI(namespace="root\wmi")
+        temperature_info = w.MSAcpi_ThermalZoneTemperature()[0]
+        return float(temperature_info.CurrentTemperature) / 10.0 - 273.15
+    except ImportError:
+        print "Error: Cannot read the CPU temperature because WMI is not installed."        
+    except wmi.x_access_denied:
+        print "Error: Access denied when trying to read the CPU temperature."
+    return 0
 
 def mac_cpu_temperature():
-    process = subprocess.Popen(['istats'], stdout=subprocess.PIPE)
-    out_str, err_str = process.communicate()
-    cpu_str = out_str.split('\n')[1]
-    temp_str = cpu_str.split(':')[1].strip(' \t\n\r')
-    temp_str = temp_str.split('\xc2')[0]
-    return float(temp_str)
+    try:
+        process = subprocess.Popen(['istats'], stdout=subprocess.PIPE)
+        out_str, err_str = process.communicate()
+        cpu_str = out_str.split('\n')[1]
+        temp_str = cpu_str.split(':')[1].strip(' \t\n\r')
+        temp_str = temp_str.split('\xc2')[0]
+        return float(temp_str)
+    except OSError:
+        print "Error: Cannot read the CPU temperature because istats is not installed."
+    return 0
 
 # Returns the CPU temperature in degrees C.
 def cpu_temperature():
