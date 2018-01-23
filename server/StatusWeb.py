@@ -154,9 +154,9 @@ class StatusWeb(object):
                             cpu_str += self.format_graph_point(datetime_str, 0)
                         if "cpu - temperature" in status:
                             last_cpu_temp_value = status["cpu - temperature"]
-                            cpu_str += self.format_graph_point(datetime_str, last_cpu_temp_value)
+                            cpu_temp_str += self.format_graph_point(datetime_str, last_cpu_temp_value)
                         else:
-                            cpu_str += self.format_graph_point(datetime_str, 0)
+                            cpu_temp_str += self.format_graph_point(datetime_str, 0)
                         if "virtual memory - percent" in status:
                             last_ram_value = status["virtual memory - percent"]
                             ram_str += self.format_graph_point(datetime_str, last_ram_value)
@@ -179,7 +179,7 @@ class StatusWeb(object):
             else:
                 cpu_str = ""
             if len(last_cpu_temp_value) > 0:
-                table_str += "\t\t<td>Current CPU Temperature</td><td>" + str(last_cpu_temp_value) + "%</td><tr>\n"
+                table_str += "\t\t<td>Current CPU Temperature</td><td>" + str(last_cpu_temp_value) + "</td><tr>\n"
             else:
                 cpu_temp_str = ""
             if len(last_ram_value) > 0:
