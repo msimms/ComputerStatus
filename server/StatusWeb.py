@@ -163,12 +163,13 @@ class StatusWeb(object):
                         bytes_recv_str += self.append_graph_point(datetime_str, status, 'network - bytes received', last_value)
 
             table_str = "\t<table>\n"
+            degree_sign = u'\N{DEGREE SIGN}'
             if 'cpu - percent' in last_value:
                 table_str += "\t\t<td>Current CPU Utilization</td><td>" + str(last_value['cpu - percent']) + "%</td><tr>\n"
             else:
                 cpu_str = ""
             if 'cpu - temperature' in last_value:
-                table_str += "\t\t<td>Current CPU Temperature</td><td>" + str(last_value['cpu - temperature']) + "ºC</td><tr>\n"
+                table_str += "\t\t<td>Current CPU Temperature</td><td>" + str(last_value['cpu - temperature']) + degree_sign + "C</td><tr>\n"
             else:
                 cpu_temp_str = ""
             if 'virtual memory - percent' in last_value:
@@ -180,7 +181,7 @@ class StatusWeb(object):
             else:
                 gpu_str = ""
             if 'gpu - temperature' in last_value:
-                table_str += "\t\t<td>Current GPU Temperature</td><td>" + str(last_value['gpu - temperature']) + "ºC</td><tr>\n"
+                table_str += "\t\t<td>Current GPU Temperature</td><td>" + str(last_value['gpu - temperature']) + degree_sign + "C</td><tr>\n"
             else:
                 gpu_temp_str = ""
             if 'network - bytes sent' in last_value:
