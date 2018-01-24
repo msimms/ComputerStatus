@@ -117,6 +117,12 @@ ${graph4}
 	var graph5 = [
 ${graph5}
 	];
+	var graph6 = [
+${graph6}
+	];
+	var graph7 = [
+${graph7}
+	];
 
 	if (graph1.length > 0)
 		$(function() { drawChart(graph1, "CPU Utilization", "DodgerBlue") });
@@ -128,6 +134,10 @@ ${graph5}
 		$(function() { drawChart(graph4, "GPU Temperature", "FireBrick") });
 	if (graph5.length > 0)
 		$(function() { drawChart(graph5, "CPU Temperature", "FireBrick") });
+	if (graph6.length > 0)
+		$(function() { drawChart(graph6, "Bytes Sent", "DarkOrange") });
+	if (graph7.length > 0)
+		$(function() { drawChart(graph7, "Bytes Received", "DarkOrange") });
 </script>
 
 </div>
