@@ -31,7 +31,7 @@ def win_cpu_temperature():
         temperature_info = w.MSAcpi_ThermalZoneTemperature()[0]
         return float(temperature_info.CurrentTemperature) / 10.0 - 273.15
     except ImportError:
-        print "Error: Cannot read the CPU temperature because WMI is not installed."        
+        print "Error: Cannot read the CPU temperature because WMI is not installed."
     except wmi.x_access_denied:
         print "Error: Access denied when trying to read the CPU temperature."
     return 0
