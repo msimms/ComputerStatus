@@ -1,4 +1,6 @@
-# MIT License
+# -*- coding: utf-8 -*-
+# 
+# # MIT License
 # 
 # Copyright (c) 2018 Mike Simms
 # 
