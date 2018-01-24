@@ -166,7 +166,7 @@ class StatusWeb(object):
             else:
                 cpu_str = ""
             if 'cpu - temperature' in last_value:
-                table_str += "\t\t<td>Current CPU Temperature</td><td>" + str(last_value['cpu - temperature']) + "</td><tr>\n"
+                table_str += "\t\t<td>Current CPU Temperature</td><td>" + str(last_value['cpu - temperature']) + "ºC</td><tr>\n"
             else:
                 cpu_temp_str = ""
             if 'virtual memory - percent' in last_value:
@@ -178,15 +178,15 @@ class StatusWeb(object):
             else:
                 gpu_str = ""
             if 'gpu - temperature' in last_value:
-                table_str += "\t\t<td>Current GPU Temperature</td><td>" + str(last_value['gpu - temperature']) + "</td><tr>\n"
+                table_str += "\t\t<td>Current GPU Temperature</td><td>" + str(last_value['gpu - temperature']) + "ºC</td><tr>\n"
             else:
                 gpu_temp_str = ""
             if 'network - bytes sent' in last_value:
-                table_str += "\t\t<td>Bytes Sent</td><td>" + str(last_value['network - bytes sent']) + "Bytes </td><tr>\n"
+                table_str += "\t\t<td>Bytes Sent</td><td>" + str(last_value['network - bytes sent']) + " Bytes </td><tr>\n"
             else:
                 bytes_sent_str = ""
             if 'network - bytes received' in last_value:
-                table_str += "\t\t<td>Bytes Sent</td><td>" + str(last_value['network - bytes received']) + "Bytes </td><tr>\n"
+                table_str += "\t\t<td>Bytes Received</td><td>" + str(last_value['network - bytes received']) + " Bytes </td><tr>\n"
             else:
                 bytes_recv_str = ""
             table_str += "\t</table>\n"
