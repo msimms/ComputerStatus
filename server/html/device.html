@@ -101,38 +101,43 @@ ${nav}
 			.text(title);
 	}
 
-	var graph1 = [
-${graph1}
-	];
-	var graph2 = [
-${graph2}
-	];
-	var graph3 = [
-${graph3}
-	];
-	var graph4 = [
-${graph4}
-	];
-	var graph5 = [
-${graph5}
-	];
-	var graph6 = [
-${graph6}
-	];
-	var graph7 = [
-${graph7}
-	];
+	function get_graph_data(param)
+	{
+		var the_url = "${root_url}/api/1.0/graph_data?device_id=".concat("${device_id}","&param=",param,"&start_time=0");
+		var xml_http = new XMLHttpRequest();
+		var response = null;
+
+		xml_http.onreadystatechange = function()
+		{
+			if (xml_http.readyState == XMLHttpRequest.DONE)
+			{
+				response = xml_http.responseText;
+			}
+		}
+
+		xml_http.open("GET", the_url, false);
+	    xml_http.send(null);
+		return response;
+	}
+
+	var graph1 = eval(get_graph_data("cpu - percent"));
+	var graph2 = eval(get_graph_data("cpu - temperature"));
+	var graph3 = eval(get_graph_data("virtual memory - percent"));
+	var graph4 = eval(get_graph_data("gpu - percent"));
+	var graph5 = eval(get_graph_data("gpu - temperature"));
+	var graph6 = eval(get_graph_data("network - bytes sent"));
+	var graph7 = eval(get_graph_data("network - bytes received"));
 
 	if (graph1.length > 0)
 		$(function() { drawChart(graph1, "CPU Utilization", "DodgerBlue") });
 	if (graph2.length > 0)
-		$(function() { drawChart(graph2, "Memory Utilization", "Black") });
+		$(function() { drawChart(graph2, "CPU Temperature", "DodgerBlue") });
 	if (graph3.length > 0)
-		$(function() { drawChart(graph3, "GPU Utilization", "ForestGreen") });
+		$(function() { drawChart(graph3, "Memory Utilization", "Black") });
 	if (graph4.length > 0)
-		$(function() { drawChart(graph4, "GPU Temperature", "FireBrick") });
+		$(function() { drawChart(graph4, "GPU Utilization", "ForestGreen") });
 	if (graph5.length > 0)
-		$(function() { drawChart(graph5, "CPU Temperature", "FireBrick") });
+		$(function() { drawChart(graph5, "GPU Temperature", "ForestGreen") });
 	if (graph6.length > 0)
 		$(function() { drawChart(graph6, "Bytes Sent", "DarkOrange") });
 	if (graph7.length > 0)

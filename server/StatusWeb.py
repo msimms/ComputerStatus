@@ -123,80 +123,37 @@ class StatusWeb(object):
             pass
         return my_template.render(root_url=g_root_url, error=error_str)
 
-    def format_graph_point(self, datetime_str, value):
-        graph_str = "\t\t\t\t{ date: new Date(" + datetime_str + "), value: " + str(value) + " },\n"
-        return graph_str
-
-    def append_graph_point(self, datetime_str, status, key, last_value):
-        if key in status:
-            last_value[key] = status[key]
-            return self.format_graph_point(datetime_str, last_value[key])
-        else:
-            return self.format_graph_point(datetime_str, 0)
-
     # Page for displaying graphs about a particular device.
     @cherrypy.expose
     def device(self, device_id, *args, **kw):
         try:
-            cpu_str = ""
-            cpu_temp_str = ""
-            ram_str = ""
-            gpu_str = ""
-            gpu_temp_str = ""
-            bytes_sent_str = ""
-            bytes_recv_str = ""
-
-            last_value = {}
-
-            statuses = self.database.retrieve_status(device_id)
-            if statuses is not None:
-                for status in statuses:
-                    if "datetime" in status:
-                        datetime_num = int(status["datetime"]) * 1000
-                        datetime_str = str(datetime_num)
-                        cpu_str += self.append_graph_point(datetime_str, status, 'cpu - percent', last_value)
-                        cpu_temp_str += self.append_graph_point(datetime_str, status, 'cpu - temperature', last_value)
-                        ram_str += self.append_graph_point(datetime_str, status, 'virtual memory - percent', last_value)
-                        gpu_str += self.append_graph_point(datetime_str, status, 'gpu - percent', last_value)
-                        gpu_temp_str += self.append_graph_point(datetime_str, status, 'gpu - temperature', last_value)
-                        bytes_sent_str += self.append_graph_point(datetime_str, status, 'network - bytes sent', last_value)
-                        bytes_recv_str += self.append_graph_point(datetime_str, status, 'network - bytes received', last_value)
-
             table_str = "\t<table>\n"
             degree_sign = u'\N{DEGREE SIGN}'
-            if 'cpu - percent' in last_value:
-                table_str += "\t\t<td>Current CPU Utilization</td><td>" + str(last_value['cpu - percent']) + "%</td><tr>\n"
-            else:
-                cpu_str = ""
-            if 'cpu - temperature' in last_value:
-                table_str += "\t\t<td>Current CPU Temperature</td><td>" + str(last_value['cpu - temperature']) + degree_sign + "C</td><tr>\n"
-            else:
-                cpu_temp_str = ""
-            if 'virtual memory - percent' in last_value:
-                table_str += "\t\t<td>Current RAM Utilization</td><td>" + str(last_value['virtual memory - percent']) + "%</td><tr>\n"
-            else:
-                ram_str = ""
-            if 'gpu - percent' in last_value:
-                table_str += "\t\t<td>Current GPU Utilization</td><td>" + str(last_value['gpu - percent']) + "%</td><tr>\n"
-            else:
-                gpu_str = ""
-            if 'gpu - temperature' in last_value:
-                table_str += "\t\t<td>Current GPU Temperature</td><td>" + str(last_value['gpu - temperature']) + degree_sign + "C</td><tr>\n"
-            else:
-                gpu_temp_str = ""
-            if 'network - bytes sent' in last_value:
-                table_str += "\t\t<td>Bytes Sent</td><td>" + str(last_value['network - bytes sent']) + " Bytes </td><tr>\n"
-            else:
-                bytes_sent_str = ""
-            if 'network - bytes received' in last_value:
-                table_str += "\t\t<td>Bytes Received</td><td>" + str(last_value['network - bytes received']) + " Bytes </td><tr>\n"
-            else:
-                bytes_recv_str = ""
+
+            statuses = self.database.retrieve_status(device_id)
+            if statuses is not None and statuses.count() > 0:
+                last_status = statuses[statuses.count() - 1]
+
+                if 'cpu - percent' in last_status:
+                    table_str += "\t\t<td>Current CPU Utilization</td><td>" + str(last_status['cpu - percent']) + "%</td><tr>\n"
+                if 'cpu - temperature' in last_status:
+                    table_str += "\t\t<td>Current CPU Temperature</td><td>" + str(last_status['cpu - temperature']) + degree_sign + "C</td><tr>\n"
+                if 'virtual memory - percent' in last_status:
+                    table_str += "\t\t<td>Current RAM Utilization</td><td>" + str(last_status['virtual memory - percent']) + "%</td><tr>\n"
+                if 'gpu - percent' in last_status:
+                    table_str += "\t\t<td>Current GPU Utilization</td><td>" + str(last_status['gpu - percent']) + "%</td><tr>\n"
+                if 'gpu - temperature' in last_status:
+                    table_str += "\t\t<td>Current GPU Temperature</td><td>" + str(last_status['gpu - temperature']) + degree_sign + "C</td><tr>\n"
+                if 'network - bytes sent' in last_status:
+                    table_str += "\t\t<td>Bytes Sent</td><td>" + str(last_status['network - bytes sent']) + " Bytes </td><tr>\n"
+                if 'network - bytes received' in last_status:
+                    table_str += "\t\t<td>Bytes Received</td><td>" + str(last_status['network - bytes received']) + " Bytes </td><tr>\n"
+
             table_str += "\t</table>\n"
 
             device_html_file = os.path.join(g_root_dir, 'html', 'device.html')
             my_template = Template(filename=device_html_file, module_directory=g_tempmod_dir)
-            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, device_id=device_id, graph1=cpu_str, graph2=ram_str, graph3=gpu_str, graph4=gpu_temp_str, graph5=cpu_temp_str, graph6=bytes_sent_str, graph7=bytes_recv_str, table=table_str)
+            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, device_id=device_id, table=table_str)
         except:
             cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
         return ""
@@ -381,17 +338,24 @@ class StatusWeb(object):
     # Endpoint for API calls.
     @cherrypy.expose
     def api(self, *args, **kw):
-        if len(args) > 0:
-            api_version = args[0]
-            if api_version == '1.0':
-                api = StatusApi.StatusApi(g_root_dir)
-                handled = api.handle_api_1_0_request(args[1:], kw)
-                if not handled:
+        response = ""
+        try:
+            if len(args) > 0:
+                api_version = args[0]
+                if api_version == '1.0':
+                    api = StatusApi.StatusApi(g_root_dir)
+                    handled, response = api.handle_api_1_0_request(args[1:], kw)
+                    if not handled:
+                        cherrypy.response.status = 400
+                    else:
+                        cherrypy.response.status = 200
+                else:
                     cherrypy.response.status = 400
             else:
                 cherrypy.response.status = 400
-        else:
-            cherrypy.response.status = 400
+        except:
+            cherrypy.response.status = 500
+        return response
 
 # Parse command line options.
 parser = argparse.ArgumentParser()
