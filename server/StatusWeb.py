@@ -180,6 +180,28 @@ class StatusWeb(object):
             cherrypy.log.error('Unhandled exception in dashboard', 'EXEC', logging.WARNING)
         return ""
 
+    @cherrypy.expose
+    def name_device(self, device_id, name):
+        try:
+            # Get the logged in user.
+            username = cherrypy.session.get(SESSION_KEY)
+            if username is None:
+                raise cherrypy.HTTPRedirect("/login")
+
+            # Get the details of the logged in user.
+            user_id, user_hash, user_realname = self.database.retrieve_user(username)
+
+            # Add the device id to the database.
+            self.database.create_device_name(device_id, name)
+
+            # Refresh the dashboard page.
+            raise cherrypy.HTTPRedirect("/dashboard")
+        except cherrypy.HTTPRedirect as e:
+            raise e
+        except:
+            cherrypy.log.error('Unhandled exception in dashboard', 'EXEC', logging.WARNING)
+        return ""
+
     # Page for displaying the devices owned by a particular user.
     @cherrypy.expose
     @require()
@@ -201,7 +223,11 @@ class StatusWeb(object):
             device_table_str += "\t\t<td><b>Name</b></td><td><b>Device ID</b></td><tr>\n"
             if devices is not None:
                 for device in devices:
-                    device_table_str += "\t\t<td></td><td><a href=\"" + g_root_url + "/device/" + str(device) + "\">" + str(device) + "</a></td><tr>\n"
+                    device_id_str = str(device)
+                    device_name = self.database.retrieve_device_name(device_id_str)
+                    if device_name is None:
+                        device_name = ""
+                    device_table_str += "\t\t<td>" + device_name + "</td><td><a href=\"" + g_root_url + "/device/" + device_id_str + "\">" + device_id_str + "</a></td><tr>\n"
             device_table_str += "\t<table>\n"
 
             # Render the dashboard page.

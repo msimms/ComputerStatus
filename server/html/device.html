@@ -150,6 +150,22 @@ ${nav}
 ${table}
 </div>
 
+<div align="center">
+	<section class="claim_device cf" style="width: 480px">
+		<form name="claim_device" action="${root_url}/name_device?device_id=${device_id}" method="post" accept-charset="utf-8">
+			<ul>
+				<li>
+					<label for="device_id" style="width: 440px">Name this device:</label>
+					<input type="name" name="name" style="width: 440px" placeholder="" required>
+				</li>
+				<li>
+					<input type="submit" value="Save">
+				</li>
+			</ul>
+		</form>
+	</section>
+</div>
+
 </body>
 
 </html>

@@ -42,6 +42,7 @@ class MongoDatabase(Database.Database):
             self.conn = pymongo.MongoClient('localhost:27017')
             self.db = self.conn['statusdb']
             self.users_collection = self.db['users']
+            self.devices_collection = self.db['devices']
             self.status_collection = self.db['status']
             return True
         except pymongo.errors.ConnectionFailure, e:
@@ -132,6 +133,42 @@ class MongoDatabase(Database.Database):
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])
         return False
+
+    def create_device_name(self, device_id, name):
+        if device_id is None:
+            self.log_error(MongoDatabase.create_device_name.__name__ + "Unexpected empty object: device_id")
+            return None
+        if name is None:
+            self.log_error(MongoDatabase.create_device_name.__name__ + "Unexpected empty object: name")
+            return None
+
+        try:
+            device = self.devices_collection.find_one({"device_id": device_id})
+            if device is None:
+                post = {"device_id": device_id, "name": name}
+                self.devices_collection.insert(post)
+            else:
+                device['name'] = name
+                self.devices_collection.save(device)
+            return True
+        except:
+            traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return None
+
+    def retrieve_device_name(self, device_id):
+        if device_id is None:
+            self.log_error(MongoDatabase.create_device_name.__name__ + "Unexpected empty object: device_id")
+            return None
+
+        try:
+            device = self.devices_collection.find_one({"device_id": device_id})
+            if device is not None:
+                return device['name']
+        except:
+            traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return None
 
     def create_status(self, status):
         if status is None:
