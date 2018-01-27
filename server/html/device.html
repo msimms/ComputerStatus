@@ -56,7 +56,7 @@ ${nav}
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
 <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
 <script type="text/javascript">
-	function drawChart(data, title, color)
+	function draw_chart(data, title, color)
 	{
 		var margin = {top: 20, right: 20, bottom: 20, left: 50},
 			width = $("#charts").width() - margin.left - margin.right,
@@ -101,6 +101,56 @@ ${nav}
 			.text(title);
 	}
 
+	function add_color_selection_cb()
+	{
+		var sel = document.createElement("select");
+		sel.align = "right";
+
+		var opt = document.createElement("option");
+		opt.value = "Red";
+		opt.text = "Red";
+		sel.appendChild(opt);
+
+		var opt = document.createElement("option");
+		opt.value = "ForestGreen";
+		opt.text = "Green";
+		sel.appendChild(opt);
+
+		var opt = document.createElement("option");
+		opt.value = "DodgerBlue";
+		opt.text = "Blue";
+		sel.appendChild(opt);
+
+		var charts_div = document.getElementById("charts");
+		charts_div.appendChild(sel);
+	}
+
+	function add_sep()
+	{
+		var sep = document.createElement("hr");
+		var charts_div = document.getElementById("charts");
+		charts_div.appendChild(sep);
+	}
+
+	function get_printable_name(ugly_name)
+	{
+		if (ugly_name == "cpu - percent")
+			return "CPU - %";
+		else if (ugly_name == "cpu - temperature")
+			return "CPU - Temperature";
+		else if (ugly_name == "virtual memory - percent")
+			return "RAM - %";
+		else if (ugly_name == "gpu - percent")
+			return "GPU - %";
+		else if (ugly_name == "gpu - temperature")
+			return "GPU - Temperature";
+		else if (ugly_name == "network - bytes sent")
+			return "Bytes Sent";
+		else if (ugly_name == "network - bytes received")
+			return "Bytes Received";
+		return ugly_name;
+	}
+
 	function get_graph_data(params_str)
 	{
 		var the_url = "${root_url}/api/1.0/graph_data?device_id=".concat("${device_id}", "&params=", params_str, "&start_time=0");
@@ -142,7 +192,9 @@ ${nav}
 				// Draw each of the graphs.
 				for (var param_index = 0; param_index < params.length; ++param_index)
 				{
-					drawChart(graphs[param_index], params[param_index], "DodgerBlue");
+					draw_chart(graphs[param_index], get_printable_name(params[param_index]), "DodgerBlue");
+					//add_color_selection_cb();
+					add_sep();
 				}
 			}
 		}
