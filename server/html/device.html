@@ -101,47 +101,58 @@ ${nav}
 			.text(title);
 	}
 
-	function get_graph_data(param)
+	function get_graph_data(params_str)
 	{
-		var the_url = "${root_url}/api/1.0/graph_data?device_id=".concat("${device_id}","&param=",param,"&start_time=0");
+		var the_url = "${root_url}/api/1.0/graph_data?device_id=".concat("${device_id}", "&params=", params_str, "&start_time=0");
 		var xml_http = new XMLHttpRequest();
-		var response = null;
 
 		xml_http.onreadystatechange = function()
 		{
 			if (xml_http.readyState == XMLHttpRequest.DONE)
 			{
-				response = xml_http.responseText;
+				var params = params_str.split(",");
+				var json_str = xml_http.responseText;
+				var json_data = JSON.parse(json_str);
+
+				var graphs = new Array();
+
+				// Create an array of data points for each graph.
+				for (var param_index = 0; param_index < params.length; ++param_index)
+				{
+					var graph = new Array();
+					graphs.push(graph);
+				}
+
+				// Parse the returned JSON data and add points to each graph.
+				for (var point_index = 0; point_index < json_data.points.length; ++point_index)
+				{
+					var point = json_data.points[point_index];
+					var datetime_str = point["datetime"];
+
+					// Each point may contain data for multiple graphs.
+					for (var param_index = 0; param_index < params.length; ++param_index)
+					{
+						var key = params[param_index]
+						var value = point[key]
+						var element = { date: new Date(parseInt(datetime_str)), value: parseFloat(value) };
+						graphs[param_index].push(element);
+					}
+				}
+
+				// Draw each of the graphs.
+				for (var param_index = 0; param_index < params.length; ++param_index)
+				{
+					drawChart(graphs[param_index], params[param_index], "DodgerBlue");
+				}
 			}
 		}
 
 		xml_http.open("GET", the_url, false);
 	    xml_http.send(null);
-		return response;
 	}
 
-	var graph1 = eval(get_graph_data("cpu - percent"));
-	var graph2 = eval(get_graph_data("cpu - temperature"));
-	var graph3 = eval(get_graph_data("virtual memory - percent"));
-	var graph4 = eval(get_graph_data("gpu - percent"));
-	var graph5 = eval(get_graph_data("gpu - temperature"));
-	var graph6 = eval(get_graph_data("network - bytes sent"));
-	var graph7 = eval(get_graph_data("network - bytes received"));
+	get_graph_data("cpu - percent,cpu - temperature,virtual memory - percent,gpu - percent,gpu - temperature,network - bytes sent,network - bytes received");
 
-	if (graph1.length > 0)
-		$(function() { drawChart(graph1, "CPU Utilization", "DodgerBlue") });
-	if (graph2.length > 0)
-		$(function() { drawChart(graph2, "CPU Temperature", "DodgerBlue") });
-	if (graph3.length > 0)
-		$(function() { drawChart(graph3, "Memory Utilization", "Black") });
-	if (graph4.length > 0)
-		$(function() { drawChart(graph4, "GPU Utilization", "ForestGreen") });
-	if (graph5.length > 0)
-		$(function() { drawChart(graph5, "GPU Temperature", "ForestGreen") });
-	if (graph6.length > 0)
-		$(function() { drawChart(graph6, "Bytes Sent", "DarkOrange") });
-	if (graph7.length > 0)
-		$(function() { drawChart(graph7, "Bytes Received", "DarkOrange") });
 </script>
 
 </div>
