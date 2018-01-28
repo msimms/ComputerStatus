@@ -170,7 +170,7 @@ class MongoDatabase(Database.Database):
         try:
             device = self.devices_collection.find_one({"device_id": device_id})
             if device is None:
-                post = {"device_id": device_id, "colors": { attribute: color } }
+                post = {"device_id": device_id, "colors": {attribute: color}}
                 self.devices_collection.insert(post)
             else:
                 colors = {}
