@@ -52,7 +52,7 @@ class StatusApi(object):
     def handle_api_1_0_request(self, args, values):
         if len(args) > 0:
             request = args[0]
-            
+
             if request == 'upload':
                 if "device_id" in values and "datetime" in values:
                     self.database.create_status(values)

@@ -101,10 +101,25 @@ ${nav}
 			.text(title);
 	}
 
-	function add_color_selection_cb()
+	function on_color_selection_changed(event)
+	{
+		var selected_obj = event.target
+		var selected_index = selected_obj.selectedIndex
+		var selected_value = selected_obj.options[selected_index].value; 
+
+		var the_url = "${root_url}/set_device_attribute_color?device_id=".concat("${device_id}", "&attribute=", selected_obj.id, "&color=", selected_value);
+		var xml_http = new XMLHttpRequest();
+
+		xml_http.open("POST", the_url, false);
+	    xml_http.send(null);
+	}
+
+	function add_color_selection_cb(key)
 	{
 		var sel = document.createElement("select");
 		sel.align = "right";
+		sel.id = key;
+		sel.onchange = on_color_selection_changed;
 
 		var opt = document.createElement("option");
 		opt.value = "Red";
@@ -192,8 +207,9 @@ ${nav}
 				// Draw each of the graphs.
 				for (var param_index = 0; param_index < params.length; ++param_index)
 				{
-					draw_chart(graphs[param_index], get_printable_name(params[param_index]), "DodgerBlue");
-					//add_color_selection_cb();
+					var key = params[param_index]
+					draw_chart(graphs[param_index], get_printable_name(key), "DodgerBlue");
+					add_color_selection_cb(key);
 					add_sep();
 				}
 			}
@@ -215,7 +231,7 @@ ${table}
 
 <div align="center">
 	<section class="claim_device cf" style="width: 480px">
-		<form name="claim_device" action="${root_url}/name_device?device_id=${device_id}" method="post" accept-charset="utf-8">
+		<form name="claim_device" action="${root_url}/set_name_device?device_id=${device_id}" method="post" accept-charset="utf-8">
 			<ul>
 				<li>
 					<label for="device_id" style="width: 440px">Name this device:</label>

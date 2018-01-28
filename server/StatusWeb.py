@@ -181,7 +181,7 @@ class StatusWeb(object):
         return ""
 
     @cherrypy.expose
-    def name_device(self, device_id, name):
+    def set_name_device(self, device_id, name):
         try:
             # Get the logged in user.
             username = cherrypy.session.get(SESSION_KEY)
@@ -193,6 +193,28 @@ class StatusWeb(object):
 
             # Add the device id to the database.
             self.database.create_device_name(device_id, name)
+
+            # Refresh the dashboard page.
+            raise cherrypy.HTTPRedirect("/dashboard")
+        except cherrypy.HTTPRedirect as e:
+            raise e
+        except:
+            cherrypy.log.error('Unhandled exception in dashboard', 'EXEC', logging.WARNING)
+        return ""
+
+    @cherrypy.expose
+    def set_device_attribute_color(self, device_id, attribute, color):
+        try:
+            # Get the logged in user.
+            username = cherrypy.session.get(SESSION_KEY)
+            if username is None:
+                raise cherrypy.HTTPRedirect("/login")
+
+            # Get the details of the logged in user.
+            user_id, user_hash, user_realname = self.database.retrieve_user(username)
+
+            # Add the device id to the database.
+            self.database.create_device_attribute_color(device_id, attribute, color)
 
             # Refresh the dashboard page.
             raise cherrypy.HTTPRedirect("/dashboard")

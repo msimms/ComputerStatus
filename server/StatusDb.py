@@ -156,6 +156,35 @@ class MongoDatabase(Database.Database):
             self.log_error(sys.exc_info()[0])
         return None
 
+    def create_device_attribute_color(self, device_id, attribute, color):
+        if device_id is None:
+            self.log_error(MongoDatabase.create_device_attribute_color.__name__ + "Unexpected empty object: device_id")
+            return None
+        if attribute is None:
+            self.log_error(MongoDatabase.create_device_attribute_color.__name__ + "Unexpected empty object: attribute")
+            return None
+        if color is None:
+            self.log_error(MongoDatabase.create_device_attribute_color.__name__ + "Unexpected empty object: color")
+            return None
+
+        try:
+            device = self.devices_collection.find_one({"device_id": device_id})
+            if device is None:
+                post = {"device_id": device_id, "colors": { attribute: color } }
+                self.devices_collection.insert(post)
+            else:
+                colors = {}
+                if "colors" in device:
+                    colors = device["colors"]
+                colors[attribute] = color
+                device['colors'] = colors
+                self.devices_collection.save(device)
+            return True
+        except:
+            traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return None
+
     def retrieve_device_name(self, device_id):
         if device_id is None:
             self.log_error(MongoDatabase.create_device_name.__name__ + "Unexpected empty object: device_id")
