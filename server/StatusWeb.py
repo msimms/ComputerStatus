@@ -127,6 +127,10 @@ class StatusWeb(object):
     @cherrypy.expose
     def device(self, device_id, *args, **kw):
         try:
+            title_str = self.database.retrieve_device_name(device_id)
+            if title_str is None:
+                title_str = "Device ID: " + str(device_id)
+
             table_str = "\t<table>\n"
             degree_sign = u'\N{DEGREE SIGN}'
 
@@ -153,7 +157,7 @@ class StatusWeb(object):
 
             device_html_file = os.path.join(g_root_dir, 'html', 'device.html')
             my_template = Template(filename=device_html_file, module_directory=g_tempmod_dir)
-            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, device_id=device_id, table=table_str)
+            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, title=title_str, device_id=device_id, table=table_str)
         except:
             cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
         return ""
