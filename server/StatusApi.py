@@ -28,7 +28,7 @@ class StatusApi(object):
         super(StatusApi, self).__init__()
         self.database = StatusDb.MongoDatabase(root_dir)
 
-    def handle_graph_data_request(self, device_id, params, start_time):
+    def handle_graph_data_request(self, device_id, attributes, start_time):
         graph_data = []
 
         statuses = self.database.retrieve_status(device_id)
@@ -39,15 +39,18 @@ class StatusApi(object):
                     if datetime_num > start_time:
                         point_data = {}
                         point_data['datetime'] = str(datetime_num)
-                        for param in params:
-                            if param in status:
-                                point_data[param] = status[param]
+                        for attribute in attributes:
+                            if attribute in status:
+                                point_data[attribute] = status[attribute]
                             else:
-                                point_data[param] = 0
+                                point_data[attribute] = 0
                         graph_data.append(point_data)
 
         graph_str = "{\"points\":" + json.dumps(graph_data) + "}"
         return graph_str
+
+    def handle_graph_color_request(self, device_id, attribute):
+        return self.database.retrieve_device_color(device_id, attribute)
 
     def handle_api_1_0_request(self, args, values):
         if len(args) > 0:
@@ -57,8 +60,12 @@ class StatusApi(object):
                 if "device_id" in values and "datetime" in values:
                     self.database.create_status(values)
                     return True, ""
-            elif request == 'graph_data':
-                if "device_id" in values and "params" in values and "start_time" in values:
-                    response = self.handle_graph_data_request(values["device_id"], values["params"].split(','), int(values["start_time"]))
+            elif request == 'retrieve_graph_data':
+                if "device_id" in values and "attributes" in values and "start_time" in values:
+                    response = self.handle_graph_data_request(values["device_id"], values["attributes"].split(','), int(values["start_time"]))
+                    return True, response
+            elif request == 'retrieve_graph_color':
+                if "device_id" in values and "attribute" in values:
+                    response = self.handle_graph_color_request(values["device_id"], values["attribute"])
                     return True, response
         return False, ""

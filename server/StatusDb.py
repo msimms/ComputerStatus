@@ -98,7 +98,7 @@ class MongoDatabase(Database.Database):
 
     def retrieve_user_devices(self, user_id):
         if user_id is None:
-            self.log_error(MongoDatabase.claim_device.__name__ + "Unexpected empty object: user_id")
+            self.log_error(MongoDatabase.retrieve_user_devices.__name__ + "Unexpected empty object: user_id")
             return None
 
         try:
@@ -187,13 +187,33 @@ class MongoDatabase(Database.Database):
 
     def retrieve_device_name(self, device_id):
         if device_id is None:
-            self.log_error(MongoDatabase.create_device_name.__name__ + "Unexpected empty object: device_id")
+            self.log_error(MongoDatabase.retrieve_device_name.__name__ + "Unexpected empty object: device_id")
             return None
 
         try:
             device = self.devices_collection.find_one({"device_id": device_id})
             if device is not None:
                 return device['name']
+        except:
+            traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return None
+
+    def retrieve_device_color(self, device_id, attribute):
+        if device_id is None:
+            self.log_error(MongoDatabase.retrieve_device_color.__name__ + "Unexpected empty object: device_id")
+            return None
+        if attribute is None:
+            self.log_error(MongoDatabase.retrieve_device_color.__name__ + "Unexpected empty object: attribute")
+            return None
+
+        try:
+            device = self.devices_collection.find_one({"device_id": device_id})
+            if device is not None:
+                if "colors" in device:
+                    colors = device["colors"]
+                    if attribute in colors:
+                        return colors[attribute]
         except:
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])

@@ -147,7 +147,7 @@ ${nav}
 		charts_div.appendChild(sep);
 	}
 
-	function get_printable_name(ugly_name)
+	function retrieve_printable_name(ugly_name)
 	{
 		if (ugly_name == "cpu - percent")
 			return "CPU - %";
@@ -166,23 +166,40 @@ ${nav}
 		return ugly_name;
 	}
 
-	function get_graph_data(params_str)
+	function retrieve_graph_color(attribute_str)
 	{
-		var the_url = "${root_url}/api/1.0/graph_data?device_id=".concat("${device_id}", "&params=", params_str, "&start_time=0");
+		var the_url = "${root_url}/api/1.0/retrieve_graph_color?device_id=".concat("${device_id}", "&attribute=", attribute_str);
+		var xml_http = new XMLHttpRequest();
+		var result = "Black"
+
+		xml_http.onreadystatechange = function()
+		{
+			result = xml_http.responseText;
+		}
+
+		xml_http.open("GET", the_url, false);
+	    xml_http.send(null);
+
+		return result;
+	}
+
+	function retrieve_graph_data(attributes_str)
+	{
+		var the_url = "${root_url}/api/1.0/retrieve_graph_data?device_id=".concat("${device_id}", "&attributes=", attributes_str, "&start_time=0");
 		var xml_http = new XMLHttpRequest();
 
 		xml_http.onreadystatechange = function()
 		{
 			if (xml_http.readyState == XMLHttpRequest.DONE)
 			{
-				var params = params_str.split(",");
+				var attributes = attributes_str.split(",");
 				var json_str = xml_http.responseText;
 				var json_data = JSON.parse(json_str);
 
 				var graphs = new Array();
 
 				// Create an array of data points for each graph.
-				for (var param_index = 0; param_index < params.length; ++param_index)
+				for (var attribute_index = 0; attribute_index < attributes.length; ++attribute_index)
 				{
 					var graph = new Array();
 					graphs.push(graph);
@@ -195,20 +212,20 @@ ${nav}
 					var datetime_str = point["datetime"];
 
 					// Each point may contain data for multiple graphs.
-					for (var param_index = 0; param_index < params.length; ++param_index)
+					for (var attribute_index = 0; attribute_index < attributes.length; ++attribute_index)
 					{
-						var key = params[param_index]
+						var key = attributes[attribute_index]
 						var value = point[key]
 						var element = { date: new Date(parseInt(datetime_str)), value: parseFloat(value) };
-						graphs[param_index].push(element);
+						graphs[attribute_index].push(element);
 					}
 				}
 
 				// Draw each of the graphs.
-				for (var param_index = 0; param_index < params.length; ++param_index)
+				for (var attribute_index = 0; attribute_index < attributes.length; ++attribute_index)
 				{
-					var key = params[param_index]
-					draw_chart(graphs[param_index], get_printable_name(key), "DodgerBlue");
+					var key = attributes[attribute_index]
+					draw_chart(graphs[attribute_index], retrieve_printable_name(key), retrieve_graph_color(key));
 					add_color_selection_cb(key);
 					add_sep();
 				}
@@ -219,7 +236,7 @@ ${nav}
 	    xml_http.send(null);
 	}
 
-	get_graph_data("cpu - percent,cpu - temperature,virtual memory - percent,gpu - percent,gpu - temperature,network - bytes sent,network - bytes received");
+	retrieve_graph_data("cpu - percent,cpu - temperature,virtual memory - percent,gpu - percent,gpu - temperature,network - bytes sent,network - bytes received");
 
 </script>
 
