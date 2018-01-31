@@ -110,11 +110,16 @@ ${nav}
 		var the_url = "${root_url}/set_device_attribute_color?device_id=".concat("${device_id}", "&attribute=", selected_obj.id, "&color=", selected_value);
 		var xml_http = new XMLHttpRequest();
 
+		xml_http.onreadystatechange = function()
+		{
+			document.location.reload();
+		}
+
 		xml_http.open("POST", the_url, false);
 	    xml_http.send(null);
 	}
 
-	function add_color_selection_cb(key)
+	function add_color_selection_cb(key, default_color)
 	{
 		var sel = document.createElement("select");
 		sel.align = "right";
@@ -135,6 +140,13 @@ ${nav}
 		opt.value = "DodgerBlue";
 		opt.text = "Blue";
 		sel.appendChild(opt);
+
+		var opt = document.createElement("option");
+		opt.value = "Black";
+		opt.text = "Black";
+		sel.appendChild(opt);
+
+		sel.value = default_color
 
 		var charts_div = document.getElementById("charts");
 		charts_div.appendChild(sel);
@@ -225,8 +237,10 @@ ${nav}
 				for (var attribute_index = 0; attribute_index < attributes.length; ++attribute_index)
 				{
 					var key = attributes[attribute_index]
-					draw_chart(graphs[attribute_index], retrieve_printable_name(key), retrieve_graph_color(key));
-					add_color_selection_cb(key);
+					var chart_color = retrieve_graph_color(key)
+
+					draw_chart(graphs[attribute_index], retrieve_printable_name(key), chart_color);
+					add_color_selection_cb(key, chart_color);
 					add_sep();
 				}
 			}
