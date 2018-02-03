@@ -186,7 +186,8 @@ ${nav}
 
 		xml_http.onreadystatechange = function()
 		{
-			result = xml_http.responseText;
+			if (xml_http.responseText.length > 0)
+				result = xml_http.responseText;
 		}
 
 		xml_http.open("GET", the_url, false);
