@@ -35,11 +35,12 @@ class StatusApi(object):
         if statuses is not None:
             for status in statuses:
                 if "datetime" in status:
-                    datetime_num = int(status["datetime"]) * 1000
+                    datetime_num = int(status["datetime"])
                     if datetime_num > start_time:
                         point_data = {}
-                        point_data['datetime'] = str(datetime_num)
+                        point_data['datetime'] = datetime_num
                         for attribute in attributes:
+                            # If the attribute doesn't exist for this timeslice then insert a zero
                             if attribute in status:
                                 point_data[attribute] = status[attribute]
                             else:
