@@ -31,7 +31,7 @@
 	path
 	{
 		stroke: steelblue;
-		stroke-width: 2;
+		stroke-width: 1;
 		fill: none;
 	}
 
@@ -62,53 +62,78 @@ ${nav}
 			width = $("#charts").width() - margin.left - margin.right,
 			height = 275 - margin.top - margin.bottom;
 
-		var x = d3.scaleTime().range([0, width]);
-		var y = d3.scaleLinear().range([height, 0]);
+		var zoom = d3.zoom()
+			.scaleExtent([1, 5])
+			.extent([100, 100], [width-100, height-100])
+			.on("zoom", zoomed);
 
-		var valueline = d3.line()
-			.x(function(d) { return x(d.date); })
-			.y(function(d) { return y(d.value); });
+		function zoomed()
+		{
+			svg.selectAll(".charts").attr("transform", d3.event.transform);
+			gX.call(xAxis.scale(d3.event.transform.rescaleX(x)));
+			gY.call(yAxis.scale(d3.event.transform.rescaleY(y)));
+		}
+		
+		// Format the data
+		data.forEach(function(d) {
+			d.date = new Date(d.date * 1000);
+			d.value = +d.value;
+		});
 
 		var svg = d3.select("#charts")
 			.append("svg:svg")
 				.attr("width", width + margin.left + margin.right)
 				.attr("height", height + margin.top + margin.bottom)
 			.append("g")
-				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
 
-		// Format the data
-		data.forEach(function(d) {
-			d.date = new Date(d.date * 1000);
-			d.value = +d.value;
-		});
-		
 		// Scale the range of the data.
+		var x = d3.scaleTime().range([0, width]);
+		var y = d3.scaleLinear().range([height, 0]);
 		x.domain(d3.extent(data, function(d) { return d.date; }));
 		y.domain([0, d3.max(data, function(d) { return d.value; })]);
 
-  		// Add the valueline path.
-		svg.append("path")
-			.data([data])
-			.attr("class", "line")
-			.attr("d", valueline)
-			.style("stroke", color);
-
 		// Add the X axis.
-		svg.append("g")
-			.attr("class", "axis")
+		var xAxis = d3.axisBottom(x).tickFormat(d3.timeFormat("%Y-%m-%d %H:%M:%S"));
+		var gX = svg.append("g")
+			.attr("class", "x axis")
 			.attr("transform", "translate(0," + height + ")")
-			.call(d3.axisBottom(x)
-				.tickFormat(d3.timeFormat("%Y-%m-%d %H:%M:%S")))
-			.selectAll("text")	
+		    .call(xAxis)
+			.selectAll("text")
 				.style("text-anchor", "end")
 				.attr("dx", "-.8em")
 				.attr("dy", ".15em")
 				.attr("transform", "rotate(-10)");
 
 		// Add the Y axis.
+		var yAxis = d3.axisLeft(y);
+		var gY = svg.append("g")
+			.attr("class", "y axis")
+			.call(yAxis)
+			.append("text")
+				.style("text-anchor", "end")
+				.attr("dy", ".15em")
+				.attr("transform", "rotate(-90)")
+				.text(title);
+
+  		// Add the valueline path.
+		var valueline = d3.line()
+			.x(function(d) { return x(d.date); })
+			.y(function(d) { return y(d.value); });
 		svg.append("g")
-			.attr("class", "axis")
-			.call(d3.axisLeft(y));
+			.attr("class", "charts")
+			.append("path")
+				.datum(data)
+				.attr("class", "line")
+				.attr("d", function(d) { return valueline(d); })
+				.style("stroke", color);
+		svg.append("text")
+			.attr("x", (width / 2))             
+			.attr("y", 0 - (margin.top / 2.75))
+			.attr("text-anchor", "middle")  
+			.style("font-size", "16px") 
+			.text(title);
+
 	}
 
 	function on_color_selection_changed(event)
