@@ -30,6 +30,7 @@ import sys
 import threading
 import time
 import psutil
+import urlparse
 import uuid
 import cpu_status
 
@@ -163,8 +164,15 @@ if __name__ == "__main__":
         parser.error(e)
         sys.exit(1)
 
+    # Sanitize the server name, if applicable.
+    server = args.server
+    if server is not None and len(server) > 0:
+        parsed_server = urlparse.urlparse(server)
+        if parsed_server.scheme is '':
+            server = "http://" + server
+
     # Start the monitor thread.
-    g_monitor_thread = MonitorThread(args.interval, args.server, args.verbose, args.cpu, args.mem, args.net, args.gpu)
+    g_monitor_thread = MonitorThread(args.interval, server, args.verbose, args.cpu, args.mem, args.net, args.gpu)
     g_monitor_thread.start()
 
     # Wait for it to finish. We do it like this so that the main thread isn't blocked and can execute the signal handler.
