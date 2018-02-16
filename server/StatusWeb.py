@@ -459,7 +459,8 @@ conf = {
         'tools.staticdir.root': g_root_dir,
         'tools.statusweb_auth.on': True,
         'tools.sessions.on': True,
-        'tools.sessions.name': 'statusweb_auth'
+        'tools.sessions.name': 'statusweb_auth',
+        'tools.sessions.timeout': 129600
     },
     '/css':
     {
