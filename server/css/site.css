@@ -99,7 +99,6 @@ tr {
 td {
 	border: 1px solid #FFFFFF;
 	padding: 4px;
-	font-color: #FFFFFF;
 	background-color: rgba(119, 122, 116, 0.452);
 	border-radius: 2px;
 	text-shadow: 1px 1px #FFFFFF;
@@ -123,7 +122,6 @@ tr:hover {
 
 .user_search_form li {
 	display: inline;
-	float: left;
 	padding-bottom: .25cm;
 }
 
