@@ -77,7 +77,8 @@ class MonitorThread(threading.Thread):
             values['datetime'] = str(int(time.time()))
             url = self.server + "/api/1.0/upload"
             r = requests.post(url, data=values)
-            print r
+            if self.verbose:
+                print r
         except:
             print "Error sending to the server."
 
