@@ -43,7 +43,7 @@ def shutdown():
     if target == 'Windows':
         os.system("shutdown /s /t 1")
     elif target == 'Darwin':
-        pass
+        os.system("shutdown now")
     elif target == 'Linux':
         os.system('systemctl poweroff')
 
@@ -52,9 +52,9 @@ def restart():
     if target == 'Windows':
         os.system("shutdown /r /t 1")
     elif target == 'Darwin':
-        pass
+        os.system("shutdown -r now")
     elif target == 'Linux':
-        pass
+        os.system("shutdown -r now")
 
 class ControlThread(threading.Thread):
     def __init__(self, server):
