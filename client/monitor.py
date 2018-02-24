@@ -22,6 +22,7 @@
 
 import argparse
 import datetime
+import logging
 import os
 import requests
 import signal
@@ -39,7 +40,7 @@ g_monitor_thread = None
 def signal_handler(signal, frame):
     global g_monitor_thread
 
-    print "Exiting..."
+    logging.info("Exiting...")
     if g_monitor_thread:
         g_monitor_thread.terminate()
 
@@ -67,7 +68,7 @@ class MonitorThread(threading.Thread):
                     device_id_file.write(self.device_id)
 
     def terminate(self):
-        print "Terminating..."
+        logging.info("Terminating...")
         self.stopped.set()
 
     # Sends the values to the server for archival.
@@ -77,10 +78,11 @@ class MonitorThread(threading.Thread):
             values['datetime'] = str(int(time.time()))
             url = self.server + "/api/1.0/upload"
             r = requests.post(url, data=values)
+            logging.info("Server Response: " + str(r))
             if self.verbose:
                 print r
         except:
-            print "Error sending to the server."
+            logging.error("Error sending to the server.")
 
     # Appends GPU values to the 'values' dictionary.
     def check_gpu(self, values):
@@ -93,7 +95,7 @@ class MonitorThread(threading.Thread):
             values['gpu - temperature'] = int(out[6].strip(' \t\n\r'))
             values['gpu - percent'] = int(out[7].strip(' \t\n\r%%s'))
         except:
-            print "Error collecting GPU stats."
+            logging.error("Error collecting GPU stats.")
 
     # Appends current CPU values to the 'values' dictionary.
     def check_cpu(self, values):
@@ -103,7 +105,7 @@ class MonitorThread(threading.Thread):
             cpu_times = psutil.cpu_times()
             values['cpu - user times'] = cpu_times.user
         except:
-            print "Error collecting CPU stats."
+            logging.error("Error collecting CPU stats.")
 
         try:
             cpu_temp = cpu_status.cpu_temperature()
@@ -119,7 +121,7 @@ class MonitorThread(threading.Thread):
             values['virtual memory - total'] = virt_mem.total
             values['virtual memory - percent'] = virt_mem.percent
         except:
-            print "Error collecting memory stats."
+            logging.error("Error collecting memory stats.")
 
     # Appends current network stats to the 'values' dictionary.
     def check_net(self, values):
@@ -128,11 +130,12 @@ class MonitorThread(threading.Thread):
             values['network - bytes sent'] = net_io.bytes_sent
             values['network - bytes received'] = net_io.bytes_recv
         except:
-            print "Error collecting network stats."
+            logging.error("Error collecting network stats.")
 
     def run(self):
         while not self.stopped.wait(self.interval):
             values = {}
+
             if self.do_cpu_check:
                 self.check_cpu(values)
             if self.do_mem_check:
@@ -143,6 +146,8 @@ class MonitorThread(threading.Thread):
                 self.check_gpu(values)
             if self.server:
                 self.send_to_server(values)
+
+            logging.info(values)
             if self.verbose:
                 print values
 
@@ -154,6 +159,7 @@ if __name__ == "__main__":
     parser.add_argument("--interval", type=int, default=60, help="Frequency (in seconds) at which to sample.", required=False)
     parser.add_argument("--server", type=str, action="store", default="", help="Remote logging server (optional)", required=False)
     parser.add_argument("--verbose", action="store_true", default=True, help="TRUE to enable verbose mode", required=False)
+    parser.add_argument("--log", action="store", default="", help="Name of the log file (optional)", required=False)
     parser.add_argument("--cpu", action="store_true", default=True, help="TRUE if sampling the CPU", required=False)
     parser.add_argument("--net", action="store_true", default=True, help="TRUE if sampling network I/O", required=False)
     parser.add_argument("--mem", action="store_true", default=True, help="TRUE if sampling memory", required=False)
@@ -171,6 +177,10 @@ if __name__ == "__main__":
         parsed_server = urlparse.urlparse(server)
         if parsed_server.scheme is '':
             server = "http://" + server
+
+    # Configure the log file, if applicable.
+    if len(args.log) > 0:
+        logging.basicConfig(filename=args.log,level=logging.DEBUG)
 
     # Start the monitor thread.
     g_monitor_thread = MonitorThread(args.interval, server, args.verbose, args.cpu, args.mem, args.net, args.gpu)
