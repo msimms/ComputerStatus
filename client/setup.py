@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import platform
 
 target = platform.system()
-requirements = ['psutil', 'requests']
+requirements = ['psutil', 'pycron', 'requests']
 if target == 'Windows':
     requirements.append('pypiwin32')
     requirements.append('wmi')
