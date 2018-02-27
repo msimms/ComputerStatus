@@ -57,12 +57,12 @@ def signal_handler(signal, frame):
         g_app.terminate()
     sys.exit(0)
 
-#@cherrypy.tools.register('before_finalize', priority=60)
-#def secureheaders():
-#    headers = cherrypy.response.headers
-#    headers['X-Frame-Options'] = 'DENY'
-#    headers['X-XSS-Protection'] = '1; mode=block'
-#    headers['Content-Security-Policy'] = "default-src='self'"
+@cherrypy.tools.register('before_finalize', priority=60)
+def secureheaders():
+    headers = cherrypy.response.headers
+    headers['X-Frame-Options'] = 'DENY'
+    headers['X-XSS-Protection'] = '1; mode=block'
+    headers['Content-Security-Policy'] = "default-src='self'"
 
 def check_auth(*args, **kwargs):
     # A tool that looks in config for 'auth.require'. If found and it is not None, a login
@@ -468,7 +468,7 @@ conf = {
         'tools.sessions.on': True,
         'tools.sessions.name': 'statusweb_auth',
         'tools.sessions.timeout': 129600,
-#        'tools.secureheaders.on': True
+        'tools.secureheaders.on': True
     },
     '/css':
     {
