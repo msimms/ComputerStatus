@@ -52,7 +52,7 @@ g_app = None
 def signal_handler(signal, frame):
     global g_app
 
-    print "Exiting..."
+    logging.info("Exiting...")
     if g_app is not None:
         g_app.terminate()
     sys.exit(0)
@@ -105,7 +105,7 @@ class StatusWeb(object):
         self.database = StatusDb.MongoDatabase(g_root_dir)
 
     def terminate(self):
-        print "Terminating"
+        logging.info("Terminating...")
 
     # Helper function for building the navigation bar.
     @staticmethod
@@ -127,7 +127,7 @@ class StatusWeb(object):
             if error_str is None:
                 error_str = "Internal Error."
         except:
-            pass
+            cherrypy.log.error("Unhandled exception in error().")
         return my_template.render(root_url=g_root_url, error=error_str)
 
     # Page for displaying graphs about a particular device.
