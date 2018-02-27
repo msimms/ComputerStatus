@@ -64,7 +64,7 @@ class ControlThread(threading.Thread):
         threading.Thread.__init__(self)
         self.cron = cron
         self.stopped = threading.Event()
-        self.interval = 1
+        self.interval = 60
 
     def terminate(self):
         logging.info("Terminating...")
@@ -84,7 +84,10 @@ class ControlThread(threading.Thread):
         if pycron.is_now(line2):
             process = subprocess.Popen([cmd], stdout=subprocess.PIPE)
             out_str, err_str = process.communicate()
-            print out_str
+            if out_str is not None and len(out_str) > 0:
+                logging.info(out_str)
+            if err_str is not None and len(err_str) > 0:
+                logging.error(err_str)
 
     def check_cron(self):
         with open(self.cron) as f:
