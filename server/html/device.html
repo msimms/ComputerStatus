@@ -33,6 +33,7 @@
 		stroke: steelblue;
 		stroke-width: 1;
 		fill: none;
+		clip-path: url(#clip);
 	}
 
 	.axis path,
@@ -58,34 +59,28 @@ ${nav}
 <script type="text/javascript">
 	function draw_chart(data, title, color)
 	{
-		var margin = {top: 20, right: 20, bottom: 75, left: 75},
-			width = $("#charts").width() - margin.left - margin.right,
-			height = 275 - margin.top - margin.bottom;
-
-		var zoom = d3.zoom()
-			.scaleExtent([1, 5])
-			.extent([100, 100], [width-100, height-100])
-			.on("zoom", zoomed);
-
-		function zoomed()
-		{
-			svg.selectAll(".charts").attr("transform", d3.event.transform);
-			gX.call(xAxis.scale(d3.event.transform.rescaleX(x)));
-			gY.call(yAxis.scale(d3.event.transform.rescaleY(y)));
-		}
-		
-		// Format the data
-		data.forEach(function(d) {
-			d.date = new Date(d.date * 1000);
-			d.value = +d.value;
-		});
-
+		var margin = {top: 20, right: 20, bottom: 75, left: 75};
+		var width = $("#charts").width() - margin.left - margin.right;
+		var height = 275 - margin.top - margin.bottom;
 		var svg = d3.select("#charts")
 			.append("svg:svg")
 				.attr("width", width + margin.left + margin.right)
 				.attr("height", height + margin.top + margin.bottom)
-			.append("g")
-				.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+			.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		// Format the data
+		data.forEach(function(d)
+		{
+			d.date = new Date(d.date * 1000);
+			d.value = +d.value;
+		});
+
+		// Define the clipping rectangle.
+		svg.append("defs").append("svg:clipPath")
+			.attr("id", "clip")
+			.append("svg:rect")
+				.attr("width", width)
+				.attr("height", height);
 
 		// Scale the range of the data.
 		var x = d3.scaleTime().range([0, width]);
@@ -116,24 +111,45 @@ ${nav}
 				.attr("transform", "rotate(-90)")
 				.text(title);
 
-  		// Add the valueline path.
+		// Add the valueline path.
 		var valueline = d3.line()
 			.x(function(d) { return x(d.date); })
 			.y(function(d) { return y(d.value); });
-		svg.append("g")
+		var chartBody = svg.append("g")
 			.attr("class", "charts")
-			.append("path")
+			.append("svg:path")
 				.datum(data)
 				.attr("class", "line")
 				.attr("d", function(d) { return valueline(d); })
+				.attr("clip-path", "url(#clip)")
 				.style("stroke", color);
 		svg.append("text")
-			.attr("x", (width / 2))             
+			.attr("x", (width / 2))
 			.attr("y", 0 - (margin.top / 2.75))
-			.attr("text-anchor", "middle")  
-			.style("font-size", "16px") 
+			.attr("text-anchor", "middle")
+			.style("font-size", "16px")
 			.text(title);
 
+		function zoomed()
+		{
+			svg.selectAll(".charts").attr("transform", d3.event.transform);
+            zoom.translate(0, height);
+			gX.call(xAxis.scale(d3.event.transform.rescaleX(x)));
+		}
+		
+		// Setup zoom
+		var zoom = d3.zoom()
+			.scaleExtent([0, margin.top + height])
+			.translateExtent([[margin.left, margin.bottom], [width + margin.right, margin.top + height]])
+			.on("zoom", zoomed);
+
+		// Add the zoom rectangle.
+		svg.append("rect")
+			.attr("class", "zoom")
+			.attr("width", width)
+			.attr("height", height)
+			.attr("fill", "transparent")
+			.call(zoom);
 	}
 
 	function on_color_selection_changed(event)
