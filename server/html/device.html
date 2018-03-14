@@ -84,7 +84,8 @@ ${nav}
 		function zoomed()
 		{
 			svg.selectAll(".charts").attr("transform", d3.event.transform);
-			var t = d3.event.transform;
+			gY.call(yAxis.scale(d3.event.transform.rescaleY(y)));
+			gX.call(xAxis.scale(d3.event.transform.rescaleX(x)));
 		}
 
 		// Add the zoom rectangle.
@@ -94,13 +95,6 @@ ${nav}
 			.attr("height", height)
 			.attr("fill", "transparent")
 			.call(zoom);
-			
-		// Define the clipping rectangle.
-		var clippy = g.append("defs").append("svg:clipPath")
-			.attr("id", "clip")
-			.append("svg:rect")
-				.attr("width", width)
-				.attr("height", height);
 
 		// Scale the range of the data.
 		var x = d3.scaleTime()
@@ -110,41 +104,38 @@ ${nav}
 			.domain([0, d3.max(data, function(d) { return d.value; })])
 			.range([height, 0]);
 
+		// Add the X axis.
+		var xAxis = d3.axisBottom(x).tickFormat(d3.timeFormat("%Y-%m-%d %H:%M:%S"));
+		var gX = g.append("g")
+			.attr("class", "axis axis--x")
+			.attr("transform", "translate(0," + height + ")")
+		    .call(xAxis);
+
+		// Add the Y axis.
+		var yAxis = d3.axisLeft(y);
+		var gY = g.append("g")
+			.attr("class", "axis axis--y")
+			.call(yAxis);
+
+		// Define the clipping rectangle.
+		var clippy = g.append("defs").append("clipPath")
+			.attr("id", "clip")
+			.append("rect")
+				.attr("width", width)
+				.attr("height", height);
+
 		// Add the line.
 		var valueline = d3.line()
 			.x(function(d) { return x(d.date); })
 			.y(function(d) { return y(d.value); });
 		var chartBody = g.append("g")
 			.attr("class", "charts")
-			.append("svg:path")
+			.append("path")
 				.datum(data)
 				.attr("class", "line")
 				.attr("d", function(d) { return valueline(d); })
 				.attr("clip-path", "url(#clip)")
 				.style("stroke", color);
-
-		// Add the X axis.
-		var xAxis = d3.axisBottom(x).tickFormat(d3.timeFormat("%Y-%m-%d %H:%M:%S"));
-		var gX = g.append("g")
-			.attr("class", "axis axis--x")
-			.attr("transform", "translate(0," + height + ")")
-		    .call(xAxis)
-			.selectAll("text")
-				.style("text-anchor", "end")
-				.attr("dx", "-.8em")
-				.attr("dy", ".15em")
-				.attr("transform", "rotate(-10)");
-
-		// Add the Y axis.
-		var yAxis = d3.axisLeft(y);
-		var gY = g.append("g")
-			.attr("class", "axis axis--y")
-			.call(yAxis)
-			.append("text")
-				.style("text-anchor", "end")
-				.attr("dy", ".15em")
-				.attr("transform", "rotate(-90)")
-				.text(title);
 
 		// Add the title.
 		svg.append("text")
