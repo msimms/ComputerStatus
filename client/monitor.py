@@ -68,11 +68,12 @@ class MonitorThread(threading.Thread):
                     device_id_file.write(self.device_id)
 
     def terminate(self):
+        """Destructor"""
         logging.info("Terminating...")
         self.stopped.set()
 
-    # Sends the values to the server for archival.
     def send_to_server(self, values):
+        """Sends the values to the server for archival."""
         try:
             values['device_id'] = self.device_id
             values['datetime'] = str(int(time.time()))
@@ -84,8 +85,8 @@ class MonitorThread(threading.Thread):
         except:
             logging.error("Error sending to the server.")
 
-    # Appends GPU values to the 'values' dictionary.
     def check_gpu(self, values):
+        """Appends GPU values to the 'values' dictionary."""
         try:
             process = subprocess.Popen(['nvidia-smi', '--query-gpu=name,pci.bus_id,driver_version,pstate,pcie.link.gen.max,pcie.link.gen.current,temperature.gpu,utilization.gpu,utilization.memory,memory.total,memory.free,memory.used', '--format=csv'], stdout=subprocess.PIPE)
             out_str, err_str = process.communicate()
@@ -97,8 +98,8 @@ class MonitorThread(threading.Thread):
         except:
             logging.error("Error collecting GPU stats.")
 
-    # Appends current CPU values to the 'values' dictionary.
     def check_cpu(self, values):
+        """Appends current CPU values to the 'values' dictionary."""
         try:
             cpu_percent = psutil.cpu_percent()
             values['cpu - percent'] = cpu_percent
@@ -114,8 +115,8 @@ class MonitorThread(threading.Thread):
         except:
             pass
 
-    # Appends current memory values to the 'values' dictionary.
     def check_mem(self, values):
+        """Appends current memory values to the 'values' dictionary."""
         try:
             virt_mem = psutil.virtual_memory()
             values['virtual memory - total'] = virt_mem.total
@@ -123,8 +124,8 @@ class MonitorThread(threading.Thread):
         except:
             logging.error("Error collecting memory stats.")
 
-    # Appends current network stats to the 'values' dictionary.
     def check_net(self, values):
+        """Appends current network stats to the 'values' dictionary."""
         try:
             net_io = psutil.net_io_counters()
             values['network - bytes sent'] = net_io.bytes_sent
@@ -133,6 +134,7 @@ class MonitorThread(threading.Thread):
             logging.error("Error collecting network stats.")
 
     def run(self):
+        """Main run loop."""
         while not self.stopped.wait(self.interval):
             values = {}
 
