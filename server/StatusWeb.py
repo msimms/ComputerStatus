@@ -105,11 +105,12 @@ class StatusWeb(object):
         self.database = StatusDb.MongoDatabase(g_root_dir)
 
     def terminate(self):
+        """Destructor"""
         logging.info("Terminating...")
 
-    # Helper function for building the navigation bar.
     @staticmethod
     def create_navbar(logged_in=True):
+        """Helper function for building the navigation bar."""
         navbar_str = "<nav>\n\t<ul>\n"
         navbar_str += "\t\t<li><a href=\"" + g_root_url + "/about/\">About</a></li>\n"
         if logged_in is True:
@@ -117,9 +118,9 @@ class StatusWeb(object):
         navbar_str += "\t</ul>\n</nav>"
         return navbar_str
 
-    # Renders the error page.
     @cherrypy.expose
     def error(self, error_str=None):
+        """Renders the error page."""
         try:
             cherrypy.response.status = 500
             error_html_file = os.path.join(g_root_dir, 'html', 'error.html')
@@ -130,9 +131,9 @@ class StatusWeb(object):
             cherrypy.log.error("Unhandled exception in error().")
         return my_template.render(root_url=g_root_url, error=error_str)
 
-    # Page for displaying graphs about a particular device.
     @cherrypy.expose
     def device(self, device_id, *args, **kw):
+        """Page for displaying graphs about a particular device."""
         try:
             title_str = self.database.retrieve_device_name(device_id)
             if title_str is None:
@@ -235,10 +236,11 @@ class StatusWeb(object):
             cherrypy.log.error('Unhandled exception in dashboard', 'EXEC', logging.WARNING)
         return ""
 
-    # Page for displaying the devices owned by a particular user.
     @cherrypy.expose
     @require()
     def dashboard(self, *args, **kw):
+        """Page for displaying the devices owned by a particular user."""
+
         try:
             # Get the logged in user.
             username = cherrypy.session.get(SESSION_KEY)
@@ -310,9 +312,9 @@ class StatusWeb(object):
 
         return True, "The user was created."
 
-    # Processes a login.
     @cherrypy.expose
     def submit_login(self, *args, **kw):
+        """Processes a login."""
         try:
             email = cherrypy.request.params.get("email")
             password = cherrypy.request.params.get("password")
@@ -336,9 +338,9 @@ class StatusWeb(object):
             cherrypy.log.error('Unhandled exception in submit_login', 'EXEC', logging.WARNING)
         return self.error()
 
-    # Creates a new login.
     @cherrypy.expose
     def submit_new_login(self, email, realname, password1, password2, *args, **kw):
+        """Creates a new login."""
         try:
             user_created, info_str = self.create_user(email, realname, password1, password2)
             if user_created:
@@ -356,9 +358,9 @@ class StatusWeb(object):
             cherrypy.log.error('Unhandled exception in submit_new_login', 'EXEC', logging.WARNING)
         return self.error()
 
-    # Renders the login page.
     @cherrypy.expose
     def login(self):
+        """Renders the login page."""
         try:
             login_html_file = os.path.join(g_root_dir, 'html', 'login.html')
             my_template = Template(filename=login_html_file, module_directory=g_tempmod_dir)
@@ -367,9 +369,9 @@ class StatusWeb(object):
             result = self.error()
         return result
 
-    # Renders the create login page.
     @cherrypy.expose
     def create_login(self):
+        """Renders the create login page."""
         try:
             create_login_html_file = os.path.join(g_root_dir, 'html', 'create_login.html')
             my_template = Template(filename=create_login_html_file, module_directory=g_tempmod_dir)
@@ -378,9 +380,9 @@ class StatusWeb(object):
             result = self.error()
         return result
 
-    # Renders the about page.
     @cherrypy.expose
     def about(self):
+        """Renders the about page."""
         try:
             create_login_html_file = os.path.join(g_root_dir, 'html', 'about.html')
             my_template = Template(filename=create_login_html_file, module_directory=g_tempmod_dir)
@@ -389,14 +391,14 @@ class StatusWeb(object):
             result = self.error()
         return result
 
-    # Renders the index (default) page.
     @cherrypy.expose
     def index(self):
+        """Renders the index (default) page."""
         return self.login()
 
-    # Endpoint for API calls.
     @cherrypy.expose
     def api(self, *args, **kw):
+        """Endpoint for API calls."""
         response = ""
         try:
             if len(args) > 0:

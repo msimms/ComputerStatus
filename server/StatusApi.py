@@ -24,6 +24,8 @@ import json
 import StatusDb
 
 class StatusApi(object):
+    """Class for managing API messages."""
+
     def __init__(self, root_dir):
         super(StatusApi, self).__init__()
         self.database = StatusDb.MongoDatabase(root_dir)
@@ -54,7 +56,7 @@ class StatusApi(object):
         return self.database.retrieve_device_color(device_id, attribute)
 
     def handle_api_1_0_request(self, args, values):
-        if len(args) > 0:
+        if args is not None and len(args) > 0:
             request = args[0]
 
             if request == 'upload':

@@ -33,19 +33,22 @@ class Database(object):
         super(Database, self).__init__()
 
     def log_error(self, log_str):
-        with open(self.log_file_name, 'a') as f:
-            f.write(str(log_str) + "\n")
-            f.close()
+        """Writes a error message to the log file."""
+        with open(self.log_file_name, 'a') as log_file:
+            log_file.write(str(log_str) + "\n")
+            log_file.close()
 
-    def is_quoted(self, s):
-        if len(s) < 2:
+    def is_quoted(self, log_str):
+        """Determines if the provided string starts and ends with a double quote."""
+        if len(log_str) < 2:
             return False
-        return s[0] == '\"' and s[len(s)-1] == '\"'
+        return log_str[0] == '\"' and log_str[len(log_str)-1] == '\"'
 
-    def quote_identifier(self, s, errors="strict"):
-        if self.is_quoted(s):
-            return s
-        encodable = s.encode("utf-8", errors).decode("utf-8")
+    def quote_identifier(self, log_str, errors="strict"):
+        """Adds quotes to the given string if they do not already exist."""
+        if self.is_quoted(log_str):
+            return log_str
+        encodable = log_str.encode("utf-8", errors).decode("utf-8")
         null_index = encodable.find("\x00")
         if null_index >= 0:
             return ""
@@ -58,9 +61,11 @@ class SqliteDatabase(Database):
         Database.__init__(self, root_dir)
 
     def connect(self):
+        """Inherited from the base class and unused."""
         pass
 
     def execute(self, sql):
+        """Executes the specified SQL query."""
         try:
             con = sqlite3.connect(self.db_file)
             with con:

@@ -20,13 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from bson.objectid import ObjectId
-
-import os
-import pymongo
 import sys
 import traceback
 import Database
+
+from bson.objectid import ObjectId
+import pymongo
 
 class MongoDatabase(Database.Database):
     conn = None
@@ -38,6 +37,7 @@ class MongoDatabase(Database.Database):
         self.create()
 
     def create(self):
+        """Connects/creates the database"""
         try:
             self.conn = pymongo.MongoClient('localhost:27017')
             self.db = self.conn['statusdb']
@@ -79,6 +79,7 @@ class MongoDatabase(Database.Database):
         return False
 
     def retrieve_user(self, username):
+        """Create method for a user."""
         if username is None:
             self.log_error(MongoDatabase.retrieve_user.__name__ + "Unexpected empty object: username")
             return None, None, None
@@ -97,6 +98,7 @@ class MongoDatabase(Database.Database):
         return None, None, None
 
     def retrieve_user_devices(self, user_id):
+        """Retrieve method for a device."""
         if user_id is None:
             self.log_error(MongoDatabase.retrieve_user_devices.__name__ + "Unexpected empty object: user_id")
             return None
@@ -113,6 +115,7 @@ class MongoDatabase(Database.Database):
         return None
 
     def claim_device(self, user_id, device_id):
+        """Associates a device with a user."""
         if user_id is None:
             self.log_error(MongoDatabase.claim_device.__name__ + "Unexpected empty object: user_id")
             return False
@@ -135,6 +138,7 @@ class MongoDatabase(Database.Database):
         return False
 
     def create_device_name(self, device_id, name):
+        """Associates a name with a device."""
         if device_id is None:
             self.log_error(MongoDatabase.create_device_name.__name__ + "Unexpected empty object: device_id")
             return None
@@ -157,6 +161,7 @@ class MongoDatabase(Database.Database):
         return None
 
     def create_device_attribute_color(self, device_id, attribute, color):
+        """Associates a color with a device attribute."""
         if device_id is None:
             self.log_error(MongoDatabase.create_device_attribute_color.__name__ + "Unexpected empty object: device_id")
             return None
@@ -186,6 +191,7 @@ class MongoDatabase(Database.Database):
         return None
 
     def retrieve_device_name(self, device_id):
+        """Returns the name of the device with the specified device ID."""
         if device_id is None:
             self.log_error(MongoDatabase.retrieve_device_name.__name__ + "Unexpected empty object: device_id")
             return None
@@ -200,6 +206,7 @@ class MongoDatabase(Database.Database):
         return None
 
     def retrieve_device_color(self, device_id, attribute):
+        """Returns the color associated with the specified device attribute."""
         if device_id is None:
             self.log_error(MongoDatabase.retrieve_device_color.__name__ + "Unexpected empty object: device_id")
             return None
