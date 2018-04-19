@@ -19,6 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+"""API request handlers"""
 
 import json
 import StatusDb
@@ -56,6 +57,7 @@ class StatusApi(object):
         return self.database.retrieve_device_color(device_id, attribute)
 
     def handle_api_1_0_request(self, args, values):
+        """Called to parse a version 1.0 API message."""
         if args is not None and len(args) > 0:
             request = args[0]
 

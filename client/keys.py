@@ -19,6 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+"""Module that defines the keys in the keys/value pairs returned by the client software."""
 
 KEY_DEVICE_ID = 'device_id'
 KEY_DATETIME = 'datetime'

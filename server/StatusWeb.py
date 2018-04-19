@@ -21,6 +21,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+"""Main application, contains all web page handlers"""
 
 import argparse
 import bcrypt
@@ -121,6 +122,7 @@ class StatusWeb(object):
     @cherrypy.expose
     def error(self, error_str=None):
         """Renders the error page."""
+        
         try:
             cherrypy.response.status = 500
             error_html_file = os.path.join(g_root_dir, 'html', 'error.html')
@@ -134,6 +136,7 @@ class StatusWeb(object):
     @cherrypy.expose
     def device(self, device_id, *args, **kw):
         """Page for displaying graphs about a particular device."""
+
         try:
             title_str = self.database.retrieve_device_name(device_id)
             if title_str is None:
