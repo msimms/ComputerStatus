@@ -21,30 +21,32 @@
 	${nav}
 	</section>
 
-	<section class="loginform cf" style="width: 480px">
-		<form name="create_login" action="${root_url}/submit_new_login" method="post" accept-charset="utf-8">
-			<ul>
-				<li>
-					<label for="username" style="width: 440px">Email</label>
-					<input type="email" name="email" style="width: 440px"placeholder="yourname@email.com" required>
-				</li>
-				<li>
-					<label for="firstname" style="width: 440px">Name</label>
-					<input type="text" name="realname" style="width: 440px"placeholder="" required>
-				</li>
-				<li>
-					<label for="password" style="width: 440px">Password</label>
-					<input type="password" name="password1" style="width: 440px"placeholder="password" required>
-				</li>
-				<li>
-					<label for="password" style="width: 440px">Confirm Password</label>
-					<input type="password" name="password2" style="width: 440px" placeholder="confirm password" required>
-				</li>
-				<li>
-					<input type="submit" value="Create">
-				</li>
-			</ul>
-		</form>
+	<section class="loginbackground">
+		<section class="loginform cf" style="width: 480px">
+			<form name="create_login" action="${root_url}/submit_new_login" method="post" accept-charset="utf-8">
+				<ul>
+					<li>
+						<label for="username" style="width: 440px">Email</label>
+						<input type="email" name="email" style="width: 440px"placeholder="yourname@email.com" required>
+					</li>
+					<li>
+						<label for="firstname" style="width: 440px">Name</label>
+						<input type="text" name="realname" style="width: 440px"placeholder="" required>
+					</li>
+					<li>
+						<label for="password" style="width: 440px">Password</label>
+						<input type="password" name="password1" style="width: 440px"placeholder="password" required>
+					</li>
+					<li>
+						<label for="password" style="width: 440px">Confirm Password</label>
+						<input type="password" name="password2" style="width: 440px" placeholder="confirm password" required>
+					</li>
+					<li>
+						<input type="submit" value="Create">
+					</li>
+				</ul>
+			</form>
+		</section>
 	</section>
 </body>
 

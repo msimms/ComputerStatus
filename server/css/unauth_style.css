@@ -1,8 +1,3 @@
-html {
-	background: url('../images/background.jpg');
-	background-size: cover;
-}
-
 label {
 	display: block;
 	color: #999;
@@ -31,9 +26,17 @@ a:active {color: #FF00CC}
 	outline: 0;
 }
 
+.loginbackground {
+	margin: 0px 0px 0px 0px;
+	padding: 50px;
+	height: 1280px;
+	background: url('../images/background.jpg');
+	background-size: cover;
+}
+
 .loginform {
 	width: 200px;
-	margin: 50px auto;
+	margin: 0px auto;
 	padding: 25px;
 	background-color: rgba(250,250,250,0.5);
 	border-radius: 5px;
@@ -42,13 +45,12 @@ a:active {color: #FF00CC}
 }
 
 .loginform ul {
-	padding: 0;
-	margin: 0;
+	margin: 0px;
+	padding: 0px;
 }
 
 .loginform li {
 	display: inline;
-	float: left;
 	padding-bottom: .25cm;
 }
 

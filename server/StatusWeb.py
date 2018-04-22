@@ -24,14 +24,13 @@
 """Main application, contains all web page handlers"""
 
 import argparse
-import bcrypt
-import cherrypy
-import datetime
 import logging
-import mako
 import os
 import signal
 import sys
+import bcrypt
+import cherrypy
+import mako
 import StatusApi
 import StatusDb
 
@@ -113,7 +112,7 @@ class StatusWeb(object):
     def create_navbar(logged_in=True):
         """Helper function for building the navigation bar."""
         navbar_str = "<nav>\n\t<ul>\n"
-        navbar_str += "\t\t<li><a href=\"" + g_root_url + "/about/\">About</a></li>\n"
+        navbar_str += "\t\t<li><a href=\"https://github.com/msimms/ComputerStatus/\">GitHub</a></li>\n"
         if logged_in is True:
             navbar_str += "\t\t<li><a href=\"" + g_root_url + "/dashboard/\">Dashboard</a></li>\n"
         navbar_str += "\t</ul>\n</nav>"
@@ -182,7 +181,7 @@ class StatusWeb(object):
                 raise cherrypy.HTTPRedirect("/login")
 
             # Get the details of the logged in user.
-            user_id, user_hash, user_realname = self.database.retrieve_user(username)
+            user_id, _, _ = self.database.retrieve_user(username)
 
             # Add the device id to the database.
             self.database.claim_device(user_id, device_id)
@@ -286,7 +285,7 @@ class StatusWeb(object):
         if len(password) < MIN_PASSWORD_LEN:
             return False, "The password is too short."
 
-        user_id, db_hash1, user_name = self.database.retrieve_user(email)
+        _, db_hash1, _ = self.database.retrieve_user(email)
         if db_hash1 is None:
             return False, "The user could not be found."
         db_hash2 = bcrypt.hashpw(password.encode('utf-8'), db_hash1.encode('utf-8'))
@@ -309,8 +308,8 @@ class StatusWeb(object):
             return False, "The user already exists."
 
         salt = bcrypt.gensalt()
-        hash = bcrypt.hashpw(password1.encode('utf-8'), salt)
-        if not self.database.create_user(email, realname, hash):
+        userhash = bcrypt.hashpw(password1.encode('utf-8'), salt)
+        if not self.database.create_user(email, realname, userhash):
             return False, "An internal error was encountered when creating the user."
 
         return True, "The user was created."
@@ -318,6 +317,7 @@ class StatusWeb(object):
     @cherrypy.expose
     def submit_login(self, *args, **kw):
         """Processes a login."""
+
         try:
             email = cherrypy.request.params.get("email")
             password = cherrypy.request.params.get("password")
@@ -344,6 +344,7 @@ class StatusWeb(object):
     @cherrypy.expose
     def submit_new_login(self, email, realname, password1, password2, *args, **kw):
         """Creates a new login."""
+
         try:
             user_created, info_str = self.create_user(email, realname, password1, password2)
             if user_created:
@@ -364,6 +365,7 @@ class StatusWeb(object):
     @cherrypy.expose
     def login(self):
         """Renders the login page."""
+
         try:
             login_html_file = os.path.join(g_root_dir, 'html', 'login.html')
             my_template = Template(filename=login_html_file, module_directory=g_tempmod_dir)
@@ -375,6 +377,7 @@ class StatusWeb(object):
     @cherrypy.expose
     def create_login(self):
         """Renders the create login page."""
+
         try:
             create_login_html_file = os.path.join(g_root_dir, 'html', 'create_login.html')
             my_template = Template(filename=create_login_html_file, module_directory=g_tempmod_dir)
@@ -384,24 +387,15 @@ class StatusWeb(object):
         return result
 
     @cherrypy.expose
-    def about(self):
-        """Renders the about page."""
-        try:
-            create_login_html_file = os.path.join(g_root_dir, 'html', 'about.html')
-            my_template = Template(filename=create_login_html_file, module_directory=g_tempmod_dir)
-            result = my_template.render(nav=self.create_navbar(False), root_url=g_root_url)
-        except:
-            result = self.error()
-        return result
-
-    @cherrypy.expose
     def index(self):
         """Renders the index (default) page."""
+
         return self.login()
 
     @cherrypy.expose
     def api(self, *args, **kw):
         """Endpoint for API calls."""
+
         response = ""
         try:
             if len(args) > 0:
