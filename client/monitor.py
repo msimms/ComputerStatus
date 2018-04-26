@@ -47,7 +47,7 @@ def signal_handler(signal, frame):
         g_monitor_thread.terminate()
 
 class MonitorThread(threading.Thread):
-    def __init__(self, interval, server, post_file, verbose, do_cpu_check, do_mem_check, do_net_check, do_gpu_check):
+    def __init__(self, interval, server, id_file, post_file, verbose, do_cpu_check, do_mem_check, do_net_check, do_gpu_check):
         threading.Thread.__init__(self)
         self.stopped = threading.Event()
         self.interval = interval
@@ -62,12 +62,12 @@ class MonitorThread(threading.Thread):
         if self.server:
             # Look for device ID file; generate one if not found.
             self.device_id = None
-            if os.path.isfile('device_id.txt'):
-                with open('device_id.txt', 'r') as device_id_file:
+            if os.path.isfile(id_file):
+                with open(id_file, 'r') as device_id_file:
                     self.device_id = device_id_file.read()
             if self.device_id is None:
                 self.device_id = str(uuid.uuid4())
-                with open('device_id.txt', 'w') as device_id_file:
+                with open(id_file, 'w') as device_id_file:
                     device_id_file.write(self.device_id)
 
     def terminate(self):
@@ -176,6 +176,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--interval", type=int, default=60, help="Frequency (in seconds) at which to sample.", required=False)
     parser.add_argument("--server", type=str, action="store", default="", help="Remote logging server (optional)", required=False)
+    parser.add_argument("--id_file", type=str, action="store", default="device_id.txt", help="Name of the file containing the device's unique identifier (optional)", required=False)
     parser.add_argument("--post", type=str, action="store", default="", help="Post processing code module (optional)", required=False)
     parser.add_argument("--verbose", action="store_true", default=True, help="TRUE to enable verbose mode", required=False)
     parser.add_argument("--log", action="store", default="", help="Name of the log file (optional)", required=False)
@@ -202,7 +203,7 @@ def main():
         logging.basicConfig(filename=args.log,level=logging.DEBUG)
 
     # Start the monitor thread.
-    g_monitor_thread = MonitorThread(args.interval, server, args.post, args.verbose, args.cpu, args.mem, args.net, args.gpu)
+    g_monitor_thread = MonitorThread(args.interval, server, args.id_file, args.post, args.verbose, args.cpu, args.mem, args.net, args.gpu)
     g_monitor_thread.start()
 
     # Wait for it to finish. We do it like this so that the main thread isn't blocked and can execute the signal handler.
