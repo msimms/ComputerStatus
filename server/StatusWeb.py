@@ -121,7 +121,7 @@ class StatusWeb(object):
     @cherrypy.expose
     def error(self, error_str=None):
         """Renders the error page."""
-        
+
         try:
             cherrypy.response.status = 500
             error_html_file = os.path.join(g_root_dir, 'html', 'error.html')
@@ -182,6 +182,12 @@ class StatusWeb(object):
 
             # Get the details of the logged in user.
             user_id, _, _ = self.database.retrieve_user(username)
+
+            # Make sure the device ID is real.
+            device_status = self.database.retrieve_status(device_id)
+            if device_status.count() == 0:
+                cherrypy.log.error('Unknown device ID', 'EXEC', logging.WARNING)
+                raise cherrypy.HTTPRedirect("/dashboard")
 
             # Add the device id to the database.
             self.database.claim_device(user_id, device_id)
