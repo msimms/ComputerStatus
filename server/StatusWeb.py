@@ -182,6 +182,9 @@ class StatusWeb(object):
 
             # Get the details of the logged in user.
             user_id, _, _ = self.database.retrieve_user(username)
+            if user_id is None:
+                cherrypy.log.error('Unknown user ID', 'EXEC', logging.WARNING)
+                raise cherrypy.HTTPRedirect("/dashboard")
 
             # Make sure the device ID is real.
             device_status = self.database.retrieve_status(device_id)
@@ -210,6 +213,9 @@ class StatusWeb(object):
 
             # Get the details of the logged in user.
             user_id, _, _ = self.database.retrieve_user(username)
+            if user_id is None:
+                cherrypy.log.error('Unknown user ID', 'EXEC', logging.WARNING)
+                raise cherrypy.HTTPRedirect("/dashboard")
 
             # Get the user's devices.
             devices = self.database.retrieve_user_devices(user_id)
@@ -238,6 +244,9 @@ class StatusWeb(object):
 
             # Get the details of the logged in user.
             user_id, _, _ = self.database.retrieve_user(username)
+            if user_id is None:
+                cherrypy.log.error('Unknown user ID', 'EXEC', logging.WARNING)
+                raise cherrypy.HTTPRedirect("/dashboard")
 
             # Get the user's devices.
             devices = self.database.retrieve_user_devices(user_id)
@@ -268,7 +277,10 @@ class StatusWeb(object):
                 raise cherrypy.HTTPRedirect("/login")
 
             # Get the details of the logged in user.
-            user_id, user_hash, user_realname = self.database.retrieve_user(username)
+            user_id, _, _ = self.database.retrieve_user(username)
+            if user_id is None:
+                cherrypy.log.error('Unknown user ID', 'EXEC', logging.WARNING)
+                raise cherrypy.HTTPRedirect("/login")
 
             # Get the user's devices.
             devices = self.database.retrieve_user_devices(user_id)
