@@ -209,7 +209,13 @@ class StatusWeb(object):
                 raise cherrypy.HTTPRedirect("/login")
 
             # Get the details of the logged in user.
-            user_id, user_hash, user_realname = self.database.retrieve_user(username)
+            user_id, _, _ = self.database.retrieve_user(username)
+
+            # Get the user's devices.
+            devices = self.database.retrieve_user_devices(user_id)
+            if not device_id in devices:
+                cherrypy.log.error('Unknown device ID', 'EXEC', logging.WARNING)
+                raise cherrypy.HTTPRedirect("/dashboard")
 
             # Add the device id to the database.
             self.database.create_device_name(device_id, name)
@@ -231,7 +237,13 @@ class StatusWeb(object):
                 raise cherrypy.HTTPRedirect("/login")
 
             # Get the details of the logged in user.
-            user_id, user_hash, user_realname = self.database.retrieve_user(username)
+            user_id, _, _ = self.database.retrieve_user(username)
+
+            # Get the user's devices.
+            devices = self.database.retrieve_user_devices(user_id)
+            if not device_id in devices:
+                cherrypy.log.error('Unknown device ID', 'EXEC', logging.WARNING)
+                raise cherrypy.HTTPRedirect("/dashboard")
 
             # Add the device id to the database.
             self.database.create_device_attribute_color(device_id, attribute, color)
