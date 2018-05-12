@@ -100,6 +100,8 @@ def require(*conditions):
     return decorate
 
 class StatusWeb(object):
+    """Class containing the URL handlers."""
+
     def __init__(self):
         super(StatusWeb, self).__init__()
         self.database = StatusDb.MongoDatabase(g_root_dir)
@@ -445,87 +447,95 @@ class StatusWeb(object):
             cherrypy.response.status = 500
         return response
 
-# Parse command line options.
-parser = argparse.ArgumentParser()
-parser.add_argument("--debug", action="store_true", default=False, help="Prevents the app from going into the background", required=False)
-parser.add_argument("--port", type=int, default=8282, help="Port on which to listen", required=False)
-parser.add_argument("--https", action="store_true", default=False, help="Runs the app as HTTPS", required=False)
-parser.add_argument("--cert", default="cert.pem", help="Certificate file for HTTPS", required=False)
-parser.add_argument("--privkey", default="privkey.pem", help="Private Key file for HTTPS", required=False)
-parser.add_argument("--url", default="homecomputerstatus.com", help="URL of the server on which this is being run", required=False)
+def main():
+    global g_root_dir
+    global g_root_url
+    global g_app
 
-try:
-    args = parser.parse_args()
-except IOError as e:
-    parser.error(e)
-    sys.exit(1)
+    # Parse command line options.
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", action="store_true", default=False, help="Prevents the app from going into the background", required=False)
+    parser.add_argument("--port", type=int, default=8282, help="Port on which to listen", required=False)
+    parser.add_argument("--https", action="store_true", default=False, help="Runs the app as HTTPS", required=False)
+    parser.add_argument("--cert", default="cert.pem", help="Certificate file for HTTPS", required=False)
+    parser.add_argument("--privkey", default="privkey.pem", help="Private Key file for HTTPS", required=False)
+    parser.add_argument("--url", default="homecomputerstatus.com", help="URL of the server on which this is being run", required=False)
 
-if args.debug:
-    if args.https:
-        g_root_url = "https://127.0.0.1:" + str(args.port)
+    try:
+        args = parser.parse_args()
+    except IOError as e:
+        parser.error(e)
+        sys.exit(1)
+
+    if args.debug:
+        if args.https:
+            g_root_url = "https://127.0.0.1:" + str(args.port)
+        else:
+            g_root_url = "http://127.0.0.1:" + str(args.port)
     else:
-        g_root_url = "http://127.0.0.1:" + str(args.port)
-else:
+        if args.https:
+            g_root_url = 'https://' + args.url
+        else:
+            g_root_url = 'http://' + args.url
+
+        Daemonizer(cherrypy.engine).subscribe()
+
     if args.https:
-        g_root_url = 'https://' + args.url
-    else:
-        g_root_url = 'http://' + args.url
+        print "Running HTTPS...."
+        cherrypy.server.ssl_module = 'builtin'
+        cherrypy.server.ssl_certificate = args.cert
+        print "Certificate File: " + args.cert
+        cherrypy.server.ssl_private_key = args.privkey
+        print "Private Key File: " + args.privkey
 
-    Daemonizer(cherrypy.engine).subscribe()
+    signal.signal(signal.SIGINT, signal_handler)
+    mako.collection_size = 100
+    mako.directories = "templates"
 
-if args.https:
-    print "Running HTTPS...."
-    cherrypy.server.ssl_module = 'builtin'
-    cherrypy.server.ssl_certificate = args.cert
-    print "Certificate File: " + args.cert
-    cherrypy.server.ssl_private_key = args.privkey
-    print "Private Key File: " + args.privkey
+    g_app = StatusWeb()
 
-signal.signal(signal.SIGINT, signal_handler)
-mako.collection_size = 100
-mako.directories = "templates"
+    cherrypy.tools.statusweb_auth = cherrypy.Tool('before_handler', check_auth)
 
-g_app = StatusWeb()
+    conf = {
+        '/':
+        {
+            'tools.staticdir.root': g_root_dir,
+            'tools.statusweb_auth.on': True,
+            'tools.sessions.on': True,
+            'tools.sessions.name': 'statusweb_auth',
+            'tools.sessions.timeout': 129600,
+            'tools.secureheaders.on': True
+        },
+        '/css':
+        {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': 'css'
+        },
+        '/images':
+        {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': 'images',
+        },
+        '/media':
+        {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': 'media',
+        },
+        '/.well-known':
+        {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': '.well-known',
+        },
+    }
 
-cherrypy.tools.statusweb_auth = cherrypy.Tool('before_handler', check_auth)
+    cherrypy.config.update({
+        'server.socket_host': '127.0.0.1',
+        'server.socket_port': args.port,
+        'requests.show_tracebacks': False,
+        'log.access_file': ACCESS_LOG,
+        'log.error_file': ERROR_LOG})
 
-conf = {
-    '/':
-    {
-        'tools.staticdir.root': g_root_dir,
-        'tools.statusweb_auth.on': True,
-        'tools.sessions.on': True,
-        'tools.sessions.name': 'statusweb_auth',
-        'tools.sessions.timeout': 129600,
-        'tools.secureheaders.on': True
-    },
-    '/css':
-    {
-        'tools.staticdir.on': True,
-        'tools.staticdir.dir': 'css'
-    },
-    '/images':
-    {
-        'tools.staticdir.on': True,
-        'tools.staticdir.dir': 'images',
-    },
-    '/media':
-    {
-        'tools.staticdir.on': True,
-        'tools.staticdir.dir': 'media',
-    },
-    '/.well-known':
-    {
-        'tools.staticdir.on': True,
-        'tools.staticdir.dir': '.well-known',
-    },
-}
+    cherrypy.quickstart(g_app, config=conf)
 
-cherrypy.config.update({
-    'server.socket_host': '127.0.0.1',
-    'server.socket_port': args.port,
-    'requests.show_tracebacks': False,
-    'log.access_file': ACCESS_LOG,
-    'log.error_file': ERROR_LOG})
-
-cherrypy.quickstart(g_app, config=conf)
+if __name__ == "__main__":
+    main()
