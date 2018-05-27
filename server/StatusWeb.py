@@ -131,7 +131,7 @@ class StatusWeb(object):
             if error_str is None:
                 error_str = "Internal Error."
         except:
-            cherrypy.log.error("Unhandled exception in error().")
+            cherrypy.log.error("Unhandled exception in " + error.__name__)
         return my_template.render(root_url=g_root_url, error=error_str)
 
     @cherrypy.expose
@@ -171,11 +171,13 @@ class StatusWeb(object):
             my_template = Template(filename=device_html_file, module_directory=g_tempmod_dir)
             return my_template.render(nav=self.create_navbar(), root_url=g_root_url, title=title_str, device_id=device_id, table=table_str)
         except:
-            cherrypy.log.error('Unhandled exception in device', 'EXEC', logging.WARNING)
+            cherrypy.log.error('Unhandled exception in ' + device.__name__, 'EXEC', logging.WARNING)
         return ""
 
     @cherrypy.expose
     def claim_device(self, device_id):
+        """Associates a device with a user."""
+
         try:
             # Get the logged in user.
             username = cherrypy.session.get(SESSION_KEY)
@@ -202,11 +204,13 @@ class StatusWeb(object):
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
-            cherrypy.log.error('Unhandled exception in dashboard', 'EXEC', logging.WARNING)
+            cherrypy.log.error('Unhandled exception in ' + claim_device.__name__, 'EXEC', logging.WARNING)
         return ""
 
     @cherrypy.expose
-    def set_name_device(self, device_id, name):
+    def set_device_name(self, device_id, name):
+        """Associates a name with a device's unique identifier."""
+
         try:
             # Get the logged in user.
             username = cherrypy.session.get(SESSION_KEY)
@@ -233,11 +237,13 @@ class StatusWeb(object):
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
-            cherrypy.log.error('Unhandled exception in dashboard', 'EXEC', logging.WARNING)
+            cherrypy.log.error('Unhandled exception in ' + set_device_name.__name__, 'EXEC', logging.WARNING)
         return ""
 
     @cherrypy.expose
     def set_device_attribute_color(self, device_id, attribute, color):
+        """Associates a color with a device."""
+
         try:
             # Get the logged in user.
             username = cherrypy.session.get(SESSION_KEY)
@@ -264,7 +270,7 @@ class StatusWeb(object):
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
-            cherrypy.log.error('Unhandled exception in dashboard', 'EXEC', logging.WARNING)
+            cherrypy.log.error('Unhandled exception in ' + set_device_attribute_color.__name__, 'EXEC', logging.WARNING)
         return ""
 
     @cherrypy.expose
@@ -306,10 +312,12 @@ class StatusWeb(object):
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
-            cherrypy.log.error('Unhandled exception in dashboard', 'EXEC', logging.WARNING)
+            cherrypy.log.error('Unhandled exception in ' + dashboard.__name__, 'EXEC', logging.WARNING)
         return ""
 
     def authenticate_user(self, email, password):
+        """Helper function"""
+
         if self.database is None:
             return False, "No database."
         if len(email) == 0:
@@ -326,6 +334,8 @@ class StatusWeb(object):
         return False, "The password is invalid."
 
     def create_user(self, email, realname, password1, password2):
+        """Helper function"""
+
         if self.database is None:
             return False, "No database."
         if len(email) == 0:
@@ -370,7 +380,7 @@ class StatusWeb(object):
                     result = self.error(error_msg)
             return result
         except:
-            cherrypy.log.error('Unhandled exception in submit_login', 'EXEC', logging.WARNING)
+            cherrypy.log.error('Unhandled exception in ' + submit_login.__name__, 'EXEC', logging.WARNING)
         return self.error()
 
     @cherrypy.expose
@@ -391,7 +401,7 @@ class StatusWeb(object):
                 result = self.error(error_msg)
             return result
         except:
-            cherrypy.log.error('Unhandled exception in submit_new_login', 'EXEC', logging.WARNING)
+            cherrypy.log.error('Unhandled exception in ' + submit_new_login.__name__, 'EXEC', logging.WARNING)
         return self.error()
 
     @cherrypy.expose
