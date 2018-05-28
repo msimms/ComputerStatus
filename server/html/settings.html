@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+
+<title>Settings</title>
+
+<link rel="stylesheet" href="${root_url}/css/normalize.css">
+<link rel="stylesheet" href="${root_url}/css/site.css">
+
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+
+</head>
+
+<link rel="shortcut icon" href="${root_url}/media/favicon.ico" >
+
+<body>
+
+<script type="text/javascript" src="${root_url}/js/all.js"></script>
+<script>
+function update_email()
+{
+	var the_url = "${root_url}/update_email";
+	var new_email = document.getElementById("new_email").value;
+	var dict = [];
+	dict.push({["email"] : new_email});
+	if (send_post_request(the_url, dict))
+		alert("Email updated!");
+	else
+		alert("An error occurred!");
+}
+
+function update_password()
+{
+	var the_url = "${root_url}/update_password";
+	var current_pword = document.getElementById("current_password").value;
+	var new_pword1 = document.getElementById("new_password1").value;
+	var new_pword2 = document.getElementById("new_password2").value;
+	var dict = [];
+	dict.push({["old_password"] : current_pword});
+	dict.push({["new_password1"] : new_pword1});
+	dict.push({["new_password2"] : new_pword2});
+	if (send_post_request(the_url, dict))
+		alert("Password updated!");
+	else
+		alert("An error occurred!");
+}
+
+function delete_user()
+{
+	var the_url = "${root_url}/delete_user";
+	var pword = document.getElementById("password").value;
+	var dict = [];
+	dict.push({["password"] : pword});
+	if (send_post_request(the_url, dict))
+		window.location.replace("${root_url}");
+	else
+		alert("An error occurred!");
+}
+</script>
+
+<section class="nav">
+${nav}
+</section>
+
+<section class="settings" style="width: 600px">
+	<h2>Email</h2>
+	<p>New Email Address: <input type="text" id="new_email"><br></p>
+	<button type="button" onclick="return update_email()">Update</button>
+	<p>Note: Your email address is only used for login authentication.</p>
+	<h2>Password</h2>
+	<p>Current Password: <input type="password" id="current_password"><br></p>
+	<p>New Password: <input type="password" id="new_password1"><br></p>
+	<p>Confirm Password: <input type="password" id="new_password2"><br></p>
+	<button type="button" onclick="return update_password()">Update</button>
+	<h2>Delete</h2>
+	<p>Password: <input type="password" id="password"><br></p>
+	<button type="button" onclick="return delete_user()">Delete My Account and All My Data</button>
+	<p>Note: This cannot be undone.</p>
+</section>
+
+</body>
+</html>

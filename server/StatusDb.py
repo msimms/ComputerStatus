@@ -51,6 +51,7 @@ class MongoDatabase(Database.Database):
         return False
 
     def create_user(self, username, realname, hash):
+        """Create method for a user."""
         if username is None:
             self.log_error(MongoDatabase.create_user.__name__ + "Unexpected empty object: username")
             return False
@@ -97,6 +98,45 @@ class MongoDatabase(Database.Database):
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])
         return None, None, None
+
+    def update_user(self, user_id, username, realname, passhash):
+        """Update method for a user."""
+        if user_id is None:
+            self.log_error(MongoDatabase.update_user.__name__ + "Unexpected empty object: user_id")
+            return False
+
+        try:
+            user_id_obj = ObjectId(user_id)
+            values = {}
+            if username is not None:
+                values['username'] = username
+            if realname is not None:
+                values['realname'] = realname
+            if passhash is not None:
+                values['hash'] = passhash
+            if len(values) > 0:
+                self.users_collection.update_one({"_id": user_id_obj}, {"$set": values}, upsert=False)
+            return True
+        except:
+            traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return False
+
+    def delete_user(self, user_id):
+        """Delete method for a user."""
+        if user_id is None:
+            self.log_error(MongoDatabase.delete_user.__name__ + "Unexpected empty object: user_id")
+            return False
+
+        try:
+            user_id_obj = ObjectId(user_id)
+            user = self.users_collection.delete_one({"_id": user_id_obj})
+            if user is not None:
+                return True
+        except:
+            traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return False
 
     def retrieve_user_devices(self, user_id):
         """Retrieve method for a device."""
