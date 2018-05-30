@@ -30,7 +30,7 @@ import pymongo
 
 class MongoDatabase(Database.Database):
     conn = None
-    db = None
+    database = None
     status_collection = None
 
     def __init__(self, rootDir):
@@ -41,10 +41,10 @@ class MongoDatabase(Database.Database):
         """Connects/creates the database"""
         try:
             self.conn = pymongo.MongoClient('localhost:27017')
-            self.db = self.conn['statusdb']
-            self.users_collection = self.db['users']
-            self.devices_collection = self.db['devices']
-            self.status_collection = self.db['status']
+            self.database = self.conn['statusdb']
+            self.users_collection = self.database['users']
+            self.devices_collection = self.database['devices']
+            self.status_collection = self.database['status']
             return True
         except pymongo.errors.ConnectionFailure, e:
             self.log_error("Could not connect to MongoDB: %s" % e)
