@@ -553,6 +553,13 @@ class StatusWeb(object):
             # Reauthenticate the user.
             user_logged_in, info_str = self.authenticate_user(username, password)
             if user_logged_in:
+                # Delete data from the user's devices, as well as the associated attributes.
+                user_devices = self.database.retrieve_user_devices(user_id)
+                for user_device in user_devices:
+                    self.database.delete_status(user_device)
+                    self.database.delete_device_attributes(user_device)
+
+                # Delete the user.
                 self.database.delete_user(user_id)
                 cherrypy.response.status = 200
                 return ""

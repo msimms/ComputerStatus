@@ -267,6 +267,20 @@ class MongoDatabase(Database.Database):
             self.log_error(sys.exc_info()[0])
         return None
 
+    def delete_device_attributes(self, device_id):
+        """Deletes the device attributes (name, color, etc.) for the device with the specified ID."""
+        if device_id is None:
+            self.log_error(MongoDatabase.delete_device_attributes.__name__ + "Unexpected empty object: device_id")
+            return False
+
+        try:
+            self.devices_collection.remove({"device_id": device_id})
+            return True
+        except:
+            traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return False
+
     def create_status(self, status):
         if status is None:
             self.log_error(MongoDatabase.create_status.__name__ + "Unexpected empty object: status")
@@ -284,6 +298,7 @@ class MongoDatabase(Database.Database):
         return False
 
     def retrieve_status(self, device_id, num_results):
+        """Retrieves num_results statuses from the device with the specified ID."""
         if device_id is None:
             self.log_error(MongoDatabase.retrieve_status.__name__ + "Unexpected empty object: device_id")
             return None
@@ -295,3 +310,17 @@ class MongoDatabase(Database.Database):
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])
         return None
+
+    def delete_status(self, device_id):
+        """Deletes all statuses from the device with the specified ID."""
+        if device_id is None:
+            self.log_error(MongoDatabase.delete_status.__name__ + "Unexpected empty object: device_id")
+            return False
+
+        try:
+            self.status_collection.remove({"device_id": device_id})
+            return True
+        except:
+            traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return False
