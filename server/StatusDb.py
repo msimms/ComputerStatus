@@ -160,17 +160,20 @@ class MongoDatabase(Database.Database):
         if user_id is None:
             self.log_error(MongoDatabase.claim_device.__name__ + "Unexpected empty object: user_id")
             return False
+        if device_id is None:
+            self.log_error(MongoDatabase.claim_device.__name__ + "Unexpected empty object: device_id")
+            return False
 
         try:
             user_id_obj = ObjectId(user_id)
             user = self.users_collection.find_one({"_id": user_id_obj})
             if user is not None:
-                user_list = []
+                device_list = []
                 if 'devices' in user:
-                    user_list = user['devices']
-                if device_id not in user_list:
-                    user_list.append(device_id)
-                    user['devices'] = user_list
+                    device_list = user['devices']
+                if device_id not in device_list:
+                    device_list.append(device_id)
+                    user['devices'] = device_list
                     self.users_collection.save(user)
             return True
         except:
@@ -178,6 +181,32 @@ class MongoDatabase(Database.Database):
             self.log_error(sys.exc_info()[0])
         return False
 
+    def unclaim_device(self, user_id, device_id):
+        """Disassociates a device with a user."""
+        if user_id is None:
+            self.log_error(MongoDatabase.unclaim_device.__name__ + "Unexpected empty object: user_id")
+            return False
+        if device_id is None:
+            self.log_error(MongoDatabase.unclaim_device.__name__ + "Unexpected empty object: device_id")
+            return False
+
+        try:
+            user_id_obj = ObjectId(user_id)
+            user = self.users_collection.find_one({"_id": user_id_obj})
+            if user is not None:
+                device_list = []
+                if 'devices' in user:
+                    device_list = user['devices']
+                if device_id in device_list:
+                    device_list.remove(device_id)
+                    user['devices'] = device_list
+                    self.users_collection.save(user)
+            return True
+        except:
+            traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return False
+        
     def create_device_name(self, device_id, name):
         """Associates a name with a device."""
         if device_id is None:

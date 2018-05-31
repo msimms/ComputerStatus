@@ -212,6 +212,41 @@ class StatusWeb(object):
         return ""
 
     @cherrypy.expose
+    def delete_device(self, device_id):
+        """Deletes the device with the specified ID, assuming it is owned by the current user."""
+
+        try:
+            # Get the logged in user.
+            username = cherrypy.session.get(SESSION_KEY)
+            if username is None:
+                raise cherrypy.HTTPRedirect(LOGIN_URL)
+
+            # Get the details of the logged in user.
+            user_id, _, _ = self.database.retrieve_user(username)
+            if user_id is None:
+                cherrypy.log.error('Unknown user ID', 'EXEC', logging.ERROR)
+                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
+
+            # Get the user's devices.
+            devices = self.database.retrieve_user_devices(user_id)
+            if not device_id in devices:
+                cherrypy.log.error('Unknown device ID', 'EXEC', logging.ERROR)
+                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
+
+            # Delete the device.
+            self.database.delete_status(device_id)
+            self.database.delete_device_attributes(device_id)
+            self.database.unclaim_device(user_id, device_id)
+
+            # Refresh the dashboard page.
+            raise cherrypy.HTTPRedirect(DASHBOARD_URL)
+        except cherrypy.HTTPRedirect as e:
+            raise e
+        except:
+            cherrypy.log.error('Unhandled exception in ' + StatusWeb.set_device_name.__name__, 'EXEC', logging.WARNING)
+        return ""
+
+    @cherrypy.expose
     def set_device_name(self, device_id, name):
         """Associates a name with a device's unique identifier."""
 
@@ -299,14 +334,14 @@ class StatusWeb(object):
 
             # Render a table containing the user's devices.
             device_table_str = "\t<table>\n"
-            device_table_str += "\t\t<td><b>Name</b></td><td><b>Device ID</b></td><tr>\n"
+            device_table_str += "\t\t<td><b>Name</b></td><td><b>Device ID</b></td><td></td><tr>\n"
             if devices is not None:
                 for device in devices:
                     device_id_str = str(device)
                     device_name = self.database.retrieve_device_name(device_id_str)
                     if device_name is None:
                         device_name = ""
-                    device_table_str += "\t\t<td>" + device_name + "</td><td><a href=\"" + g_root_url + "/device/" + device_id_str + "\">" + device_id_str + "</a></td><tr>\n"
+                    device_table_str += "\t\t<td>" + device_name + "</td><td><a href=\"" + g_root_url + "/device/" + device_id_str + "\">" + device_id_str + "</a></td><td><a href=\"" + g_root_url + "/delete_device/" + device_id_str + "\">Delete</td><tr>\n"
             device_table_str += "\t<table>\n"
 
             # Render the dashboard page.
