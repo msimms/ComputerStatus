@@ -31,10 +31,10 @@ class StatusApi(object):
         super(StatusApi, self).__init__()
         self.database = StatusDb.MongoDatabase(root_dir)
 
-    def handle_graph_data_request(self, device_id, attributes, start_time):
+    def handle_graph_data_request(self, device_id, attributes, start_time, num_results):
         graph_data = []
 
-        statuses = self.database.retrieve_status(device_id)
+        statuses = self.database.retrieve_status(device_id, num_results)
         if statuses is not None:
             for status in statuses:
                 if "datetime" in status:
@@ -67,7 +67,7 @@ class StatusApi(object):
                     return True, ""
             elif request == 'retrieve_graph_data':
                 if "device_id" in values and "attributes" in values and "start_time" in values:
-                    response = self.handle_graph_data_request(values["device_id"], values["attributes"].split(','), int(values["start_time"]))
+                    response = self.handle_graph_data_request(values["device_id"], values["attributes"].split(','), int(values["start_time"]), 1000)
                     return True, response
             elif request == 'retrieve_graph_color':
                 if "device_id" in values and "attribute" in values:

@@ -151,9 +151,9 @@ class StatusWeb(object):
             table_str = "\t<table>\n"
             degree_sign = u'\N{DEGREE SIGN}'
 
-            statuses = self.database.retrieve_status(device_id)
-            if statuses is not None and statuses.count() > 0:
-                last_status = statuses[statuses.count() - 1]
+            statuses = self.database.retrieve_status(device_id, 1)
+            if statuses is not None and len(statuses) > 0:
+                last_status = statuses[len(statuses) - 1]
 
                 if 'cpu - percent' in last_status:
                     table_str += "\t\t<td>Current CPU Utilization</td><td>" + str(last_status['cpu - percent']) + "%</td><tr>\n"
@@ -562,7 +562,7 @@ class StatusWeb(object):
         except:
             cherrypy.log.error('Unhandled exception in ' + StatusWeb.delete_user.__name__, 'EXEC', logging.WARNING)
         return self.error()
-        
+
     @cherrypy.expose
     def login(self):
         """Renders the login page."""

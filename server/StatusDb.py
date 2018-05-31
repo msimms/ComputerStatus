@@ -283,13 +283,15 @@ class MongoDatabase(Database.Database):
             self.log_error(sys.exc_info()[0])
         return False
 
-    def retrieve_status(self, device_id):
+    def retrieve_status(self, device_id, num_results):
         if device_id is None:
             self.log_error(MongoDatabase.retrieve_status.__name__ + "Unexpected empty object: device_id")
             return None
 
         try:
-            statuses = self.status_collection.find({"device_id": device_id})
+            print num_results
+            statuses = list(self.status_collection.find({"device_id": device_id}).sort("_id", -1).skip(0).limit(num_results))
+            print len(statuses)
             return statuses
         except:
             traceback.print_exc(file=sys.stdout)
