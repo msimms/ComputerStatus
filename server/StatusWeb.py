@@ -34,7 +34,6 @@ import mako
 import StatusApi
 import StatusDb
 
-from cherrypy import tools
 from cherrypy.process.plugins import Daemonizer
 from mako.lookup import TemplateLookup
 from mako.template import Template
@@ -196,7 +195,7 @@ class StatusWeb(object):
                 raise cherrypy.HTTPRedirect(DASHBOARD_URL)
 
             # Make sure the device ID is real.
-            device_status = self.database.retrieve_status(device_id)
+            device_status = self.database.retrieve_status(device_id, 1)
             if device_status.count() == 0:
                 cherrypy.log.error('Unknown device ID', 'EXEC', logging.ERROR)
                 raise cherrypy.HTTPRedirect(DASHBOARD_URL)

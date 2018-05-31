@@ -289,9 +289,7 @@ class MongoDatabase(Database.Database):
             return None
 
         try:
-            print num_results
             statuses = list(self.status_collection.find({"device_id": device_id}).sort("_id", -1).skip(0).limit(num_results))
-            print len(statuses)
             return statuses
         except:
             traceback.print_exc(file=sys.stdout)
