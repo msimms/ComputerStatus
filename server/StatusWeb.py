@@ -121,6 +121,7 @@ class StatusWeb(object):
         if logged_in is True:
             navbar_str += "\t\t<li><a href=\"" + g_root_url + "/dashboard/\">Dashboard</a></li>\n"
             navbar_str += "\t\t<li><a href=\"" + g_root_url + "/settings/\">Settings</a></li>\n"
+            navbar_str += "\t\t<li><a href=\"" + g_root_url + "/logout/\">Log Out</a></li>\n"
         navbar_str += "\t</ul>\n</nav>"
         return navbar_str
 
@@ -624,6 +625,29 @@ class StatusWeb(object):
             create_login_html_file = os.path.join(g_root_dir, HTML_DIR, 'create_login.html')
             my_template = Template(filename=create_login_html_file, module_directory=g_tempmod_dir)
             result = my_template.render(nav=self.create_navbar(False), root_url=g_root_url)
+        except:
+            result = self.error()
+        return result
+
+    @cherrypy.expose
+    def logout(self):
+        """Ends the logged in session."""
+
+        try:
+            # Get the logged in user.
+            username = cherrypy.session.get(SESSION_KEY)
+            if username is None:
+                raise cherrypy.HTTPRedirect(LOGIN_URL)
+
+            # Clear the session.
+            sess = cherrypy.session
+            sess[SESSION_KEY] = None
+
+            # Send the user back to the login screen.
+            raise cherrypy.HTTPRedirect(LOGIN_URL)
+
+        except cherrypy.HTTPRedirect as e:
+            raise e
         except:
             result = self.error()
         return result
