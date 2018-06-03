@@ -19,45 +19,48 @@
 
 <script type="text/javascript" src="${root_url}/js/all.js"></script>
 <script>
-function update_email()
-{
-	var the_url = "${root_url}/update_email";
-	var new_email = document.getElementById("new_email").value;
-	var dict = [];
-	dict.push({["email"] : new_email});
-	if (send_post_request(the_url, dict))
-		alert("Email updated!");
-	else
-		alert("An error occurred!");
-}
+	function update_email()
+	{
+		var the_url = "${root_url}/update_email";
+		var new_email = document.getElementById("new_email").value;
+		var dict = [];
+		dict.push({["email"] : new_email});
+		if (send_post_request(the_url, dict))
+			alert("Email updated!");
+		else
+			alert("An error occurred!");
+	}
 
-function update_password()
-{
-	var the_url = "${root_url}/update_password";
-	var current_pword = document.getElementById("current_password").value;
-	var new_pword1 = document.getElementById("new_password1").value;
-	var new_pword2 = document.getElementById("new_password2").value;
-	var dict = [];
-	dict.push({["old_password"] : current_pword});
-	dict.push({["new_password1"] : new_pword1});
-	dict.push({["new_password2"] : new_pword2});
-	if (send_post_request(the_url, dict))
-		alert("Password updated!");
-	else
-		alert("An error occurred!");
-}
+	function update_password()
+	{
+		var the_url = "${root_url}/update_password";
+		var current_pword = document.getElementById("current_password").value;
+		var new_pword1 = document.getElementById("new_password1").value;
+		var new_pword2 = document.getElementById("new_password2").value;
+		var dict = [];
+		dict.push({["old_password"] : current_pword});
+		dict.push({["new_password1"] : new_pword1});
+		dict.push({["new_password2"] : new_pword2});
+		if (send_post_request(the_url, dict))
+			alert("Password updated!");
+		else
+			alert("An error occurred!");
+	}
 
-function delete_user()
-{
-	var the_url = "${root_url}/delete_user";
-	var pword = document.getElementById("password").value;
-	var dict = [];
-	dict.push({["password"] : pword});
-	if (send_post_request(the_url, dict))
-		window.location.replace("${root_url}");
-	else
-		alert("An error occurred!");
-}
+	function delete_user()
+	{
+		if (confirm('Are you sure you want to do this?'))
+		{
+			var the_url = "${root_url}/delete_user";
+			var pword = document.getElementById("password").value;
+			var dict = [];
+			dict.push({["password"] : pword});
+			if (send_post_request(the_url, dict))
+				window.location.replace("${root_url}");
+			else
+				alert("An error occurred!");
+		}
+	}
 </script>
 
 <section class="nav">
