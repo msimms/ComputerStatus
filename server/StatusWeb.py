@@ -247,7 +247,7 @@ class StatusWeb(object):
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
-            cherrypy.log.error('Unhandled exception in ' + StatusWeb.set_device_name.__name__, 'EXEC', logging.WARNING)
+            cherrypy.log.error('Unhandled exception in ' + StatusWeb.delete_device.__name__, 'EXEC', logging.WARNING)
         return ""
 
     @cherrypy.expose
