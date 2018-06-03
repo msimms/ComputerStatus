@@ -18,6 +18,24 @@
 
 <body>
 
+<script type="text/javascript" src="${root_url}/js/all.js"></script>
+<script>
+	function on_delete(device_id)
+	{
+		if (confirm('Are you sure you want to do this?'))
+		{
+			var the_url = "${root_url}/delete_device";
+			var dict = [];
+
+			dict.push({["device_id"] : device_id});
+			if (send_post_request(the_url, dict))
+				window.location.replace("${root_url}/dashboard");
+			else
+				alert("An error occurred!");
+		}
+	}
+</script>
+
 <section class="nav">
 ${nav}
 </section>

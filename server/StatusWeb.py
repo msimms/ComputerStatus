@@ -213,7 +213,7 @@ class StatusWeb(object):
         return ""
 
     @cherrypy.expose
-    def delete_device(self, device_id):
+    def delete_device(self, *args, **kw):
         """Deletes the device with the specified ID, assuming it is owned by the current user."""
 
         try:
@@ -227,6 +227,9 @@ class StatusWeb(object):
             if user_id is None:
                 cherrypy.log.error('Unknown user ID', 'EXEC', logging.ERROR)
                 raise cherrypy.HTTPRedirect(DASHBOARD_URL)
+
+            # Get the device ID from the push request.
+            device_id = cherrypy.request.params.get("device_id")
 
             # Get the user's devices.
             devices = self.database.retrieve_user_devices(user_id)
@@ -342,8 +345,8 @@ class StatusWeb(object):
                     device_name = self.database.retrieve_device_name(device_id_str)
                     if device_name is None:
                         device_name = ""
-                    device_table_str += "\t\t<td>" + device_name + "</td><td><a href=\"" + g_root_url + "/device/" + device_id_str + "\">" + device_id_str + "</a></td><td><a href=\"" + g_root_url + "/delete_device/" + device_id_str + "\">Delete</td><tr>\n"
-            device_table_str += "\t<table>\n"
+                    device_table_str += "\t\t<td>" + device_name + "</td><td>" + device_id_str + "</td><td><button type=\"button\" onclick=\"return on_delete('" + device_id_str + "')\">Delete</button></td><tr>\n"
+            device_table_str += "\t</table>\n"
 
             # Render the dashboard page.
             dashboard_html_file = os.path.join(g_root_dir, HTML_DIR, 'dashboard.html')
