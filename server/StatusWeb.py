@@ -31,6 +31,7 @@ import sys
 import bcrypt
 import cherrypy
 import mako
+import markdown
 import StatusApi
 import StatusDb
 
@@ -613,9 +614,18 @@ class StatusWeb(object):
         """Renders the login page."""
 
         try:
+            # Convert the README to markdown.
+            html = ""
+            readme_file_name = os.path.join(g_root_dir, '..', 'README.md')
+            with open(readme_file_name, 'r') as readme_file:
+                md = readme_file.read()
+                extensions = ['extra', 'smarty']
+                html = markdown.markdown(md, extensions=extensions, output_format='html5')
+
+            # Render the page.
             login_html_file = os.path.join(g_root_dir, HTML_DIR, 'login.html')
             my_template = Template(filename=login_html_file, module_directory=g_tempmod_dir)
-            result = my_template.render(nav=self.create_navbar(False), root_url=g_root_url)
+            result = my_template.render(nav=self.create_navbar(False), root_url=g_root_url, readme=html)
         except:
             result = self.error()
         return result
