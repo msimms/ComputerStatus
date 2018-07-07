@@ -21,7 +21,9 @@
 # SOFTWARE.
 """API request handlers"""
 
+import fractions
 import json
+import uuid
 import StatusDb
 
 class StatusApi(object):
@@ -31,7 +33,29 @@ class StatusApi(object):
         super(StatusApi, self).__init__()
         self.database = StatusDb.MongoDatabase(root_dir)
 
+    def handle_create_status(self, status):
+        """Called when new data is received. Sanitizes the data before storing it."""
+        result = ""
+        sanitized_status = {}
+        for status_item in status:
+            temp = status[status_item]
+            try:
+                # If this is the device ID then make sure it is a UUID. Otherwise, make sure it's a number.
+                if status_item == 'device_id':
+                    uuid.UUID(temp, version=4)
+                else:
+                    fractions.Fraction(temp)
+
+                # Make sure the key isn't too long.
+                if len(status_item) < 64:
+                    sanitized_status[status_item] = temp
+            except:
+                result = "At least one value was rejected."
+        self.database.create_status(sanitized_status)
+        return result
+
     def handle_graph_data_request(self, device_id, attributes, start_time, num_results):
+        """Called when a request for data associated with an attribute is received."""
         graph_data = []
 
         statuses = self.database.retrieve_status(device_id, num_results)
@@ -54,6 +78,7 @@ class StatusApi(object):
         return graph_str
 
     def handle_graph_color_request(self, device_id, attribute):
+        """Called when a request for the graph color to use with an attribute is received."""
         return self.database.retrieve_device_color(device_id, attribute)
 
     def handle_api_1_0_request(self, args, values):
@@ -63,8 +88,8 @@ class StatusApi(object):
 
             if request == 'upload':
                 if "device_id" in values and "datetime" in values:
-                    self.database.create_status(values)
-                    return True, ""
+                    response = self.handle_create_status(values)
+                    return True, response
             elif request == 'retrieve_graph_data':
                 if "device_id" in values and "attributes" in values and "start_time" in values:
                     response = self.handle_graph_data_request(values["device_id"], values["attributes"].split(','), int(values["start_time"]), 1000)
