@@ -24,16 +24,17 @@
 """Main application, contains all web page handlers"""
 
 import argparse
+import json
 import logging
 import os
 import signal
 import sys
-import bcrypt
 import cherrypy
 import mako
 import markdown
 import StatusApi
 import StatusDb
+import UserMgr
 
 from cherrypy.process.plugins import Daemonizer
 from mako.lookup import TemplateLookup
@@ -41,8 +42,6 @@ from mako.template import Template
 
 ACCESS_LOG = 'access.log'
 ERROR_LOG = 'error.log'
-SESSION_KEY = '_computerstatus_username'
-MIN_PASSWORD_LEN = 8
 
 LOGIN_URL = '/login'
 DASHBOARD_URL = '/dashboard'
@@ -82,7 +81,7 @@ def check_auth(*args, **kwargs):
         if requested_url_parts[0] == "device":
             pass
 
-        username = cherrypy.session.get(SESSION_KEY)
+        username = g_app.user_mgr.get_logged_in_user()
         if username:
             cherrypy.request.login = username
             for condition in conditions:
@@ -106,13 +105,21 @@ def require(*conditions):
 class StatusWeb(object):
     """Class containing the URL handlers."""
 
-    def __init__(self):
+    def __init__(self, user_mgr):
         super(StatusWeb, self).__init__()
+        self.user_mgr = user_mgr
         self.database = StatusDb.MongoDatabase(g_root_dir)
 
     def terminate(self):
         """Destructor"""
         logging.info("Terminating...")
+        self.user_mgr.terminate()
+        self.user_mgr = None
+
+    def log_error(self, log_str):
+        """Writes an error message to the log file."""
+        logger = logging.getLogger()
+        logger.error(log_str)
 
     @staticmethod
     def create_navbar(logged_in=True):
@@ -129,7 +136,6 @@ class StatusWeb(object):
     @cherrypy.expose
     def error(self, error_str=None):
         """Renders the error page."""
-
         try:
             cherrypy.response.status = 500
             error_html_file = os.path.join(g_root_dir, HTML_DIR, 'error.html')
@@ -137,13 +143,12 @@ class StatusWeb(object):
             if error_str is None:
                 error_str = "Internal Error."
         except:
-            cherrypy.log.error("Unhandled exception in " + StatusWeb.error.__name__)
+            self.log_error("Unhandled exception in " + StatusWeb.error.__name__)
         return my_template.render(root_url=g_root_url, error=error_str)
 
     @cherrypy.expose
     def device(self, device_id, *args, **kw):
         """Page for displaying graphs about a particular device."""
-
         try:
             title_str = self.database.retrieve_device_name(device_id)
             if title_str is None:
@@ -177,29 +182,28 @@ class StatusWeb(object):
             my_template = Template(filename=device_html_file, module_directory=g_tempmod_dir)
             return my_template.render(nav=self.create_navbar(), root_url=g_root_url, title=title_str, device_id=device_id, table=table_str)
         except:
-            cherrypy.log.error('Unhandled exception in ' + StatusWeb.device.__name__, 'EXEC', logging.WARNING)
+            self.log_error('Unhandled exception in ' + StatusWeb.device.__name__)
         return ""
 
     @cherrypy.expose
     def claim_device(self, device_id):
         """Associates a device with a user."""
-
         try:
             # Get the logged in user.
-            username = cherrypy.session.get(SESSION_KEY)
+            username = self.user_mgr.get_logged_in_user()
             if username is None:
                 raise cherrypy.HTTPRedirect(LOGIN_URL)
 
             # Get the details of the logged in user.
-            user_id, _, _ = self.database.retrieve_user(username)
+            user_id, _, _ = self.user_mgr.retrieve_user(username)
             if user_id is None:
-                cherrypy.log.error('Unknown user ID', 'EXEC', logging.ERROR)
-                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
+                self.log_error('Unknown user ID')
+                raise cherrypy.HTTPRedirect(LOGIN_URL)
 
             # Make sure the device ID is real.
             device_status = self.database.retrieve_status(device_id, 1)
-            if device_status.count() == 0:
-                cherrypy.log.error('Unknown device ID', 'EXEC', logging.ERROR)
+            if device_status is None or len(device_status) == 0:
+                self.log_error('Unknown device ID')
                 raise cherrypy.HTTPRedirect(DASHBOARD_URL)
 
             # Add the device id to the database.
@@ -210,24 +214,23 @@ class StatusWeb(object):
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
-            cherrypy.log.error('Unhandled exception in ' + StatusWeb.claim_device.__name__, 'EXEC', logging.WARNING)
+            self.log_error('Unhandled exception in ' + StatusWeb.claim_device.__name__)
         return ""
 
     @cherrypy.expose
     def delete_device(self, *args, **kw):
         """Deletes the device with the specified ID, assuming it is owned by the current user."""
-
         try:
             # Get the logged in user.
-            username = cherrypy.session.get(SESSION_KEY)
+            username = self.user_mgr.get_logged_in_user()
             if username is None:
                 raise cherrypy.HTTPRedirect(LOGIN_URL)
 
             # Get the details of the logged in user.
-            user_id, _, _ = self.database.retrieve_user(username)
+            user_id, _, _ = self.user_mgr.retrieve_user(username)
             if user_id is None:
-                cherrypy.log.error('Unknown user ID', 'EXEC', logging.ERROR)
-                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
+                self.log_error('Unknown user ID')
+                raise cherrypy.HTTPRedirect(LOGIN_URL)
 
             # Get the device ID from the push request.
             device_id = cherrypy.request.params.get("device_id")
@@ -235,7 +238,7 @@ class StatusWeb(object):
             # Get the user's devices.
             devices = self.database.retrieve_user_devices(user_id)
             if not device_id in devices:
-                cherrypy.log.error('Unknown device ID', 'EXEC', logging.ERROR)
+                self.log_error('Unknown device ID')
                 raise cherrypy.HTTPRedirect(DASHBOARD_URL)
 
             # Delete the device.
@@ -248,29 +251,28 @@ class StatusWeb(object):
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
-            cherrypy.log.error('Unhandled exception in ' + StatusWeb.delete_device.__name__, 'EXEC', logging.WARNING)
+            self.log_error('Unhandled exception in ' + StatusWeb.delete_device.__name__)
         return ""
 
     @cherrypy.expose
     def set_device_name(self, device_id, name):
         """Associates a name with a device's unique identifier."""
-
         try:
             # Get the logged in user.
-            username = cherrypy.session.get(SESSION_KEY)
+            username = self.user_mgr.get_logged_in_user()
             if username is None:
                 raise cherrypy.HTTPRedirect(LOGIN_URL)
 
             # Get the details of the logged in user.
-            user_id, _, _ = self.database.retrieve_user(username)
+            user_id, _, _ = self.user_mgr.retrieve_user(username)
             if user_id is None:
-                cherrypy.log.error('Unknown user ID', 'EXEC', logging.ERROR)
-                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
+                self.log_error('Unknown user ID')
+                raise cherrypy.HTTPRedirect(LOGIN_URL)
 
             # Get the user's devices.
             devices = self.database.retrieve_user_devices(user_id)
             if not device_id in devices:
-                cherrypy.log.error('Unknown device ID', 'EXEC', logging.ERROR)
+                self.log_error('Unknown device ID')
                 raise cherrypy.HTTPRedirect(DASHBOARD_URL)
 
             # Add the device id to the database.
@@ -281,29 +283,28 @@ class StatusWeb(object):
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
-            cherrypy.log.error('Unhandled exception in ' + StatusWeb.set_device_name.__name__, 'EXEC', logging.WARNING)
+            self.log_error('Unhandled exception in ' + StatusWeb.set_device_name.__name__)
         return ""
 
     @cherrypy.expose
     def set_device_attribute_color(self, device_id, attribute, color):
         """Associates a color with a device."""
-
         try:
             # Get the logged in user.
-            username = cherrypy.session.get(SESSION_KEY)
+            username = self.user_mgr.get_logged_in_user()
             if username is None:
                 raise cherrypy.HTTPRedirect(LOGIN_URL)
 
             # Get the details of the logged in user.
-            user_id, _, _ = self.database.retrieve_user(username)
+            user_id, _, _ = self.user_mgr.retrieve_user(username)
             if user_id is None:
-                cherrypy.log.error('Unknown user ID', 'EXEC', logging.ERROR)
-                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
+                self.log_error('Unknown user ID')
+                raise cherrypy.HTTPRedirect(LOGIN_URL)
 
             # Get the user's devices.
             devices = self.database.retrieve_user_devices(user_id)
             if not device_id in devices:
-                cherrypy.log.error('Unknown device ID', 'EXEC', logging.ERROR)
+                self.log_error('Unknown device ID')
                 raise cherrypy.HTTPRedirect(DASHBOARD_URL)
 
             # Add the device id to the database.
@@ -314,24 +315,23 @@ class StatusWeb(object):
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
-            cherrypy.log.error('Unhandled exception in ' + StatusWeb.set_device_attribute_color.__name__, 'EXEC', logging.WARNING)
+            self.log_error('Unhandled exception in ' + StatusWeb.set_device_attribute_color.__name__)
         return ""
 
     @cherrypy.expose
     @require()
     def dashboard(self, *args, **kw):
         """Page for displaying the devices owned by a particular user."""
-
         try:
             # Get the logged in user.
-            username = cherrypy.session.get(SESSION_KEY)
+            username = self.user_mgr.get_logged_in_user()
             if username is None:
                 raise cherrypy.HTTPRedirect(LOGIN_URL)
 
             # Get the details of the logged in user.
-            user_id, _, _ = self.database.retrieve_user(username)
+            user_id, _, _ = self.user_mgr.retrieve_user(username)
             if user_id is None:
-                cherrypy.log.error('Unknown user ID', 'EXEC', logging.ERROR)
+                self.log_error('Unknown user ID')
                 raise cherrypy.HTTPRedirect(LOGIN_URL)
 
             # Get the user's devices.
@@ -356,24 +356,23 @@ class StatusWeb(object):
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
-            cherrypy.log.error('Unhandled exception in ' + StatusWeb.dashboard.__name__, 'EXEC', logging.WARNING)
+            self.log_error('Unhandled exception in ' + StatusWeb.dashboard.__name__)
         return ""
 
     @cherrypy.expose
     @require()
     def settings(self, *args, **kw):
         """Renders the user's settings page."""
-
         try:
             # Get the logged in user.
-            username = cherrypy.session.get(SESSION_KEY)
+            username = self.user_mgr.get_logged_in_user()
             if username is None:
                 raise cherrypy.HTTPRedirect(LOGIN_URL)
 
             # Get the details of the logged in user.
-            user_id, _, user_realname = self.database.retrieve_user(username)
+            user_id, _, user_realname = self.user_mgr.retrieve_user(username)
             if user_id is None:
-                cherrypy.log.error('Unknown user ID', 'EXEC', logging.ERROR)
+                self.log_error('Unknown user ID')
                 raise cherrypy.HTTPRedirect(LOGIN_URL)
 
             # Render from template.
@@ -383,249 +382,74 @@ class StatusWeb(object):
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
-            cherrypy.log.error('Unhandled exception in ' + StatusWeb.settings.__name__, 'EXEC', logging.WARNING)
+            self.log_error('Unhandled exception in ' + StatusWeb.settings.__name__)
         return self.error()
-
-    def authenticate_user(self, email, password):
-        """Helper function"""
-
-        if self.database is None:
-            return False, "No database."
-        if len(email) == 0:
-            return False, "An email address was not provided."
-        if len(password) < MIN_PASSWORD_LEN:
-            return False, "The password is too short."
-
-        _, db_hash1, _ = self.database.retrieve_user(email)
-        if db_hash1 is None:
-            return False, "The user could not be found."
-        db_hash2 = bcrypt.hashpw(password.encode('utf-8'), db_hash1.encode('utf-8'))
-        if db_hash1 == db_hash2:
-            return True, "The user has been logged in."
-        return False, "The password is invalid."
-
-    def create_user(self, email, realname, password1, password2):
-        """Helper function"""
-
-        if self.database is None:
-            return False, "No database."
-        if len(email) == 0:
-            return False, "Email address not provided."
-        if len(realname) == 0:
-            return False, "Name not provided."
-        if len(password1) < MIN_PASSWORD_LEN:
-            return False, "The password is too short."
-        if password1 != password2:
-            return False, "The passwords do not match."
-        if self.database.retrieve_user(email) is None:
-            return False, "The user already exists."
-
-        salt = bcrypt.gensalt()
-        userhash = bcrypt.hashpw(password1.encode('utf-8'), salt)
-        if not self.database.create_user(email, realname, userhash):
-            return False, "An internal error was encountered when creating the user."
-
-        return True, "The user was created."
-
-    def update_user(self, user_id, email, realname, password1, password2):
-        """Helper function"""
-
-        if self.database is None:
-            return False, "No database."
-        if user_id is None:
-            return False, "Unexpected empty object: user_id."
-        if email is not None and len(email) == 0:
-            return False, "Email address not provided."
-        if realname is not None and len(realname) == 0:
-            return False, "Name not provided."
-
-        userhash = None
-
-        if password1 is not None or password2 is not None:
-            if len(password1) < MIN_PASSWORD_LEN:
-                return False, "The password is too short."
-            if password1 != password2:
-                return False, "The passwords do not match."
-
-            salt = bcrypt.gensalt()
-            userhash = bcrypt.hashpw(password1.encode('utf-8'), salt)
-
-        if not self.database.update_user(user_id, email, realname, userhash):
-            return False, "An internal error was encountered when creating the user."
-
-        return True, "The user was updated."
 
     @cherrypy.expose
     def submit_login(self, *args, **kw):
         """Processes a login."""
-
         try:
             email = cherrypy.request.params.get("email")
             password = cherrypy.request.params.get("password")
 
             if email is None or password is None:
-                return self.error("An email address and password were not provided.")
+                raise Exception("An email address and password were not provided.")
             else:
-                user_logged_in, info_str = self.authenticate_user(email, password)
-                if user_logged_in:
-                    cherrypy.session.regenerate()
-                    cherrypy.session[SESSION_KEY] = cherrypy.request.login = email
-                    result = self.dashboard(email, None, None)
+                if self.user_mgr.authenticate_user(email, password):
+                    self.user_mgr.create_new_session(email)
+                    raise cherrypy.HTTPRedirect(DASHBOARD_URL)
                 else:
-                    error_msg = "Unable to authenticate the user."
-                    if len(info_str) > 0:
-                        error_msg += " "
-                        error_msg += info_str
-                    result = self.error(error_msg)
-            return result
+                    raise Exception("Unknown error.")
+        except cherrypy.HTTPRedirect as e:
+            raise e
+        except Exception as e:
+            error_msg = 'Unable to authenticate the user. ' + str(e.args[0])
+            self.log_error(error_msg)
+            return self.error(error_msg)
         except:
-            cherrypy.log.error('Unhandled exception in ' + StatusWeb.submit_login.__name__, 'EXEC', logging.WARNING)
+            self.log_error('Unhandled exception in ' + StatusWeb.submit_login.__name__)
         return self.error()
 
     @cherrypy.expose
     def submit_new_login(self, email, realname, password1, password2, *args, **kw):
         """Creates a new login."""
-
         try:
-            user_created, info_str = self.create_user(email, realname, password1, password2)
-            if user_created:
-                cherrypy.session.regenerate()
-                cherrypy.session[SESSION_KEY] = cherrypy.request.login = email
-                result = self.dashboard(email, *args, **kw)
+            if self.user_mgr.create_user(email, realname, password1, password2):
+                self.user_mgr.create_new_session(email)
+                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
             else:
-                error_msg = "Unable to create the user."
-                if len(info_str) > 0:
-                    error_msg += " "
-                    error_msg += info_str
-                result = self.error(error_msg)
-            return result
+                raise Exception("Unknown error.")
+        except cherrypy.HTTPRedirect as e:
+            raise e
+        except Exception as e:
+            error_msg = 'Unable to create the user. ' + str(e.args[0])
+            self.log_error(error_msg)
+            return self.error(error_msg)
         except:
-            cherrypy.log.error('Unhandled exception in ' + StatusWeb.submit_new_login.__name__, 'EXEC', logging.WARNING)
-        return self.error()
-
-    @cherrypy.expose
-    def update_email(self, *args, **kw):
-        """Updates the user's email address."""
-
-        try:
-            # Get the logged in user.
-            username = cherrypy.session.get(SESSION_KEY)
-            if username is None:
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Get the details of the logged in user.
-            user_id, _, user_realname = self.database.retrieve_user(username)
-            if user_id is None:
-                cherrypy.log.error('Unknown user ID', 'EXEC', logging.ERROR)
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Get the new email address fromt the request.
-            email = cherrypy.request.params.get("email")
-
-            # Update the user's password in the database.
-            user_updated, info_str = self.update_user(user_id, email, user_realname, None, None)
-            if user_updated:
-                cherrypy.response.status = 200
-                return ""
-            else:
-                cherrypy.log.error(info_str, 'EXEC', logging.ERROR)
-        except:
-            cherrypy.log.error('Unhandled exception in ' + StatusWeb.update_email.__name__, 'EXEC', logging.WARNING)
-        return self.error()
-
-    @cherrypy.expose
-    def update_password(self, *args, **kw):
-        """Updates the user's email password."""
-
-        try:
-            # Get the logged in user.
-            username = cherrypy.session.get(SESSION_KEY)
-            if username is None:
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Get the details of the logged in user.
-            user_id, _, user_realname = self.database.retrieve_user(username)
-            if user_id is None:
-                cherrypy.log.error('Unknown user ID', 'EXEC', logging.ERROR)
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # The the old and new passwords from the request.
-            old_password = cherrypy.request.params.get("old_password")
-            new_password1 = cherrypy.request.params.get("new_password1")
-            new_password2 = cherrypy.request.params.get("new_password2")
-
-            # Reauthenticate the user.
-            user_logged_in, info_str = self.authenticate_user(username, old_password)
-            if user_logged_in:
-
-                # Update the user's password in the database.
-                user_updated, info_str = self.update_user(user_id, username, user_realname, new_password1, new_password2)
-                if user_updated:
-                    cherrypy.response.status = 200
-                    return ""
-                else:
-                    cherrypy.log.error(info_str, 'EXEC', logging.ERROR)
-            else:
-                cherrypy.log.error(info_str, 'EXEC', logging.ERROR)
-        except:
-            cherrypy.log.error('Unhandled exception in ' + StatusWeb.update_password.__name__, 'EXEC', logging.WARNING)
-        return self.error()
-
-    @cherrypy.expose
-    def delete_user(self, *args, **kw):
-        """Removes the user and all associated data."""
-
-        try:
-            # Get the logged in user.
-            username = cherrypy.session.get(SESSION_KEY)
-            if username is None:
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Get the details of the logged in user.
-            user_id, _, _ = self.database.retrieve_user(username)
-            if user_id is None:
-                cherrypy.log.error('Unknown user ID', 'EXEC', logging.ERROR)
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Get the password from the request as we'll want to reauthenticate the user before deleting.
-            password = cherrypy.request.params.get("password")
-
-            # Reauthenticate the user.
-            user_logged_in, info_str = self.authenticate_user(username, password)
-            if user_logged_in:
-                # Delete data from the user's devices, as well as the associated attributes.
-                user_devices = self.database.retrieve_user_devices(user_id)
-                for user_device in user_devices:
-                    self.database.delete_status(user_device)
-                    self.database.delete_device_attributes(user_device)
-
-                # Delete the user.
-                self.database.delete_user(user_id)
-                cherrypy.response.status = 200
-                return ""
-            else:
-                cherrypy.log.error(info_str, 'EXEC', logging.ERROR)
-        except:
-            cherrypy.log.error('Unhandled exception in ' + StatusWeb.delete_user.__name__, 'EXEC', logging.WARNING)
+            self.log_error('Unhandled exception in ' + StatusWeb.submit_new_login.__name__)
         return self.error()
 
     @cherrypy.expose
     def login(self):
         """Renders the login page."""
-
         try:
-            # Convert the README to markdown.
+            # If a user is already logged in then go straight to the landing page.
+            username = self.user_mgr.get_logged_in_user()
+            if username is not None:
+                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
+
             html = ""
-            readme_file_name = os.path.join(g_root_dir, '..', 'README.md')
+            readme_file_name = os.path.realpath(os.path.join(g_root_dir, '..', 'README.md'))
             with open(readme_file_name, 'r') as readme_file:
                 md = readme_file.read()
                 extensions = ['extra', 'smarty']
                 html = markdown.markdown(md, extensions=extensions, output_format='html5')
 
-            # Render the page.
             login_html_file = os.path.join(g_root_dir, HTML_DIR, 'login.html')
             my_template = Template(filename=login_html_file, module_directory=g_tempmod_dir)
             result = my_template.render(nav=self.create_navbar(False), root_url=g_root_url, readme=html)
+        except cherrypy.HTTPRedirect as e:
+            raise e
         except:
             result = self.error()
         return result
@@ -633,7 +457,6 @@ class StatusWeb(object):
     @cherrypy.expose
     def create_login(self):
         """Renders the create login page."""
-
         try:
             create_login_html_file = os.path.join(g_root_dir, HTML_DIR, 'create_login.html')
             my_template = Template(filename=create_login_html_file, module_directory=g_tempmod_dir)
@@ -645,16 +468,14 @@ class StatusWeb(object):
     @cherrypy.expose
     def logout(self):
         """Ends the logged in session."""
-
         try:
             # Get the logged in user.
-            username = cherrypy.session.get(SESSION_KEY)
+            username = self.user_mgr.get_logged_in_user()
             if username is None:
                 raise cherrypy.HTTPRedirect(LOGIN_URL)
 
             # Clear the session.
-            sess = cherrypy.session
-            sess[SESSION_KEY] = None
+            self.user_mgr.clear_session()
 
             # Send the user back to the login screen.
             raise cherrypy.HTTPRedirect(LOGIN_URL)
@@ -668,31 +489,53 @@ class StatusWeb(object):
     @cherrypy.expose
     def index(self):
         """Renders the index (default) page."""
-
         return self.login()
 
     @cherrypy.expose
     def api(self, *args, **kw):
         """Endpoint for API calls."""
-
         response = ""
         try:
+            # Get the logged in user.
+            user_id = None
+            username = self.user_mgr.get_logged_in_user()
+            if username is not None:
+                user_id, _, _ = self.user_mgr.retrieve_user(username)
+
+            # The the API params.
+            if cherrypy.request.method == "GET":
+                params = kw
+            elif len(kw) == 0:
+                cl = cherrypy.request.headers['Content-Length']
+                params = cherrypy.request.body.read(int(cl))
+                params = json.loads(params)
+            else:
+                params = kw
+
+            # Process the API request.
             if len(args) > 0:
                 api_version = args[0]
                 if api_version == '1.0':
-                    api = StatusApi.StatusApi(g_root_dir)
-                    handled, response = api.handle_api_1_0_request(args[1:], kw)
+                    api = StatusApi.StatusApi(g_root_dir, self.user_mgr, user_id)
+                    handled, response = api.handle_api_1_0_request(args[1:], params)
                     if not handled:
+                        self.log_error("Failed to handle request: " + args[1:])
                         cherrypy.response.status = 400
                     else:
                         cherrypy.response.status = 200
                 else:
+                    self.log_error("Failed to handle request for api version " + api_version)
                     cherrypy.response.status = 400
             else:
                 cherrypy.response.status = 400
+        except Exception as e:
+            response = str(e.args[0])
+            self.log_error(response)
+            cherrypy.response.status = 500
         except:
             cherrypy.response.status = 500
         return response
+
 
 def main():
     global g_root_dir
@@ -739,7 +582,8 @@ def main():
     mako.collection_size = 100
     mako.directories = "templates"
 
-    g_app = StatusWeb()
+    user_mgr = UserMgr.UserMgr(g_root_dir)
+    g_app = StatusWeb(user_mgr)
 
     cherrypy.tools.statusweb_auth = cherrypy.Tool('before_handler', check_auth)
 

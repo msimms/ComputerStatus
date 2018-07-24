@@ -21,12 +21,13 @@
 <script>
 	function update_email()
 	{
-		var the_url = "${root_url}/update_email";
+		var the_url = "${root_url}/api/1.0/update_email";
 		var new_email = document.getElementById("new_email").value;
 		var dict = [];
+		var result_text = {};
 
 		dict.push({["email"] : new_email});
-		if (send_post_request(the_url, dict))
+		if (send_post_request(the_url, dict, result_text))
 			alert("Email updated!");
 		else
 			alert("An error occurred!");
@@ -34,16 +35,17 @@
 
 	function update_password()
 	{
-		var the_url = "${root_url}/update_password";
+		var the_url = "${root_url}/api/1.0/update_password";
 		var current_pword = document.getElementById("current_password").value;
 		var new_pword1 = document.getElementById("new_password1").value;
 		var new_pword2 = document.getElementById("new_password2").value;
 		var dict = [];
+		var result_text = {};
 
 		dict.push({["old_password"] : current_pword});
 		dict.push({["new_password1"] : new_pword1});
 		dict.push({["new_password2"] : new_pword2});
-		if (send_post_request(the_url, dict))
+		if (send_post_request(the_url, dict, result_text))
 			alert("Password updated!");
 		else
 			alert("An error occurred!");
@@ -53,12 +55,13 @@
 	{
 		if (confirm('Are you sure you want to do this?'))
 		{
-			var the_url = "${root_url}/delete_user";
+			var the_url = "${root_url}/api/1.0/delete_user";
 			var pword = document.getElementById("password").value;
 			var dict = [];
+			var result_text = {};
 
 			dict.push({["password"] : pword});
-			if (send_post_request(the_url, dict))
+			if (send_post_request(the_url, dict, result_text))
 				window.location.replace("${root_url}");
 			else
 				alert("An error occurred!");

@@ -23,18 +23,26 @@
 
 import fractions
 import json
+import urllib
 import uuid
 import StatusDb
 
 class StatusApi(object):
     """Class for managing API messages."""
 
-    def __init__(self, root_dir):
+    def __init__(self, root_dir, user_mgr, user_id):
         super(StatusApi, self).__init__()
         self.database = StatusDb.MongoDatabase(root_dir)
+        self.user_mgr = user_mgr
+        self.user_id = user_id
 
     def handle_create_status(self, status):
         """Called when new data is received. Sanitizes the data before storing it."""
+        if 'device_id' not in status:
+            raise Exception("device_id not specified.")
+        if 'datetime' not in status:
+            raise Exception("datetime not specified.")
+
         result = ""
         sanitized_status = {}
         for status_item in status:
@@ -51,11 +59,23 @@ class StatusApi(object):
                     sanitized_status[status_item] = temp
             except:
                 result = "At least one value was rejected."
-        self.database.create_status(sanitized_status)
-        return result
 
-    def handle_graph_data_request(self, device_id, attributes, start_time, num_results):
+        self.database.create_status(sanitized_status)
+        return True, result
+
+    def handle_graph_data_request(self, values):
         """Called when a request for data associated with an attribute is received."""
+        if 'device_id' not in values:
+            raise Exception("device_id not specified.")
+        if 'attributes' not in values:
+            raise Exception("attributes not specified.")
+        if 'start_time' not in values:
+            raise Exception("start_time not specified.")
+
+        device_id = values['device_id']
+        attributes = urllib.unquote_plus(values["attributes"]).split(',')
+        start_time = int(values["start_time"])
+        num_results = 1000
         graph_data = []
 
         statuses = self.database.retrieve_status(device_id, num_results)
@@ -75,27 +95,110 @@ class StatusApi(object):
                         graph_data.append(point_data)
 
         graph_str = "{\"points\":" + json.dumps(graph_data) + "}"
-        return graph_str
+        return True, graph_str
 
-    def handle_graph_color_request(self, device_id, attribute):
+    def handle_graph_color_request(self, values):
         """Called when a request for the graph color to use with an attribute is received."""
-        return self.database.retrieve_device_color(device_id, attribute)
+        if 'device_id' not in values:
+            raise Exception("device_id not specified.")
+        if 'attribute' not in values:
+            raise Exception("attribute not specified.")
+
+        return True, self.database.retrieve_device_color(values["device_id"], values["attribute"])
+
+    def handle_update_email(self, values):
+        """Updates the user's email address."""
+        if self.user_id is None:
+            raise Exception("Not logged in.")
+        if 'email' not in values:
+            raise Exception("email not specified.")
+
+        # Get the logged in user.
+        current_username = self.user_mgr.get_logged_in_user()
+        if current_username is None:
+            raise Exception("Empty username.")
+
+        # Decode the parameter.
+        new_username = urllib.unquote_plus(values['email'])
+
+        # Get the user details.
+        user_id, _, user_realname = self.database.retrieve_user(current_username)
+
+        # Update the user's password in the database.
+        if not self.user_mgr.update_user_email(user_id, new_username, user_realname):
+            raise Exception("Update failed.")
+        return True, ""
+
+    def handle_update_password(self, values):
+        """Updates the user's email password."""
+        if self.user_id is None:
+            raise Exception("Not logged in.")
+        if 'old_password' not in values:
+            raise Exception("Old password not specified.")
+        if 'new_password1' not in values:
+            raise Exception("New password not specified.")
+        if 'new_password2' not in values:
+            raise Exception("New password confirmation not specified.")
+
+        # Get the logged in user.
+        username = self.user_mgr.get_logged_in_user()
+        if username is None:
+            raise Exception("Empty username.")
+
+        # Get the user details.
+        user_id, _, user_realname = self.database.retrieve_user(username)
+
+        # The the old and new passwords from the request.
+        old_password = urllib.unquote_plus(values["old_password"])
+        new_password1 = urllib.unquote_plus(values["new_password1"])
+        new_password2 = urllib.unquote_plus(values["new_password2"])
+
+        # Reauthenticate the user.
+        if not self.user_mgr.authenticate_user(username, old_password):
+            raise Exception("Authentication failed.")
+
+        # Update the user's password in the database.
+        if not self.user_mgr.update_user_password(user_id, username, user_realname, new_password1, new_password2):
+            raise Exception("Update failed.")
+        return True, ""
+
+    def handle_delete_user(self, values):
+        """Removes the user and all associated data."""
+        if self.user_id is None:
+            raise Exception("Not logged in.")
+        if 'password' not in values:
+            raise Exception("Password not specified.")
+
+        # Get the logged in user.
+        username = self.user_mgr.get_logged_in_user()
+        if username is None:
+            raise Exception("Empty username.")
+
+        # Reauthenticate the user.
+        password = urllib.unquote_plus(values['password'])
+        if not self.user_mgr.authenticate_user(username, password):
+            raise Exception("Authentication failed.")
+
+        # Delete the user.
+        self.user_mgr.delete_user(self.user_id)
+        return True, ""
 
     def handle_api_1_0_request(self, args, values):
         """Called to parse a version 1.0 API message."""
-        if args is not None and len(args) > 0:
-            request = args[0]
+        if args is None or len(args) <= 0:
+            return False, ""
 
-            if request == 'upload':
-                if "device_id" in values and "datetime" in values:
-                    response = self.handle_create_status(values)
-                    return True, response
-            elif request == 'retrieve_graph_data':
-                if "device_id" in values and "attributes" in values and "start_time" in values:
-                    response = self.handle_graph_data_request(values["device_id"], values["attributes"].split(','), int(values["start_time"]), 1000)
-                    return True, response
-            elif request == 'retrieve_graph_color':
-                if "device_id" in values and "attribute" in values:
-                    response = self.handle_graph_color_request(values["device_id"], values["attribute"])
-                    return True, response
+        request = args[0]
+        if request == 'upload':
+            return self.handle_create_status(values)
+        elif request == 'retrieve_graph_data':
+            return self.handle_graph_data_request(values)
+        elif request == 'retrieve_graph_color':
+            return self.handle_graph_color_request(values)
+        elif request == 'update_email':
+            return self.handle_update_email(values)
+        elif request == 'update_password':
+            return self.handle_update_password(values)
+        elif request == 'delete_user':
+            return self.handle_delete_user(values)
         return False, ""
