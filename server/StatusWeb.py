@@ -345,7 +345,7 @@ class StatusWeb(object):
                     device_id_str = str(device)
                     device_name = self.database.retrieve_device_name(device_id_str)
                     if device_name is None:
-                        device_name = ""
+                        device_name = "Untitled"
                     device_table_str += "\t\t<td>" + device_name + "</td><td><a href=\"" + g_root_url + "/device/" + device_id_str + "\">" + device_id_str + "</a></td><td><button type=\"button\" onclick=\"return on_delete('" + device_id_str + "')\">Delete</button></td><tr>\n"
             device_table_str += "\t</table>\n"
 
