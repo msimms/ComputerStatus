@@ -143,7 +143,7 @@ class MonitorThread(threading.Thread):
                 loaded_module = imp.load_source("", self.post_file)
                 loaded_module.do(values)
         except:
-            logging.error("Error collecting network stats.")
+            logging.error("Error executing the post processing code.")
 
     def run(self):
         """Main run loop."""
