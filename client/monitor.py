@@ -58,6 +58,9 @@ class MonitorThread(threading.Thread):
         self.do_mem_check = do_mem_check
         self.do_net_check = do_net_check
         self.do_gpu_check = do_gpu_check
+        self.post_module = None
+        if os.path.isfile(self.post_file):
+            self.post_module = imp.load_source("", self.post_file)
 
         if self.server:
             # Look for device ID file; generate one if not found.
@@ -139,9 +142,8 @@ class MonitorThread(threading.Thread):
     def execute_post_file(self, values):
         """Executes the post process file. This is where the user can specify logic to run after each check."""
         try:
-            if os.path.isfile(self.post_file):
-                loaded_module = imp.load_source("", self.post_file)
-                loaded_module.do(values)
+            if self.post_module is not None:
+                self.post_module.do(values)
         except:
             logging.error("Error executing the post processing code.")
 
