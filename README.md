@@ -8,16 +8,23 @@ Example 1: Querying the GPU every 10 minutes.
 python client/monitor.py -gpu --interval 600
 ```
 
-Example 2: Querying the GPU every 10 minutes and reporting the results to homecomputerstatus.com.
+Example 2: Querying the GPU every 10 minutes and reporting the results to the example server at https://homecomputerstatus.com.
 ```
-python client/monitor.py -gpu --interval 600 --server http://homecomputerstatus.com
+python client/monitor.py -gpu --interval 600 --server https://homecomputerstatus.com
 ```
 
 When you run the client script on your machine, it will generate a file with the name device_id.txt. This file will contain a unique identifier for your machine. After logging in to the server, copy and paste the identifier into the Claim Device edit box to locate the data from your machine.
 
 ## Running the server
+
+Example 1: HTTP
 ```
 python server/StatusWeb.py
+```
+
+Example 2: HTTPS
+```
+python StatusWeb.py --cert cert.pem --privkey key.pem --https
 ```
 
 ## Major Features
