@@ -15,6 +15,12 @@ python client/monitor.py -gpu --interval 600 --server https://homecomputerstatus
 
 When you run the client script on your machine, it will generate a file with the name device_id.txt. This file will contain a unique identifier for your machine. After logging in to the server, copy and paste the identifier into the Claim Device edit box to locate the data from your machine.
 
+## Installing the server
+
+    git clone https://github.com/msimms/ComputerStatus.git
+    cd ComputerStatus
+    pip install -r server/requirements.txt
+    
 ## Running the server
 
 Example 1: HTTP
