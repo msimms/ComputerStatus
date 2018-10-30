@@ -1,0 +1,6 @@
+CherryPy>=10.2.1
+Mako>=1.0.6
+bson>=0.4.7
+pymongo>=3.4.0
+bcrypt
+markdown
