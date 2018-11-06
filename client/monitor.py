@@ -58,6 +58,7 @@ class MonitorThread(threading.Thread):
         self.do_mem_check = do_mem_check
         self.do_net_check = do_net_check
         self.do_gpu_check = do_gpu_check
+        self.last_net_io = None
         self.post_module = None
         if os.path.isfile(self.post_file):
             self.post_module = imp.load_source("", self.post_file)
@@ -136,6 +137,10 @@ class MonitorThread(threading.Thread):
             net_io = psutil.net_io_counters()
             values[keys.KEY_NETWORK_BYTES_SENT] = net_io.bytes_sent
             values[keys.KEY_NETWORK_BYTES_RECEIVED] = net_io.bytes_recv
+            if self.last_net_io is not None:
+                values[keys.KEY_NETWORK_BYTES_SENT_PER_SAMPLE] = net_io.bytes_sent - self.last_net_io.bytes_sent
+                values[keys.KEY_NETWORK_BYTES_RECEIVED_PER_SAMPLE] = net_io.bytes_recv - self.last_net_io.bytes_recv
+            self.last_net_io = net_io
         except:
             logging.error("Error collecting network stats.")
 
