@@ -24,6 +24,7 @@
 """Main application, contains all web page handlers"""
 
 import argparse
+import inspect
 import json
 import logging
 import os
@@ -35,6 +36,12 @@ import markdown
 import StatusApi
 import StatusDb
 import UserMgr
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+clientdir = os.path.join(parentdir, 'client')
+sys.path.insert(0, clientdir)
+import keys
 
 from cherrypy.process.plugins import Daemonizer
 from mako.lookup import TemplateLookup
@@ -161,20 +168,20 @@ class StatusWeb(object):
             if statuses is not None and len(statuses) > 0:
                 last_status = statuses[len(statuses) - 1]
 
-                if 'cpu - percent' in last_status:
-                    table_str += "\t\t<td>Current CPU Utilization</td><td>" + str(last_status['cpu - percent']) + "%</td><tr>\n"
-                if 'cpu - temperature' in last_status:
-                    table_str += "\t\t<td>Current CPU Temperature</td><td>" + str(last_status['cpu - temperature']) + degree_sign + "C</td><tr>\n"
-                if 'virtual memory - percent' in last_status:
-                    table_str += "\t\t<td>Current RAM Utilization</td><td>" + str(last_status['virtual memory - percent']) + "%</td><tr>\n"
-                if 'gpu - percent' in last_status:
-                    table_str += "\t\t<td>Current GPU Utilization</td><td>" + str(last_status['gpu - percent']) + "%</td><tr>\n"
-                if 'gpu - temperature' in last_status:
-                    table_str += "\t\t<td>Current GPU Temperature</td><td>" + str(last_status['gpu - temperature']) + degree_sign + "C</td><tr>\n"
-                if 'network - bytes sent' in last_status:
-                    table_str += "\t\t<td>Bytes Sent</td><td>" + str(last_status['network - bytes sent']) + " Bytes </td><tr>\n"
-                if 'network - bytes received' in last_status:
-                    table_str += "\t\t<td>Bytes Received</td><td>" + str(last_status['network - bytes received']) + " Bytes </td><tr>\n"
+                if keys.KEY_CPU_PERCENT in last_status:
+                    table_str += "\t\t<td>Current CPU Utilization</td><td>" + str(last_status[keys.KEY_CPU_PERCENT]) + "%</td><tr>\n"
+                if keys.KEY_CPU_TEMPERATURE in last_status:
+                    table_str += "\t\t<td>Current CPU Temperature</td><td>" + str(last_status[keys.KEY_CPU_TEMPERATURE]) + degree_sign + "C</td><tr>\n"
+                if keys.KEY_VIRTUAL_MEM_PERCENT in last_status:
+                    table_str += "\t\t<td>Current RAM Utilization</td><td>" + str(last_status[keys.KEY_VIRTUAL_MEM_PERCENT]) + "%</td><tr>\n"
+                if keys.KEY_GPU_PERCENT in last_status:
+                    table_str += "\t\t<td>Current GPU Utilization</td><td>" + str(last_status[keys.KEY_GPU_PERCENT]) + "%</td><tr>\n"
+                if keys.KEY_GPU_TEMPERATURE in last_status:
+                    table_str += "\t\t<td>Current GPU Temperature</td><td>" + str(last_status[keys.KEY_GPU_TEMPERATURE]) + degree_sign + "C</td><tr>\n"
+                if keys.KEY_NETWORK_BYTES_SENT in last_status:
+                    table_str += "\t\t<td>Bytes Sent</td><td>" + str(last_status[keys.KEY_NETWORK_BYTES_SENT]) + " Bytes </td><tr>\n"
+                if keys.KEY_NETWORK_BYTES_RECEIVED in last_status:
+                    table_str += "\t\t<td>Bytes Received</td><td>" + str(last_status[keys.KEY_NETWORK_BYTES_RECEIVED]) + " Bytes </td><tr>\n"
 
             table_str += "\t</table>\n"
 

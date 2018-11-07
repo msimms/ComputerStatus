@@ -220,6 +220,10 @@ ${nav}
 			return "Bytes Sent";
 		else if (ugly_name == "network - bytes received")
 			return "Bytes Received";
+		else if (ugly_name == "network - bytes sent per sample")
+			return "Bytes Sent / Sample";
+		else if (ugly_name == "network - bytes received per sample")
+			return "Bytes Received / Sample";
 		return ugly_name;
 	}
 
@@ -295,7 +299,7 @@ ${nav}
 	    xml_http.send(null);
 	}
 
-	retrieve_graph_data("cpu - percent,cpu - temperature,virtual memory - percent,gpu - percent,gpu - temperature,network - bytes sent,network - bytes received");
+	retrieve_graph_data("cpu - percent,cpu - temperature,virtual memory - percent,gpu - percent,gpu - temperature,network - bytes sent,network - bytes received,network - bytes sent per sample,network - bytes received per sample");
 
 </script>
 
