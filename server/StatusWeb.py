@@ -34,6 +34,7 @@ import cherrypy
 import mako
 import markdown
 import Api
+import InputChecker
 import StatusDb
 import UserMgr
 
@@ -275,6 +276,11 @@ class StatusWeb(object):
             if user_id is None:
                 self.log_error('Unknown user ID')
                 raise cherrypy.HTTPRedirect(LOGIN_URL)
+
+            # Validate the device name.
+            if not InputChecker.is_valid(name):
+                self.log_error('Invalid device name')
+                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
 
             # Get the user's devices.
             devices = self.database.retrieve_user_devices(user_id)

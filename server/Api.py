@@ -25,6 +25,7 @@ import fractions
 import json
 import urllib
 import uuid
+import InputChecker
 import StatusDb
 
 class Api(object):
@@ -120,6 +121,8 @@ class Api(object):
 
         # Decode the parameter.
         new_username = urllib.unquote_plus(values['email'])
+        if not InputChecker.is_email_address(new_username):
+            raise Exception("Invalid username.")
 
         # Get the user details.
         user_id, _, user_realname = self.database.retrieve_user(current_username)
