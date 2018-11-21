@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-requirements = ['cherrypy', 'mako', 'bson', 'pymongo', 'bcrypt', 'markdown']
+requirements = ['cherrypy', 'mako', 'bson', 'pymongo', 'bcrypt', 'markdown', 'unidecode']
 
 setup(
     name='computerstatus',

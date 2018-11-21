@@ -4,3 +4,4 @@ bson>=0.4.7
 pymongo>=3.4.0
 bcrypt
 markdown
+unidecode
