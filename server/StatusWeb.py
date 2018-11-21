@@ -33,7 +33,7 @@ import sys
 import cherrypy
 import mako
 import markdown
-import StatusApi
+import Api
 import StatusDb
 import UserMgr
 
@@ -523,7 +523,7 @@ class StatusWeb(object):
             if len(args) > 0:
                 api_version = args[0]
                 if api_version == '1.0':
-                    api = StatusApi.StatusApi(g_root_dir, self.user_mgr, user_id)
+                    api = Api.Api(g_root_dir, self.user_mgr, user_id)
                     handled, response = api.handle_api_1_0_request(args[1:], params)
                     if not handled:
                         self.log_error("Failed to handle request: " + args[1:])

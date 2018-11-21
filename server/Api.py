@@ -27,11 +27,11 @@ import urllib
 import uuid
 import StatusDb
 
-class StatusApi(object):
+class Api(object):
     """Class for managing API messages."""
 
     def __init__(self, root_dir, user_mgr, user_id):
-        super(StatusApi, self).__init__()
+        super(Api, self).__init__()
         self.database = StatusDb.MongoDatabase(root_dir)
         self.user_mgr = user_mgr
         self.user_id = user_id
