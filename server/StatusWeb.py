@@ -598,6 +598,11 @@ def main():
     user_mgr = UserMgr.UserMgr(g_root_dir)
     g_app = StatusWeb(user_mgr)
 
+    # The direcory for session objects.
+    session_dir = os.path.join(g_root_dir, 'sessions')
+    if not os.path.exists(session_dir):
+        os.makedirs(session_dir)
+
     cherrypy.tools.statusweb_auth = cherrypy.Tool('before_handler', check_auth)
 
     conf = {
@@ -607,6 +612,8 @@ def main():
             'tools.statusweb_auth.on': True,
             'tools.sessions.on': True,
             'tools.sessions.name': 'statusweb_auth',
+            'tools.sessions.storage_type': 'file',
+            'tools.sessions.storage_path': session_dir,
             'tools.sessions.timeout': 129600,
             'tools.secureheaders.on': True
         },

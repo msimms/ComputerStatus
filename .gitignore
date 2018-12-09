@@ -15,3 +15,6 @@ server/tempmod/*
 
 # Created files
 client/device_id.txt
+
+# Session management
+server/sessions/
