@@ -76,6 +76,8 @@ def secureheaders():
     headers['Content-Security-Policy'] = "default-src='self'"
 
 def check_auth(*args, **kwargs):
+    global g_app
+
     # A tool that looks in config for 'auth.require'. If found and it is not None, a login
     # is required and the entry is evaluated as a list of conditions that the user must fulfill
     conditions = cherrypy.request.config.get('auth.require', None)
@@ -83,11 +85,6 @@ def check_auth(*args, **kwargs):
         requested_url = cherrypy.request.request_line.split()[1]
         requested_url_parts = requested_url.split('/')
         requested_url_parts = filter(lambda part: part != '', requested_url_parts)
-
-        # If the user is trying to view an activity then make sure they have permissions
-        # to view it. First check to see if it's a public activity.
-        if requested_url_parts[0] == "device":
-            pass
 
         username = g_app.user_mgr.get_logged_in_user()
         if username:
@@ -615,6 +612,7 @@ def main():
             'tools.sessions.storage_type': 'file',
             'tools.sessions.storage_path': session_dir,
             'tools.sessions.timeout': 129600,
+            'tools.sessions.locking': 'early',
             'tools.secureheaders.on': True
         },
         '/css':
