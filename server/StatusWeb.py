@@ -24,25 +24,16 @@
 """Main application, contains all web page handlers"""
 
 import argparse
-import inspect
 import json
 import logging
+import mako
 import os
 import signal
 import sys
 import cherrypy
-import mako
-import markdown
 import Api
-import InputChecker
-import StatusDb
+import App
 import UserMgr
-
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-clientdir = os.path.join(parentdir, 'client')
-sys.path.insert(0, clientdir)
-import keys
 
 from cherrypy.process.plugins import Daemonizer
 from mako.lookup import TemplateLookup
@@ -52,13 +43,10 @@ ACCESS_LOG = 'access.log'
 ERROR_LOG = 'error.log'
 
 LOGIN_URL = '/login'
-DASHBOARD_URL = '/dashboard'
-HTML_DIR = 'html'
 
-g_root_dir = os.path.dirname(os.path.abspath(__file__))
-g_root_url = ''
-g_tempmod_dir = os.path.join(g_root_dir, 'tempmod')
+
 g_app = None
+
 
 def signal_handler(signal, frame):
     global g_app
@@ -68,12 +56,14 @@ def signal_handler(signal, frame):
         g_app.terminate()
     sys.exit(0)
 
+
 @cherrypy.tools.register('before_finalize', priority=60)
 def secureheaders():
     headers = cherrypy.response.headers
     headers['X-Frame-Options'] = 'DENY'
     headers['X-XSS-Protection'] = '1; mode=block'
     headers['Content-Security-Policy'] = "default-src='self'"
+
 
 def check_auth(*args, **kwargs):
     global g_app
@@ -86,7 +76,7 @@ def check_auth(*args, **kwargs):
         requested_url_parts = requested_url.split('/')
         requested_url_parts = filter(lambda part: part != '', requested_url_parts)
 
-        username = g_app.user_mgr.get_logged_in_user()
+        username = g_app.app.user_mgr.get_logged_in_user()
         if username:
             cherrypy.request.login = username
             for condition in conditions:
@@ -95,6 +85,7 @@ def check_auth(*args, **kwargs):
                     raise cherrypy.HTTPRedirect(LOGIN_URL)
         else:
             raise cherrypy.HTTPRedirect(LOGIN_URL)
+
 
 def require(*conditions):
     # A decorator that appends conditions to the auth.require config variable.
@@ -107,85 +98,44 @@ def require(*conditions):
         return f
     return decorate
 
+
 class StatusWeb(object):
     """Class containing the URL handlers."""
 
-    def __init__(self, user_mgr):
+    def __init__(self, app):
+        self.app = app
         super(StatusWeb, self).__init__()
-        self.user_mgr = user_mgr
-        self.database = StatusDb.MongoDatabase(g_root_dir)
 
     def terminate(self):
         """Destructor"""
         logging.info("Terminating...")
-        self.user_mgr.terminate()
-        self.user_mgr = None
+        self.app.terminate()
+        self.app = None
 
     def log_error(self, log_str):
         """Writes an error message to the log file."""
         logger = logging.getLogger()
         logger.error(log_str)
 
-    @staticmethod
-    def create_navbar(logged_in=True):
-        """Helper function for building the navigation bar."""
-        navbar_str = "<nav>\n\t<ul>\n"
-        navbar_str += "\t\t<li><a href=\"https://github.com/msimms/ComputerStatus/\">GitHub</a></li>\n"
-        if logged_in is True:
-            navbar_str += "\t\t<li><a href=\"" + g_root_url + "/dashboard/\">Dashboard</a></li>\n"
-            navbar_str += "\t\t<li><a href=\"" + g_root_url + "/settings/\">Settings</a></li>\n"
-            navbar_str += "\t\t<li><a href=\"" + g_root_url + "/logout/\">Log Out</a></li>\n"
-        navbar_str += "\t</ul>\n</nav>"
-        return navbar_str
-
     @cherrypy.expose
     def error(self, error_str=None):
         """Renders the error page."""
         try:
             cherrypy.response.status = 500
-            error_html_file = os.path.join(g_root_dir, HTML_DIR, 'error.html')
-            my_template = Template(filename=error_html_file, module_directory=g_tempmod_dir)
-            if error_str is None:
-                error_str = "Internal Error."
+            return self.app.error(error_str)
         except:
-            self.log_error("Unhandled exception in " + StatusWeb.error.__name__)
-        return my_template.render(root_url=g_root_url, error=error_str)
+            pass
+        return self.app.error("")
 
     @cherrypy.expose
     def device(self, device_id, *args, **kw):
         """Page for displaying graphs about a particular device."""
         try:
-            title_str = self.database.retrieve_device_name(device_id)
-            if title_str is None:
-                title_str = "Device ID: " + str(device_id)
-
-            table_str = "\t<table>\n"
-            degree_sign = u'\N{DEGREE SIGN}'
-
-            statuses = self.database.retrieve_status(device_id, 1)
-            if statuses is not None and len(statuses) > 0:
-                last_status = statuses[len(statuses) - 1]
-
-                if keys.KEY_CPU_PERCENT in last_status:
-                    table_str += "\t\t<td>Current CPU Utilization</td><td>" + str(last_status[keys.KEY_CPU_PERCENT]) + "%</td><tr>\n"
-                if keys.KEY_CPU_TEMPERATURE in last_status:
-                    table_str += "\t\t<td>Current CPU Temperature</td><td>" + str(last_status[keys.KEY_CPU_TEMPERATURE]) + degree_sign + "C</td><tr>\n"
-                if keys.KEY_VIRTUAL_MEM_PERCENT in last_status:
-                    table_str += "\t\t<td>Current RAM Utilization</td><td>" + str(last_status[keys.KEY_VIRTUAL_MEM_PERCENT]) + "%</td><tr>\n"
-                if keys.KEY_GPU_PERCENT in last_status:
-                    table_str += "\t\t<td>Current GPU Utilization</td><td>" + str(last_status[keys.KEY_GPU_PERCENT]) + "%</td><tr>\n"
-                if keys.KEY_GPU_TEMPERATURE in last_status:
-                    table_str += "\t\t<td>Current GPU Temperature</td><td>" + str(last_status[keys.KEY_GPU_TEMPERATURE]) + degree_sign + "C</td><tr>\n"
-                if keys.KEY_NETWORK_BYTES_SENT in last_status:
-                    table_str += "\t\t<td>Bytes Sent</td><td>" + str(last_status[keys.KEY_NETWORK_BYTES_SENT]) + " Bytes </td><tr>\n"
-                if keys.KEY_NETWORK_BYTES_RECEIVED in last_status:
-                    table_str += "\t\t<td>Bytes Received</td><td>" + str(last_status[keys.KEY_NETWORK_BYTES_RECEIVED]) + " Bytes </td><tr>\n"
-
-            table_str += "\t</table>\n"
-
-            device_html_file = os.path.join(g_root_dir, HTML_DIR, 'device.html')
-            my_template = Template(filename=device_html_file, module_directory=g_tempmod_dir)
-            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, title=title_str, device_id=device_id, table=table_str)
+            return self.app.device(device_id)
+        except App.RedirectException as e:
+            raise cherrypy.HTTPRedirect(e.url)
+        except cherrypy.HTTPRedirect as e:
+            raise e
         except:
             self.log_error('Unhandled exception in ' + StatusWeb.device.__name__)
         return ""
@@ -194,28 +144,9 @@ class StatusWeb(object):
     def claim_device(self, device_id):
         """Associates a device with a user."""
         try:
-            # Get the logged in user.
-            username = self.user_mgr.get_logged_in_user()
-            if username is None:
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Get the details of the logged in user.
-            user_id, _, _ = self.user_mgr.retrieve_user(username)
-            if user_id is None:
-                self.log_error('Unknown user ID')
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Make sure the device ID is real.
-            device_status = self.database.retrieve_status(device_id, 1)
-            if device_status is None or len(device_status) == 0:
-                self.log_error('Unknown device ID')
-                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
-
-            # Add the device id to the database.
-            self.database.claim_device(user_id, device_id)
-
-            # Refresh the dashboard page.
-            raise cherrypy.HTTPRedirect(DASHBOARD_URL)
+            self.app.claim_device(device_id)
+        except App.RedirectException as e:
+            raise cherrypy.HTTPRedirect(e.url)
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
@@ -226,33 +157,11 @@ class StatusWeb(object):
     def delete_device(self, *args, **kw):
         """Deletes the device with the specified ID, assuming it is owned by the current user."""
         try:
-            # Get the logged in user.
-            username = self.user_mgr.get_logged_in_user()
-            if username is None:
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Get the details of the logged in user.
-            user_id, _, _ = self.user_mgr.retrieve_user(username)
-            if user_id is None:
-                self.log_error('Unknown user ID')
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
             # Get the device ID from the push request.
             device_id = cherrypy.request.params.get("device_id")
-
-            # Get the user's devices.
-            devices = self.database.retrieve_user_devices(user_id)
-            if not device_id in devices:
-                self.log_error('Unknown device ID')
-                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
-
-            # Delete the device.
-            self.database.delete_status(device_id)
-            self.database.delete_device_attributes(device_id)
-            self.database.unclaim_device(user_id, device_id)
-
-            # Refresh the dashboard page.
-            raise cherrypy.HTTPRedirect(DASHBOARD_URL)
+            self.app.delete_device(device_id)
+        except App.RedirectException as e:
+            raise cherrypy.HTTPRedirect(e.url)
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
@@ -263,33 +172,9 @@ class StatusWeb(object):
     def set_device_name(self, device_id, name):
         """Associates a name with a device's unique identifier."""
         try:
-            # Get the logged in user.
-            username = self.user_mgr.get_logged_in_user()
-            if username is None:
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Get the details of the logged in user.
-            user_id, _, _ = self.user_mgr.retrieve_user(username)
-            if user_id is None:
-                self.log_error('Unknown user ID')
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Validate the device name.
-            if not InputChecker.is_valid(name):
-                self.log_error('Invalid device name')
-                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
-
-            # Get the user's devices.
-            devices = self.database.retrieve_user_devices(user_id)
-            if not device_id in devices:
-                self.log_error('Unknown device ID')
-                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
-
-            # Add the device id to the database.
-            self.database.create_device_name(device_id, name)
-
-            # Refresh the dashboard page.
-            raise cherrypy.HTTPRedirect(DASHBOARD_URL)
+            self.app.set_device_name(device_id, name)
+        except App.RedirectException as e:
+            raise cherrypy.HTTPRedirect(e.url)
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
@@ -300,28 +185,9 @@ class StatusWeb(object):
     def set_device_attribute_color(self, device_id, attribute, color):
         """Associates a color with a device."""
         try:
-            # Get the logged in user.
-            username = self.user_mgr.get_logged_in_user()
-            if username is None:
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Get the details of the logged in user.
-            user_id, _, _ = self.user_mgr.retrieve_user(username)
-            if user_id is None:
-                self.log_error('Unknown user ID')
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Get the user's devices.
-            devices = self.database.retrieve_user_devices(user_id)
-            if not device_id in devices:
-                self.log_error('Unknown device ID')
-                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
-
-            # Add the device id to the database.
-            self.database.create_device_attribute_color(device_id, attribute, color)
-
-            # Refresh the dashboard page.
-            raise cherrypy.HTTPRedirect(DASHBOARD_URL)
+            self.app.set_device_attribute_color(device_id, attribute, color)
+        except App.RedirectException as e:
+            raise cherrypy.HTTPRedirect(e.url)
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
@@ -333,36 +199,9 @@ class StatusWeb(object):
     def dashboard(self, *args, **kw):
         """Page for displaying the devices owned by a particular user."""
         try:
-            # Get the logged in user.
-            username = self.user_mgr.get_logged_in_user()
-            if username is None:
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Get the details of the logged in user.
-            user_id, _, _ = self.user_mgr.retrieve_user(username)
-            if user_id is None:
-                self.log_error('Unknown user ID')
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Get the user's devices.
-            devices = self.database.retrieve_user_devices(user_id)
-
-            # Render a table containing the user's devices.
-            device_table_str = "\t<table>\n"
-            device_table_str += "\t\t<td><b>Name</b></td><td><b>Device ID</b></td><td></td><tr>\n"
-            if devices is not None:
-                for device in devices:
-                    device_id_str = str(device)
-                    device_name = self.database.retrieve_device_name(device_id_str)
-                    if device_name is None:
-                        device_name = "Untitled"
-                    device_table_str += "\t\t<td>" + device_name + "</td><td><a href=\"" + g_root_url + "/device/" + device_id_str + "\">" + device_id_str + "</a></td><td><button type=\"button\" onclick=\"return on_delete('" + device_id_str + "')\">Delete</button></td><tr>\n"
-            device_table_str += "\t</table>\n"
-
-            # Render the dashboard page.
-            dashboard_html_file = os.path.join(g_root_dir, HTML_DIR, 'dashboard.html')
-            my_template = Template(filename=dashboard_html_file, module_directory=g_tempmod_dir)
-            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, devices=device_table_str)
+            return self.app.dashboard()
+        except App.RedirectException as e:
+            raise cherrypy.HTTPRedirect(e.url)
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
@@ -374,21 +213,9 @@ class StatusWeb(object):
     def settings(self, *args, **kw):
         """Renders the user's settings page."""
         try:
-            # Get the logged in user.
-            username = self.user_mgr.get_logged_in_user()
-            if username is None:
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Get the details of the logged in user.
-            user_id, _, user_realname = self.user_mgr.retrieve_user(username)
-            if user_id is None:
-                self.log_error('Unknown user ID')
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Render from template.
-            html_file = os.path.join(g_root_dir, HTML_DIR, 'settings.html')
-            my_template = Template(filename=html_file, module_directory=g_tempmod_dir)
-            return my_template.render(nav=self.create_navbar(), root_url=g_root_url, email=username, name=user_realname)
+            return self.app.settings()
+        except App.RedirectException as e:
+            raise cherrypy.HTTPRedirect(e.url)
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
@@ -401,15 +228,9 @@ class StatusWeb(object):
         try:
             email = cherrypy.request.params.get("email")
             password = cherrypy.request.params.get("password")
-
-            if email is None or password is None:
-                raise Exception("An email address and password were not provided.")
-            else:
-                if self.user_mgr.authenticate_user(email, password):
-                    self.user_mgr.create_new_session(email)
-                    raise cherrypy.HTTPRedirect(DASHBOARD_URL)
-                else:
-                    raise Exception("Unknown error.")
+            return self.app.submit_login(email, password)
+        except App.RedirectException as e:
+            raise cherrypy.HTTPRedirect(e.url)
         except cherrypy.HTTPRedirect as e:
             raise e
         except Exception as e:
@@ -417,18 +238,16 @@ class StatusWeb(object):
             self.log_error(error_msg)
             return self.error(error_msg)
         except:
-            self.log_error('Unhandled exception in ' + StatusWeb.submit_login.__name__)
+            self.log_error('Unhandled exception in ' + StraenWeb.submit_login.__name__)
         return self.error()
 
     @cherrypy.expose
     def submit_new_login(self, email, realname, password1, password2, *args, **kw):
         """Creates a new login."""
         try:
-            if self.user_mgr.create_user(email, realname, password1, password2):
-                self.user_mgr.create_new_session(email)
-                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
-            else:
-                raise Exception("Unknown error.")
+            return self.app.submit_new_login(email, realname, password1, password2)
+        except App.RedirectException as e:
+            raise cherrypy.HTTPRedirect(e.url)
         except cherrypy.HTTPRedirect as e:
             raise e
         except Exception as e:
@@ -436,65 +255,43 @@ class StatusWeb(object):
             self.log_error(error_msg)
             return self.error(error_msg)
         except:
-            self.log_error('Unhandled exception in ' + StatusWeb.submit_new_login.__name__)
+            self.log_error('Unhandled exception in ' + StraenWeb.submit_new_login.__name__)
         return self.error()
 
     @cherrypy.expose
     def login(self):
         """Renders the login page."""
         try:
-            # If a user is already logged in then go straight to the landing page.
-            username = self.user_mgr.get_logged_in_user()
-            if username is not None:
-                raise cherrypy.HTTPRedirect(DASHBOARD_URL)
-
-            html = ""
-            readme_file_name = os.path.realpath(os.path.join(g_root_dir, '..', 'README.md'))
-            with open(readme_file_name, 'r') as readme_file:
-                md = readme_file.read()
-                extensions = ['extra', 'smarty']
-                html = markdown.markdown(md, extensions=extensions, output_format='html5')
-
-            login_html_file = os.path.join(g_root_dir, HTML_DIR, 'login.html')
-            my_template = Template(filename=login_html_file, module_directory=g_tempmod_dir)
-            result = my_template.render(nav=self.create_navbar(False), root_url=g_root_url, readme=html)
+            return self.app.login()
+        except App.RedirectException as e:
+            raise cherrypy.HTTPRedirect(e.url)
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
-            result = self.error()
-        return result
+            return self.error()
+        return self.error()
 
     @cherrypy.expose
     def create_login(self):
         """Renders the create login page."""
         try:
-            create_login_html_file = os.path.join(g_root_dir, HTML_DIR, 'create_login.html')
-            my_template = Template(filename=create_login_html_file, module_directory=g_tempmod_dir)
-            result = my_template.render(nav=self.create_navbar(False), root_url=g_root_url)
+            return self.app.create_login()
         except:
-            result = self.error()
-        return result
+            return self.error()
+        return self.error()
 
     @cherrypy.expose
     def logout(self):
         """Ends the logged in session."""
         try:
-            # Get the logged in user.
-            username = self.user_mgr.get_logged_in_user()
-            if username is None:
-                raise cherrypy.HTTPRedirect(LOGIN_URL)
-
-            # Clear the session.
-            self.user_mgr.clear_session()
-
-            # Send the user back to the login screen.
-            raise cherrypy.HTTPRedirect(LOGIN_URL)
-
+            return self.app.logout()
+        except App.RedirectException as e:
+            raise cherrypy.HTTPRedirect(e.url)
         except cherrypy.HTTPRedirect as e:
             raise e
         except:
-            result = self.error()
-        return result
+            return self.error()
+        return self.error()
 
     @cherrypy.expose
     def index(self):
@@ -508,9 +305,9 @@ class StatusWeb(object):
         try:
             # Get the logged in user.
             user_id = None
-            username = self.user_mgr.get_logged_in_user()
+            username = self.app.user_mgr.get_logged_in_user()
             if username is not None:
-                user_id, _, _ = self.user_mgr.retrieve_user(username)
+                user_id, _, _ = self.app.user_mgr.retrieve_user(username)
 
             # The the API params.
             if cherrypy.request.method == "GET":
@@ -526,10 +323,10 @@ class StatusWeb(object):
             if len(args) > 0:
                 api_version = args[0]
                 if api_version == '1.0':
-                    api = Api.Api(g_root_dir, self.user_mgr, user_id)
-                    handled, response = api.handle_api_1_0_request(args[1:], params)
+                    method = args[1:]
+                    handled, response = self.app.api(user_id, method, params)
                     if not handled:
-                        self.log_error("Failed to handle request: " + args[1:])
+                        self.log_error("Failed to handle request: " + method)
                         cherrypy.response.status = 400
                     else:
                         cherrypy.response.status = 200
@@ -548,8 +345,6 @@ class StatusWeb(object):
 
 
 def main():
-    global g_root_dir
-    global g_root_url
     global g_app
 
     # Parse command line options.
@@ -569,14 +364,14 @@ def main():
 
     if args.debug:
         if args.https:
-            g_root_url = "https://127.0.0.1:" + str(args.port)
+            root_url = "https://127.0.0.1:" + str(args.port)
         else:
-            g_root_url = "http://127.0.0.1:" + str(args.port)
+            root_url = "http://127.0.0.1:" + str(args.port)
     else:
         if args.https:
-            g_root_url = 'https://' + args.url
+            root_url = 'https://' + args.url
         else:
-            g_root_url = 'http://' + args.url
+            root_url = 'http://' + args.url
 
         Daemonizer(cherrypy.engine).subscribe()
 
@@ -592,11 +387,13 @@ def main():
     mako.collection_size = 100
     mako.directories = "templates"
 
-    user_mgr = UserMgr.UserMgr(g_root_dir)
-    g_app = StatusWeb(user_mgr)
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    user_mgr = UserMgr.UserMgr(root_dir)
+    backend = App.App(user_mgr, root_dir, root_url)
+    g_app = StatusWeb(backend)
 
     # The direcory for session objects.
-    session_dir = os.path.join(g_root_dir, 'sessions')
+    session_dir = os.path.join(root_dir, 'sessions')
     if not os.path.exists(session_dir):
         os.makedirs(session_dir)
 
@@ -605,7 +402,7 @@ def main():
     conf = {
         '/':
         {
-            'tools.staticdir.root': g_root_dir,
+            'tools.staticdir.root': root_dir,
             'tools.statusweb_auth.on': True,
             'tools.sessions.on': True,
             'tools.sessions.name': 'statusweb_auth',
