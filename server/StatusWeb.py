@@ -31,7 +31,6 @@ import os
 import signal
 import sys
 import cherrypy
-import Api
 import App
 import UserMgr
 
@@ -238,7 +237,7 @@ class StatusWeb(object):
             self.log_error(error_msg)
             return self.error(error_msg)
         except:
-            self.log_error('Unhandled exception in ' + StraenWeb.submit_login.__name__)
+            self.log_error('Unhandled exception in ' + StatusWeb.submit_login.__name__)
         return self.error()
 
     @cherrypy.expose
@@ -255,7 +254,7 @@ class StatusWeb(object):
             self.log_error(error_msg)
             return self.error(error_msg)
         except:
-            self.log_error('Unhandled exception in ' + StraenWeb.submit_new_login.__name__)
+            self.log_error('Unhandled exception in ' + StatusWeb.submit_new_login.__name__)
         return self.error()
 
     @cherrypy.expose
