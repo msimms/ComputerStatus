@@ -1,3 +1,5 @@
+[![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
+
 # ComputerStatus
 This software is for anyone that needs to monitor their computer usage. It consists of client and server components, however, the server software is only necessary if you wish to remotely monitor your computer.
 
