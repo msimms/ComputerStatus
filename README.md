@@ -46,5 +46,10 @@ python StatusWeb.py --cert cert.pem --privkey key.pem --https
 * Support for AMD GPUs
 * Testing with multiple GPUs
 
+## Tech
+This software uses these projects to work properly:
+
+* [pymongo](https://github.com/mongodb/mongo-python-driver) - Python interface to mongodb.
+
 ## License
 This is open source software and is released under the MIT license.
