@@ -88,7 +88,7 @@ class MonitorThread(threading.Thread):
             r = requests.post(url, data=values)
             logging.info("Server Response: " + str(r))
             if self.verbose:
-                print r
+                print(r)
         except:
             logging.error("Error sending to the server.")
 
@@ -170,7 +170,7 @@ class MonitorThread(threading.Thread):
 
             logging.info(values)
             if self.verbose:
-                print values
+                print(values)
 
             if self.post_file is not None and len(self.post_file) > 0:
                 self.execute_post_file(values)
