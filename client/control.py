@@ -126,7 +126,7 @@ if __name__ == "__main__":
     # Check the cron file for existence, if applicable.
     if len(args.cron) > 0:
         if not os.path.isfile(args.cron):
-            print "The specified cron file does not exist."
+            print("The specified cron file does not exist.")
             sys.exit(1)
 
     # Configure the log file, if applicable.

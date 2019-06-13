@@ -28,8 +28,8 @@ def do(values):
     """The client calls this after each iteration of checks."""
     if keys.KEY_CPU_PERCENT in values:
         if values[keys.KEY_CPU_PERCENT] < 10:
-            print "CPU utilization is less than 10."
+            print("CPU utilization is less than 10.")
         else:
-            print "CPU utilization is greater than 10."
+            print("CPU utilization is greater than 10.")
     else:
-        print "CPU utilization not provided."
+        print("CPU utilization not provided.")

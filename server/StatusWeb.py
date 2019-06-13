@@ -375,12 +375,12 @@ def main():
         Daemonizer(cherrypy.engine).subscribe()
 
     if args.https:
-        print "Running HTTPS...."
+        print("Running HTTPS....")
         cherrypy.server.ssl_module = 'builtin'
         cherrypy.server.ssl_certificate = args.cert
-        print "Certificate File: " + args.cert
+        print("Certificate File: " + args.cert)
         cherrypy.server.ssl_private_key = args.privkey
-        print "Private Key File: " + args.privkey
+        print("Private Key File: " + args.privkey)
 
     signal.signal(signal.SIGINT, signal_handler)
     mako.collection_size = 100
