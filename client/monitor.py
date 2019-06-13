@@ -30,7 +30,10 @@ import subprocess
 import sys
 import threading
 import time
-import urlparse
+if sys.version_info[0] < 3:
+    import urlparse
+else:
+    import urllib.parse as urlparse
 import uuid
 import requests
 import psutil
