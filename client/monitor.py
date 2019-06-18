@@ -22,7 +22,6 @@
 """Implements client monitoring and (optional) reporting to the server."""
 
 import argparse
-import imp
 import logging
 import os
 import signal
@@ -31,8 +30,10 @@ import sys
 import threading
 import time
 if sys.version_info[0] < 3:
+    import imp
     import urlparse
 else:
+    from importlib.machinery import SourceFileLoader
     import urllib.parse as urlparse
 import uuid
 import requests
@@ -64,7 +65,10 @@ class MonitorThread(threading.Thread):
         self.last_net_io = None
         self.post_module = None
         if os.path.isfile(self.post_file):
-            self.post_module = imp.load_source("", self.post_file)
+            if sys.version_info[0] < 3:
+                self.post_module = imp.load_source("", self.post_file)
+            else:
+                self.post_module = mymodule = SourceFileLoader('modname', self.post_file).load_module()
 
         if self.server:
             # Look for device ID file; generate one if not found.
