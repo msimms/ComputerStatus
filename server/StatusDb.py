@@ -46,7 +46,7 @@ class MongoDatabase(Database.Database):
             self.devices_collection = self.database['devices']
             self.status_collection = self.database['status']
             return True
-        except pymongo.errors.ConnectionFailure, e:
+        except pymongo.errors.ConnectionFailure as e:
             self.log_error("Could not connect to MongoDB: %s" % e)
         return False
 
