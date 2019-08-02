@@ -104,11 +104,26 @@ class MonitorThread(threading.Thread):
         try:
             process = subprocess.Popen(['nvidia-smi', '--query-gpu=name,pci.bus_id,driver_version,pstate,pcie.link.gen.max,pcie.link.gen.current,temperature.gpu,utilization.gpu,utilization.memory,memory.total,memory.free,memory.used', '--format=csv'], stdout=subprocess.PIPE)
             out_str, _ = process.communicate()
-            out_str = out_str.split('\n')[1]
-            out = out_str.split(',')
-            values[keys.KEY_GPU_NAME] = out[0].strip(' \t\n\r')
-            values[keys.KEY_GPU_TEMPERATURE] = int(out[6].strip(' \t\n\r'))
-            values[keys.KEY_GPU_PERCENT] = int(out[7].strip(' \t\n\r%%s'))
+            gpu_strs = out_str.split('\n')
+
+            # Get rid of the column headers.
+            if len(gpu_strs) > 0:
+                gpu_strs = gpu_strs[1:]
+
+            # Process each GPU string.
+            multi_gpu = len(gpu_strs) > 1
+            gpu_index = 1
+            for gpu_str in gpu_strs:
+                out = gpu_str.split(',')
+                if multi_gpu:
+                    values[keys.KEY_GPUX_NAME.replace('X', str(gpu_index))] = out[0].strip(' \t\n\r')
+                    values[keys.KEY_GPUX_TEMPERATURE.replace('X', str(gpu_index))] = int(out[6].strip(' \t\n\r'))
+                    values[keys.KEY_GPUX_PERCENT.replace('X', str(gpu_index))] = int(out[7].strip(' \t\n\r%%s'))
+                    gpu_index = gpu_index + 1
+                else:
+                    values[keys.KEY_GPU_NAME] = out[0].strip(' \t\n\r')
+                    values[keys.KEY_GPU_TEMPERATURE] = int(out[6].strip(' \t\n\r'))
+                    values[keys.KEY_GPU_PERCENT] = int(out[7].strip(' \t\n\r%%s'))
         except:
             logging.error("Error collecting GPU stats.")
 
