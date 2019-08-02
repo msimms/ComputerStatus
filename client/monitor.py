@@ -115,15 +115,16 @@ class MonitorThread(threading.Thread):
             gpu_index = 1
             for gpu_str in gpu_strs:
                 out = gpu_str.split(',')
-                if multi_gpu:
-                    values[keys.KEY_GPUX_NAME.replace('X', str(gpu_index))] = out[0].strip(' \t\n\r')
-                    values[keys.KEY_GPUX_TEMPERATURE.replace('X', str(gpu_index))] = int(out[6].strip(' \t\n\r'))
-                    values[keys.KEY_GPUX_PERCENT.replace('X', str(gpu_index))] = int(out[7].strip(' \t\n\r%%s'))
-                    gpu_index = gpu_index + 1
-                else:
-                    values[keys.KEY_GPU_NAME] = out[0].strip(' \t\n\r')
-                    values[keys.KEY_GPU_TEMPERATURE] = int(out[6].strip(' \t\n\r'))
-                    values[keys.KEY_GPU_PERCENT] = int(out[7].strip(' \t\n\r%%s'))
+                if len(out) > 0:
+                    if multi_gpu:
+                        values[keys.KEY_GPUX_NAME.replace('X', str(gpu_index))] = out[0].strip(' \t\n\r')
+                        values[keys.KEY_GPUX_TEMPERATURE.replace('X', str(gpu_index))] = int(out[6].strip(' \t\n\r'))
+                        values[keys.KEY_GPUX_PERCENT.replace('X', str(gpu_index))] = int(out[7].strip(' \t\n\r%%s'))
+                        gpu_index = gpu_index + 1
+                    else:
+                        values[keys.KEY_GPU_NAME] = out[0].strip(' \t\n\r')
+                        values[keys.KEY_GPU_TEMPERATURE] = int(out[6].strip(' \t\n\r'))
+                        values[keys.KEY_GPU_PERCENT] = int(out[7].strip(' \t\n\r%%s'))
         except:
             logging.error("Error collecting GPU stats.")
 
