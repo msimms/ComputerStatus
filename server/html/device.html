@@ -206,25 +206,16 @@ ${nav}
 
 	function retrieve_printable_name(ugly_name)
 	{
-		if (ugly_name == "cpu - percent")
-			return "CPU - %";
-		else if (ugly_name == "cpu - temperature")
-			return "CPU - Temperature";
-		else if (ugly_name == "virtual memory - percent")
-			return "RAM - %";
-		else if (ugly_name == "gpu - percent")
-			return "GPU - %";
-		else if (ugly_name == "gpu - temperature")
-			return "GPU - Temperature";
-		else if (ugly_name == "network - bytes sent")
-			return "Bytes Sent";
-		else if (ugly_name == "network - bytes received")
-			return "Bytes Received";
-		else if (ugly_name == "network - bytes sent per sample")
-			return "Bytes Sent / Sample";
-		else if (ugly_name == "network - bytes received per sample")
-			return "Bytes Received / Sample";
-		return ugly_name;
+        ugly_name = ugly_name.replace("cpu", "CPU");
+        ugly_name = ugly_name.replace("gpu", "GPU");
+        ugly_name = ugly_name.replace("percent", "%");
+        ugly_name = ugly_name.replace("temperature", "Temperature");
+        ugly_name = ugly_name.replace("virtual memory", "RAM");
+        ugly_name = ugly_name.replace("network", "Network");
+        ugly_name = ugly_name.replace("bytes sent", "Bytes Sent");
+        ugly_name = ugly_name.replace("bytes received", "Bytes Received");
+        ugly_name = ugly_name.replace("per sample", "Per Sample");
+        return ugly_name;
 	}
 
 	function retrieve_graph_color(attribute_str)
