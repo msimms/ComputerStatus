@@ -113,30 +113,67 @@ class App(object):
         table_str = "\t<table>\n"
         degree_sign = u'\N{DEGREE SIGN}'
 
+        keys_to_graph = []
         statuses = self.database.retrieve_status(device_id, 1)
         if statuses is not None and len(statuses) > 0:
             last_status = statuses[len(statuses) - 1]
 
+            # Latest CPU values.
             if keys.KEY_CPU_PERCENT in last_status:
                 table_str += "\t\t<td>Current CPU Utilization</td><td>" + str(last_status[keys.KEY_CPU_PERCENT]) + "%</td><tr>\n"
+                keys_to_graph.append(keys.KEY_CPU_PERCENT)
             if keys.KEY_CPU_TEMPERATURE in last_status:
                 table_str += "\t\t<td>Current CPU Temperature</td><td>" + str(last_status[keys.KEY_CPU_TEMPERATURE]) + degree_sign + "C</td><tr>\n"
+                keys_to_graph.append(keys.KEY_CPU_TEMPERATURE)
+
+            # Latest memory value.
             if keys.KEY_VIRTUAL_MEM_PERCENT in last_status:
                 table_str += "\t\t<td>Current RAM Utilization</td><td>" + str(last_status[keys.KEY_VIRTUAL_MEM_PERCENT]) + "%</td><tr>\n"
+                keys_to_graph.append(keys.KEY_VIRTUAL_MEM_PERCENT)
+
+            # Latest GPU value (single GPU).
             if keys.KEY_GPU_PERCENT in last_status:
                 table_str += "\t\t<td>Current GPU Utilization</td><td>" + str(last_status[keys.KEY_GPU_PERCENT]) + "%</td><tr>\n"
+                keys_to_graph.append(keys.KEY_GPU_PERCENT)
             if keys.KEY_GPU_TEMPERATURE in last_status:
                 table_str += "\t\t<td>Current GPU Temperature</td><td>" + str(last_status[keys.KEY_GPU_TEMPERATURE]) + degree_sign + "C</td><tr>\n"
+                keys_to_graph.append(keys.KEY_GPU_TEMPERATURE)
+
+            # Latest GPU values (multiple GPUs).
+            found_gpu = True
+            while found_gpu:
+                gpu_index = 1
+
+                # Utilization.
+                gpu_key_name = keys.KEY_GPUX_PERCENT.replace('X', str(gpu_index))
+                found_gpu = gpu_key_name in last_status
+                if found_gpu:
+                    table_str += "\t\t<td>Current GPU " + str(gpu_index) + " Utilization</td><td>" + str(last_status[keys.KEY_GPU_TEMPERATURE]) + "%</td><tr>\n"
+                    keys_to_graph.append(gpu_key_name)
+                
+                # Temperature.
+                gpu_key_name = keys.KEY_GPUX_TEMPERATURE.replace('X', str(gpu_index))
+                found_gpu = gpu_key_name in last_status
+                if found_gpu:
+                    table_str += "\t\t<td>Current GPU " + str(gpu_index) + " Temperature</td><td>" + str(last_status[keys.KEY_GPU_TEMPERATURE]) + degree_sign + "C</td><tr>\n"
+                    keys_to_graph.append(gpu_key_name)
+
+            # Latest network values.            
             if keys.KEY_NETWORK_BYTES_SENT in last_status:
                 table_str += "\t\t<td>Bytes Sent</td><td>" + str(last_status[keys.KEY_NETWORK_BYTES_SENT]) + " Bytes </td><tr>\n"
+                keys_to_graph.append(keys.KEY_NETWORK_BYTES_SENT)
             if keys.KEY_NETWORK_BYTES_RECEIVED in last_status:
                 table_str += "\t\t<td>Bytes Received</td><td>" + str(last_status[keys.KEY_NETWORK_BYTES_RECEIVED]) + " Bytes </td><tr>\n"
+                keys_to_graph.append(keys.KEY_NETWORK_BYTES_RECEIVED)
 
         table_str += "\t</table>\n"
+        keys_to_graph = str(keys_to_graph).replace('\', \'', ',')
+        keys_to_graph = keys_to_graph.replace('[', '')
+        keys_to_graph = keys_to_graph.replace(']', '')
 
         device_html_file = os.path.join(self.root_dir, HTML_DIR, 'device.html')
         my_template = Template(filename=device_html_file, module_directory=self.tempmod_dir)
-        return my_template.render(nav=self.create_navbar(), root_url=self.root_url, title=title_str, device_id=device_id, table=table_str)
+        return my_template.render(nav=self.create_navbar(), root_url=self.root_url, title=title_str, device_id=device_id, table=table_str, keys_to_graph=keys_to_graph)
 
     def claim_device(self, device_id):
         """Associates a device with a user."""
