@@ -141,22 +141,24 @@ class App(object):
 
             # Latest GPU values (multiple GPUs).
             found_gpu = True
+            gpu_index = 1
             while found_gpu:
-                gpu_index = 1
 
                 # Utilization.
                 gpu_key_name = keys.KEY_GPUX_PERCENT.replace('X', str(gpu_index))
                 found_gpu = gpu_key_name in last_status
                 if found_gpu:
-                    table_str += "\t\t<td>Current GPU " + str(gpu_index) + " Utilization</td><td>" + str(last_status[keys.KEY_GPU_TEMPERATURE]) + "%</td><tr>\n"
+                    table_str += "\t\t<td>Current GPU " + str(gpu_index) + " Utilization</td><td>" + str(last_status[gpu_key_name]) + "%</td><tr>\n"
                     keys_to_graph.append(gpu_key_name)
                 
                 # Temperature.
                 gpu_key_name = keys.KEY_GPUX_TEMPERATURE.replace('X', str(gpu_index))
                 found_gpu = gpu_key_name in last_status
                 if found_gpu:
-                    table_str += "\t\t<td>Current GPU " + str(gpu_index) + " Temperature</td><td>" + str(last_status[keys.KEY_GPU_TEMPERATURE]) + degree_sign + "C</td><tr>\n"
+                    table_str += "\t\t<td>Current GPU " + str(gpu_index) + " Temperature</td><td>" + str(last_status[gpu_key_name]) + degree_sign + "C</td><tr>\n"
                     keys_to_graph.append(gpu_key_name)
+
+                gpu_index = gpu_index + 1
 
             # Latest network values.            
             if keys.KEY_NETWORK_BYTES_SENT in last_status:
