@@ -105,7 +105,13 @@ class Api(object):
         if 'attribute' not in values:
             raise Exception("attribute not specified.")
 
-        return True, self.database.retrieve_device_color(values["device_id"], values["attribute"])
+        # Retrieve the device color from the database.
+        device_color = self.database.retrieve_device_color(values["device_id"], values["attribute"])
+
+        # If there was nothing in the database then set it to the default of 'black'.
+        if device_color is None:
+            device_color = "black"
+        return True, device_color
 
     def handle_update_email(self, values):
         """Updates the user's email address."""
