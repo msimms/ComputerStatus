@@ -115,7 +115,7 @@ class MonitorThread(threading.Thread):
             gpu_index = 1
             for gpu_str in gpu_strs:
                 out = gpu_str.split(',')
-                if len(out) > 0:
+                if len(out) > 1:
                     if multi_gpu:
                         values[keys.KEY_GPUX_NAME.replace('X', str(gpu_index))] = out[0].strip(' \t\n\r')
                         values[keys.KEY_GPUX_TEMPERATURE.replace('X', str(gpu_index))] = int(out[6].strip(' \t\n\r'))
