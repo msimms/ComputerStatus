@@ -56,7 +56,14 @@ ${nav}
 
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.0/d3.js" integrity="sha256-WTp2ccWeyvNJn44PKZ0I9sfZ3vY6qmpWT0C/L4fU7yU=" crossorigin="anonymous"></script>
+
 <script type="text/javascript">
+
+    window.onorientationchange = function()
+    { 
+        document.location.reload(); 
+    };
+
 	function draw_chart(data, title, color)
 	{
 		var margin = {top: 20, right: 20, bottom: 75, left: 75};
@@ -76,7 +83,7 @@ ${nav}
 			d.date = new Date(d.date * 1000);
 			d.value = +d.value;
 		});
-		
+
 		// Setup zoom.
 		var zoom = d3.zoom()
 			.extent([[margin.left, margin.bottom], [width + margin.right, margin.top + height]])
@@ -84,7 +91,7 @@ ${nav}
 		function zoomed()
 		{
 			svg.selectAll(".charts").attr("transform", d3.event.transform);
-			gY.call(yAxis.scale(d3.event.transform.rescaleY(y)));
+			//gY.call(yAxis.scale(d3.event.transform.rescaleY(y)));
 			gX.call(xAxis.scale(d3.event.transform.rescaleX(x)));
 		}
 
@@ -95,6 +102,13 @@ ${nav}
 			.attr("height", height)
 			.attr("fill", "transparent")
 			.call(zoom);
+
+		// Define the clipping rectangle.
+		var clippy = g.append("defs").append("clipPath")
+			.attr("id", "clip")
+			.append("rect")
+				.attr("width", width)
+				.attr("height", height);
 
 		// Scale the range of the data.
 		var x = d3.scaleTime()
@@ -108,7 +122,7 @@ ${nav}
 		var xAxis = d3.axisBottom(x).tickFormat(d3.timeFormat("%Y-%m-%d %H:%M:%S"));
 		var gX = g.append("g")
 			.attr("class", "axis axis--x")
-			.attr("transform", "translate(0," + height + ")")
+			.attr("transform", "translate(0," + height + ")") // Puts the x-axis at the bottom of the graph
 		    .call(xAxis);
 
 		// Add the Y axis.
@@ -116,13 +130,6 @@ ${nav}
 		var gY = g.append("g")
 			.attr("class", "axis axis--y")
 			.call(yAxis);
-
-		// Define the clipping rectangle.
-		var clippy = g.append("defs").append("clipPath")
-			.attr("id", "clip")
-			.append("rect")
-				.attr("width", width)
-				.attr("height", height);
 
 		// Add the line.
 		var valueline = d3.line()
