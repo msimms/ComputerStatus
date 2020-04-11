@@ -192,6 +192,31 @@ class Api(object):
         self.user_mgr.delete_user(self.user_id)
         return True, ""
 
+    def handle_list_devices(self, values):
+        """Handles a request to list the devices registered to the current user."""
+        if self.user_id is None:
+            raise Exception("Not logged in.")
+
+        # Get the logged in user.
+        username = self.user_mgr.get_logged_in_user()
+        if username is None:
+            raise Exception("Empty username.")
+
+        # Get the user's devices.
+        device_ids = self.database.retrieve_user_devices(self.user_id)
+
+        # Add the device name.
+        device_records = []
+        for device_id in device_ids:
+            device_record = {}
+            device_record['id'] = device_id
+            device_record['name'] = self.database.retrieve_device_name(device_id)
+            device_records.append(device_record)
+
+        # Convert to JSON and return.
+        json_result = json.dumps(device_records, ensure_ascii=False)
+        return True, json_result
+
     def handle_api_1_0_request(self, args, values):
         """Called to parse a version 1.0 API message."""
         if args is None or len(args) <= 0:
@@ -210,4 +235,6 @@ class Api(object):
             return self.handle_update_password(values)
         elif request == 'delete_user':
             return self.handle_delete_user(values)
+        elif request == 'list_devices':
+            return self.handle_list_devices(values)
         return False, ""

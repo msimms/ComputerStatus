@@ -12,31 +12,6 @@ h2 {
 	background: #FFFFFF;
 }
 
-.nav ul {
-	list-style-type: none;
-	overflow: hidden;
-	background-color: #333;
-	margin: 0px;
-	padding: 0px;
-}
-
-.nav li {
-	float: left;
-}
-
-.nav li a {
-	display: inline-block;
-	color: white;
-	text-align: center;
-	margin: 0px;
-	padding: 14px 16px;
-	text-decoration: none;
-}
-
-.nav li a:hover {
-	background-color: #111;
-}
-
 section {
 	color: #000000;
 	background: #FFFFFF;
@@ -45,28 +20,8 @@ section {
 	padding: 0px;
 }
 
-.active {
-	opacity: 1.0;
-}
-
-.left {
-	display: inline-block;
-	background-color: #777713;
-	width: 250px;
-}
-
-.right {
-	display: inline-block;
-	background-color: #FFFFFF;
-	width: 1000px;
-}
-
-.left img {
-	margin: 20px;
-	width: 200px;
-	border: 3px;
-	border-style: solid;
-	border-color: #000000;
+div {
+	margin: 10px;
 }
 
 table {
@@ -102,6 +57,55 @@ tr:hover {
 	opacity: 1.0;
 }
 
+.nav ul {
+	list-style-type: none;
+	overflow: hidden;
+	background-color: #333;
+	margin: 0px;
+	padding: 0px;
+}
+
+.nav li {
+	float: left;
+}
+
+.nav li a {
+	display: inline-block;
+	color: white;
+	text-align: center;
+	margin: 0px;
+	padding: 14px 16px;
+	text-decoration: none;
+}
+
+.nav li a:hover {
+	background-color: #111;
+}
+
+.active {
+	opacity: 1.0;
+}
+
+.left {
+	display: inline-block;
+	background-color: #777713;
+	width: 250px;
+}
+
+.right {
+	display: inline-block;
+	background-color: #FFFFFF;
+	width: 1000px;
+}
+
+.left img {
+	margin: 20px;
+	width: 200px;
+	border: 3px;
+	border-style: solid;
+	border-color: #000000;
+}
+
 .user_search_form {
 	width: 200px;
 	margin: 50px auto;
@@ -118,12 +122,17 @@ tr:hover {
 	padding-bottom: .25cm;
 }
 
+.claim_device {
+	padding: 25px;
+}
+
 .claim_device ul {
 	list-style-type: none;
 	margin: 0px;
 	padding: 0px;
 }
 
-div {
-	margin: 10px;
+.claim_device li {
+	display: inline;
+	padding-bottom: .25cm;
 }

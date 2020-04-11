@@ -305,22 +305,10 @@ class App(object):
         # Get the user's devices.
         devices = self.database.retrieve_user_devices(user_id)
 
-        # Render a table containing the user's devices.
-        device_table_str = "\t<table>\n"
-        device_table_str += "\t\t<td><b>Name</b></td><td><b>Device ID</b></td><td></td><tr>\n"
-        if devices is not None:
-            for device in devices:
-                device_id_str = str(device)
-                device_name = self.database.retrieve_device_name(device_id_str)
-                if device_name is None:
-                    device_name = "Untitled"
-                device_table_str += "\t\t<td>" + device_name + "</td><td><a href=\"" + self.root_url + "/device/" + device_id_str + "\">" + device_id_str + "</a></td><td><button type=\"button\" onclick=\"return on_delete('" + device_id_str + "')\">Delete</button></td><tr>\n"
-        device_table_str += "\t</table>\n"
-
         # Render the dashboard page.
         dashboard_html_file = os.path.join(self.root_dir, HTML_DIR, 'dashboard.html')
         my_template = Template(filename=dashboard_html_file, module_directory=self.tempmod_dir)
-        return my_template.render(nav=self.create_navbar(), root_url=self.root_url, devices=device_table_str)
+        return my_template.render(nav=self.create_navbar(), root_url=self.root_url)
 
     def settings(self, *args, **kw):
         """Renders the user's settings page."""
