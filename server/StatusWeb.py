@@ -168,19 +168,6 @@ class StatusWeb(object):
         return ""
 
     @cherrypy.expose
-    def set_device_name(self, device_id, name):
-        """Associates a name with a device's unique identifier."""
-        try:
-            self.app.set_device_name(device_id, name)
-        except App.RedirectException as e:
-            raise cherrypy.HTTPRedirect(e.url)
-        except cherrypy.HTTPRedirect as e:
-            raise e
-        except:
-            self.log_error('Unhandled exception in ' + StatusWeb.set_device_name.__name__)
-        return ""
-
-    @cherrypy.expose
     def set_device_attribute_color(self, device_id, attribute, color):
         """Associates a color with a device."""
         try:

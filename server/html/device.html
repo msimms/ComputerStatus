@@ -54,6 +54,8 @@ ${nav}
 
 <div id="charts"/>
 
+<script type="text/javascript" src="${root_url}/js/all.js"></script>
+
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.0/d3.js" integrity="sha256-WTp2ccWeyvNJn44PKZ0I9sfZ3vY6qmpWT0C/L4fU7yU=" crossorigin="anonymous"></script>
 
@@ -63,6 +65,25 @@ ${nav}
     { 
         document.location.reload(); 
     };
+
+	function set_device_name()
+	{
+		var the_url = "${root_url}/api/1.0/set_device_name";
+		var name = document.getElementById("name").value;
+		var dict = [];
+		var result_text = {};
+
+		dict.push({["name"] : name});
+        dict.push({["device_id"] : "${device_id}"});
+		if (send_post_request(the_url, dict, result_text))
+			alert("Name updated!");
+		else
+			alert("An error occurred!");
+	}
+
+    function trim_data()
+    {
+    }
 
 	function draw_chart(data, title, color)
 	{
@@ -308,19 +329,9 @@ ${table}
 </div>
 
 <div align="center">
-	<section class="claim_device cf" style="width: 480px">
-		<form name="claim_device" action="${root_url}/set_device_name?device_id=${device_id}" method="post" accept-charset="utf-8">
-			<ul>
-				<li>
-					<label for="device_id" style="width: 440px">Name this device:</label>
-					<input type="name" name="name" style="width: 440px" placeholder="${title}" required>
-				</li>
-				<li>
-					<input type="submit" value="Save">
-				</li>
-			</ul>
-		</form>
-	</section>
+	<h3>Name this device</h3>
+	<p><input type="text" id="name" value="${title}"></p>
+	<p><button type="button" onclick="return set_device_name()">Name</button></p>
 </div>
 
 </body>

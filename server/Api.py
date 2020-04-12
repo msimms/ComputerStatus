@@ -197,11 +197,6 @@ class Api(object):
         if self.user_id is None:
             raise Exception("Not logged in.")
 
-        # Get the logged in user.
-        username = self.user_mgr.get_logged_in_user()
-        if username is None:
-            raise Exception("Empty username.")
-
         # Get the user's devices.
         device_ids = self.database.retrieve_user_devices(self.user_id)
 
@@ -216,6 +211,33 @@ class Api(object):
         # Convert to JSON and return.
         json_result = json.dumps(device_records, ensure_ascii=False)
         return True, json_result
+
+    def handle_set_device_name(self, values):
+        """Associates a name with a device's unique identifier."""
+        if self.user_id is None:
+            raise Exception("Not logged in.")
+        if 'device_id' not in values:
+            raise Exception("device_id not specified.")
+        if 'name' not in values:
+            raise Exception("name not specified.")
+
+        # Get the device ID.
+        device_id = values['device_id']
+
+        # Validate the device name.
+        name = values['name']
+        if not InputChecker.is_valid(name):
+            raise Exception("Invalid device name.")
+
+        # Get the user's devices.
+        devices = self.database.retrieve_user_devices(self.user_id)
+        if not device_id in devices:
+            raise Exception("Unknown device ID.")
+
+        # Add the device id to the database.
+        self.database.create_device_name(device_id, name)
+
+        return True, ""
 
     def handle_api_1_0_request(self, args, values):
         """Called to parse a version 1.0 API message."""
@@ -237,4 +259,6 @@ class Api(object):
             return self.handle_delete_user(values)
         elif request == 'list_devices':
             return self.handle_list_devices(values)
+        elif request == 'set_device_name':
+            return self.handle_set_device_name(values)
         return False, ""

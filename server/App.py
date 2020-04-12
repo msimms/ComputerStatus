@@ -231,37 +231,6 @@ class App(object):
         # Refresh the dashboard page.
         raise RedirectException(DASHBOARD_URL)
 
-    def set_device_name(self, device_id, name):
-        """Associates a name with a device's unique identifier."""
-
-        # Get the logged in user.
-        username = self.user_mgr.get_logged_in_user()
-        if username is None:
-            raise RedirectException(LOGIN_URL)
-
-        # Get the details of the logged in user.
-        user_id, _, _ = self.user_mgr.retrieve_user(username)
-        if user_id is None:
-            self.log_error('Unknown user ID')
-            raise RedirectException(LOGIN_URL)
-
-        # Validate the device name.
-        if not InputChecker.is_valid(name):
-            self.log_error('Invalid device name')
-            raise RedirectException(DASHBOARD_URL)
-
-        # Get the user's devices.
-        devices = self.database.retrieve_user_devices(user_id)
-        if not device_id in devices:
-            self.log_error('Unknown device ID')
-            raise RedirectException(DASHBOARD_URL)
-
-        # Add the device id to the database.
-        self.database.create_device_name(device_id, name)
-
-        # Refresh the dashboard page.
-        raise RedirectException(DASHBOARD_URL)
-
     def set_device_attribute_color(self, device_id, attribute, color):
         """Associates a color with a device."""
 
