@@ -124,7 +124,7 @@ class Api(object):
 
         # If there was nothing in the database then set it to the default of 'black'.
         if device_color is None:
-            device_color = "black"
+            device_color = "Black"
         return True, device_color
 
     def handle_update_email(self, values):
@@ -336,6 +336,35 @@ class Api(object):
         # Refresh the dashboard page.
         return True, ""
 
+    def handle_trim(self, values):
+        """Deletes device data from before the given date."""
+        if self.user_id is None:
+            raise Exception("Not logged in.")
+        if 'device_id' not in values:
+            raise Exception("device_id not specified.")
+        if 'trim' not in values:
+            raise Exception("trim date not specified.")
+
+        # Get the device ID.
+        device_id = values['device_id']
+        print(device_id)
+        if not InputChecker.is_uuid(device_id):
+            raise Exception("Invalid device ID.")
+
+        # Get the user's devices.
+        devices = self.database.retrieve_user_devices(self.user_id)
+        if not device_id in devices:
+            raise Exception('Unknown device ID')
+
+        # Get the trim date.
+        trim_date = values['trim']
+
+        # Delete the device.
+        self.database.delete_status_before_date(device_id, trim_date)
+
+        # Refresh the dashboard page.
+        return True, ""
+
     def handle_api_1_0_request(self, args, values):
         """Called to parse a version 1.0 API message."""
         if args is None or len(args) <= 0:
@@ -364,4 +393,6 @@ class Api(object):
             return self.handle_claim_device(values)
         elif request == 'delete_device':
             return self.handle_delete_device(values)
+        elif request == 'trim_data':
+            return self.handle_trim(values)
         return False, ""

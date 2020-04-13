@@ -353,3 +353,20 @@ class MongoDatabase(Database.Database):
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])
         return False
+
+    def delete_status_before_date(self, device_id, trim_date):
+        """Deletes all statuses from the device with the specified ID."""
+        if device_id is None:
+            self.log_error(MongoDatabase.delete_status_before_date.__name__ + "Unexpected empty object: device_id")
+            return False
+        if trim_date is None:
+            self.log_error(MongoDatabase.delete_status_before_date.__name__ + "Unexpected empty object: trim_date")
+            return False
+
+        try:
+            self.status_collection.remove({"device_id": device_id, "datetime": { "$lt": trim_date }})
+            return True
+        except:
+            traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return False

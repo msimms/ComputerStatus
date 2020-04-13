@@ -54,9 +54,12 @@ ${nav}
 
 <div id="charts"/>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.0/themes/smoothness/jquery-ui.css" integrity="sha256-wiYwAtNSF3nuWFREDO5vx5cwSmngwE1pGg59NQURCUY=" crossorigin="anonymous" />
+
 <script type="text/javascript" src="${root_url}/js/all.js"></script>
 
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.0/d3.js" integrity="sha256-WTp2ccWeyvNJn44PKZ0I9sfZ3vY6qmpWT0C/L4fU7yU=" crossorigin="anonymous"></script>
 
 <script type="text/javascript">
@@ -81,9 +84,24 @@ ${nav}
 			alert("An error occurred!");
 	}
 
-    function trim_data()
-    {
-    }
+	function trim_data()
+	{
+		if (confirm('Are you sure you want to do this?'))
+		{
+			var the_url = "${root_url}/api/1.0/trim_data";
+		    var trim_date = document.getElementById("trim").value;
+			var dict = [];
+		    var result_text = {};
+            var n = new Date(trim_date)
+
+			dict.push({["device_id"] : "${device_id}"});
+			dict.push({["trim"] : n.getTime()});
+			if (send_post_request(the_url, dict, result_text))
+			    alert("Data trimmed!");
+			else
+				alert("An error occurred!");
+		}
+	}
 
 	function draw_chart(data, title, color)
 	{
@@ -98,7 +116,7 @@ ${nav}
 					.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 		var g = svg.append("g");
 
-		// Format the data
+		// Format the data.
 		data.forEach(function(d)
 		{
 			d.date = new Date(d.date * 1000);
@@ -317,6 +335,16 @@ ${nav}
 
 	retrieve_graph_data(${keys_to_graph});
 
+	$(function()
+	{
+		$('#trim').datepicker({
+            changeYear: true,
+            changeMonth: true
+        });
+
+		var n = new Date();
+		document.getElementsByName('trim')[0].placeholder=n.toLocaleDateString();
+	});
 </script>
 
 </div>
@@ -327,8 +355,11 @@ ${table}
 
 <div align="center">
 	<h3>Name this device</h3>
-	<p><input type="text" id="name" value="${title}"></p>
+	<p><input type="text" name="name" id="name" value="${title}"></p>
 	<p><button type="button" onclick="return set_device_name()">Name</button></p>
+	<h3>Delete data before</h3>
+	<p><input type="text" name="trim" id="trim"></p>
+	<p><button type="button" onclick="return trim_data()">Trim</button></p>
 </div>
 
 </body>
