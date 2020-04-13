@@ -140,47 +140,6 @@ class StatusWeb(object):
         return ""
 
     @cherrypy.expose
-    def claim_device(self, device_id):
-        """Associates a device with a user."""
-        try:
-            self.app.claim_device(device_id)
-        except App.RedirectException as e:
-            raise cherrypy.HTTPRedirect(e.url)
-        except cherrypy.HTTPRedirect as e:
-            raise e
-        except:
-            self.log_error('Unhandled exception in ' + StatusWeb.claim_device.__name__)
-        return ""
-
-    @cherrypy.expose
-    def delete_device(self, *args, **kw):
-        """Deletes the device with the specified ID, assuming it is owned by the current user."""
-        try:
-            # Get the device ID from the push request.
-            device_id = cherrypy.request.params.get("device_id")
-            self.app.delete_device(device_id)
-        except App.RedirectException as e:
-            raise cherrypy.HTTPRedirect(e.url)
-        except cherrypy.HTTPRedirect as e:
-            raise e
-        except:
-            self.log_error('Unhandled exception in ' + StatusWeb.delete_device.__name__)
-        return ""
-
-    @cherrypy.expose
-    def set_device_attribute_color(self, device_id, attribute, color):
-        """Associates a color with a device."""
-        try:
-            self.app.set_device_attribute_color(device_id, attribute, color)
-        except App.RedirectException as e:
-            raise cherrypy.HTTPRedirect(e.url)
-        except cherrypy.HTTPRedirect as e:
-            raise e
-        except:
-            self.log_error('Unhandled exception in ' + StatusWeb.set_device_attribute_color.__name__)
-        return ""
-
-    @cherrypy.expose
     @require()
     def dashboard(self, *args, **kw):
         """Page for displaying the devices owned by a particular user."""

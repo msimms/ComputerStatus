@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-function serialize(list)
+function serialize_to_json(list)
 {
 	var str = [];
     for (var i = 0; i < list.length; ++i)
@@ -30,6 +30,30 @@ function serialize(list)
 	return json_str
 }
 
+/// @function Sends an HTTP GET request and waits for the response.
+function send_get_request(url, result_text)
+{
+	var result = false;
+
+	var xml_http = new XMLHttpRequest();
+	var content_type = "application/json; charset=utf-8";
+
+	xml_http.open("GET", url, false);
+	xml_http.setRequestHeader('Content-Type', content_type);
+
+	xml_http.onreadystatechange = function()
+	{
+		if (xml_http.readyState == XMLHttpRequest.DONE)
+		{
+			result_text.value = xml_http.responseText;
+		}
+		result = (xml_http.status == 200);
+	}
+	xml_http.send();
+	return result;
+}
+
+/// @function Sends an HTTP POST request and waits for the response.
 function send_post_request(url, params, result_text)
 {
 	var result = false;
@@ -48,6 +72,6 @@ function send_post_request(url, params, result_text)
 		}
 		result = (xml_http.status == 200);
 	}
-	xml_http.send(serialize(params));
+	xml_http.send(serialize_to_json(params));
 	return result;
 }

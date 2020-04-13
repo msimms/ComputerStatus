@@ -180,16 +180,18 @@ ${nav}
 		var selected_index = selected_obj.selectedIndex
 		var selected_value = selected_obj.options[selected_index].value; 
 
-		var the_url = "${root_url}/set_device_attribute_color?device_id=".concat("${device_id}", "&attribute=", selected_obj.id, "&color=", selected_value);
-		var xml_http = new XMLHttpRequest();
+		var the_url = "${root_url}/api/1.0/set_device_attribute_color";
+		var name = document.getElementById("name").value;
+		var dict = [];
+		var result_text = {};
 
-		xml_http.onreadystatechange = function()
-		{
-			document.location.reload();
-		}
-
-		xml_http.open("POST", the_url, false);
-	    xml_http.send(null);
+		dict.push({["color"] : selected_value});
+		dict.push({["attribute"] : selected_obj.id});
+        dict.push({["device_id"] : "${device_id}"});
+		if (send_post_request(the_url, dict, result_text))
+			alert("Color changed!");
+		else
+			alert("An error occurred!");
 	}
 
 	function add_color_selection_cb(key, default_color)
@@ -249,18 +251,13 @@ ${nav}
 	function retrieve_graph_color(attribute_str)
 	{
 		var the_url = "${root_url}/api/1.0/retrieve_graph_color?device_id=".concat("${device_id}", "&attribute=", attribute_str);
-		var xml_http = new XMLHttpRequest();
 		var result = "Black"
+		var result_text = {};
 
-		xml_http.onreadystatechange = function()
-		{
-			if (xml_http.responseText.length > 0)
-				result = xml_http.responseText;
-		}
-
-		xml_http.open("GET", the_url, false);
-	    xml_http.send(null);
-
+		if (send_get_request(the_url, result_text))
+        {
+            result = result_text.value;
+        }
 		return result;
 	}
 

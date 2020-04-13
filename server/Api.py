@@ -73,7 +73,11 @@ class Api(object):
         if 'start_time' not in values:
             raise Exception("start_time not specified.")
 
+        # Get the device ID.
         device_id = values['device_id']
+        if not InputChecker.is_uuid(device_id):
+            raise Exception("Invalid device ID.")
+
         attributes = urllib.unquote_plus(values["attributes"]).split(',')
         start_time = int(values["start_time"])
         num_results = 1000
@@ -105,8 +109,18 @@ class Api(object):
         if 'attribute' not in values:
             raise Exception("attribute not specified.")
 
+        # Get the device ID.
+        device_id = values['device_id']
+        if not InputChecker.is_uuid(device_id):
+            raise Exception("Invalid device ID.")
+
+        # Get the attribute name.
+        attribute = urllib.unquote_plus(values['attribute'])
+        if not InputChecker.is_valid_decoded_str(attribute):
+            raise Exception("Invalid attribute name.")
+
         # Retrieve the device color from the database.
-        device_color = self.database.retrieve_device_color(values["device_id"], values["attribute"])
+        device_color = self.database.retrieve_device_color(device_id, attribute)
 
         # If there was nothing in the database then set it to the default of 'black'.
         if device_color is None:
@@ -223,10 +237,12 @@ class Api(object):
 
         # Get the device ID.
         device_id = values['device_id']
+        if not InputChecker.is_uuid(device_id):
+            raise Exception("Invalid device ID.")
 
         # Validate the device name.
-        name = values['name']
-        if not InputChecker.is_valid(name):
+        name = urllib.unquote_plus(values['name'])
+        if not InputChecker.is_valid_decoded_str(name):
             raise Exception("Invalid device name.")
 
         # Get the user's devices.
@@ -237,6 +253,87 @@ class Api(object):
         # Add the device id to the database.
         self.database.create_device_name(device_id, name)
 
+        return True, ""
+
+    def handle_set_device_attribute_color(self, values):
+        """Associates a color with a device."""
+        if self.user_id is None:
+            raise Exception("Not logged in.")
+        if 'device_id' not in values:
+            raise Exception("device_id not specified.")
+
+        # Get the device ID.
+        device_id = values['device_id']
+        if not InputChecker.is_uuid(device_id):
+            raise Exception("Invalid device ID.")
+
+        # Get the attribute name.
+        attribute = urllib.unquote_plus(values['attribute'])
+        if not InputChecker.is_valid_decoded_str(attribute):
+            raise Exception("Invalid attribute name.")
+
+        # Get the attribute color.
+        color = urllib.unquote_plus(values['color'])
+        if not InputChecker.is_valid_decoded_str(color):
+            raise Exception("Invalid color.")
+
+        # Get the user's devices.
+        devices = self.database.retrieve_user_devices(self.user_id)
+        if not device_id in devices:
+            raise Exception("Unknown device ID.")
+
+        # Add the device id to the database.
+        self.database.create_device_attribute_color(device_id, attribute, color)
+
+        # Refresh the dashboard page.
+        return True, ""
+    
+    def handle_claim_device(self, values):
+        """Associates a device with a user."""
+        if self.user_id is None:
+            raise Exception("Not logged in.")
+        if 'device_id' not in values:
+            raise Exception("device_id not specified.")
+
+        # Get the device ID.
+        device_id = values['device_id']
+        if not InputChecker.is_uuid(device_id):
+            raise Exception("Invalid device ID.")
+
+        # Make sure the device ID is real.
+        device_status = self.database.retrieve_status(device_id, 1)
+        if device_status is None or len(device_status) == 0:
+            raise Exception('Unknown device ID')
+
+        # Add the device id to the database.
+        self.database.claim_device(self.user_id, device_id)
+
+        # Refresh the dashboard page.
+        return True, ""
+
+    def handle_delete_device(self, values):
+        """Deletes the device with the specified ID, assuming it is owned by the current user."""
+        if self.user_id is None:
+            raise Exception("Not logged in.")
+        if 'device_id' not in values:
+            raise Exception("device_id not specified.")
+
+        # Get the device ID.
+        device_id = values['device_id']
+        if not InputChecker.is_uuid(device_id):
+            raise Exception("Invalid device ID.")
+
+        # Get the user's devices.
+        devices = self.database.retrieve_user_devices(self.user_id)
+        if not device_id in devices:
+            raise Exception('Unknown device ID')
+
+        # Delete the device.
+        self.database.delete_status(device_id)
+        self.database.delete_device_attributes(device_id)
+        self.database.unclaim_device(self.user_id, device_id)
+
+        # Refresh the dashboard page.
         return True, ""
 
     def handle_api_1_0_request(self, args, values):
@@ -261,4 +358,10 @@ class Api(object):
             return self.handle_list_devices(values)
         elif request == 'set_device_name':
             return self.handle_set_device_name(values)
+        elif request == 'set_device_attribute_color':
+            return self.handle_set_device_attribute_color(values)
+        elif request == 'claim_device':
+            return self.handle_claim_device(values)
+        elif request == 'delete_device':
+            return self.handle_delete_device(values)
         return False, ""
