@@ -105,34 +105,3 @@ tr:hover {
 	border-style: solid;
 	border-color: #000000;
 }
-
-.user_search_form {
-	width: 200px;
-	margin: 50px auto;
-	padding: 25px;
-}
-
-.user_search_form ul {
-	margin: 0px;
-	padding: 0px;
-}
-
-.user_search_form li {
-	display: inline;
-	padding-bottom: .25cm;
-}
-
-.claim_device {
-	padding: 25px;
-}
-
-.claim_device ul {
-	list-style-type: none;
-	margin: 0px;
-	padding: 0px;
-}
-
-.claim_device li {
-	display: inline;
-	padding-bottom: .25cm;
-}
