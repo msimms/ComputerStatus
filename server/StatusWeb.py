@@ -350,6 +350,7 @@ def main():
             'tools.staticdir.root': root_dir,
             'tools.statusweb_auth.on': True,
             'tools.sessions.on': True,
+            'tools.sessions.httponly': True,
             'tools.sessions.name': 'statusweb_auth',
             'tools.sessions.storage_type': 'file',
             'tools.sessions.storage_path': session_dir,
