@@ -28,14 +28,6 @@
 		background-color: teal;
 	}
 
-	path
-	{
-		stroke: steelblue;
-		stroke-width: 1;
-		fill: none;
-		clip-path: url(#clip);
-	}
-
 	.axis path,
 	.axis line
 	{
@@ -69,6 +61,7 @@ ${nav}
         document.location.reload(); 
     };
 
+    /// @function set_device_name
 	function set_device_name()
 	{
 		var the_url = "${root_url}/api/1.0/set_device_name";
@@ -84,6 +77,7 @@ ${nav}
 			alert("An error occurred!");
 	}
 
+    /// @function trim_data
 	function trim_data()
 	{
 		if (confirm('Are you sure you want to do this?'))
@@ -103,95 +97,162 @@ ${nav}
 		}
 	}
 
-	function draw_chart(data, title, color)
-	{
-		var margin = {top: 20, right: 20, bottom: 75, left: 75};
-		var width = $("#charts").width() - margin.left - margin.right;
-		var height = 275 - margin.top - margin.bottom;
-		var svg = d3.select("#charts")
-			.append("svg:svg")
-				.attr("width", width + margin.left + margin.right)
-				.attr("height", height + margin.top + margin.bottom)
-				.append("g")
-					.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-		var g = svg.append("g");
+    /// @function draw_graph
+    function draw_graph(data, title, color)
+    {
+        if (data.length <= 1)
+        {
+            return;
+        }
 
-		// Format the data.
-		data.forEach(function(d)
-		{
-			d.date = new Date(d.date * 1000);
-			d.value = +d.value;
-		});
+        // Need to zero out the first and last points or else the fill will look silly.
+        data[0].value = 0.0;
+        data[data.length - 1].value = 0.0;
 
-		// Setup zoom.
-		var zoom = d3.zoom()
-			.extent([[margin.left, margin.bottom], [width + margin.right, margin.top + height]])
-			.on("zoom", zoomed);
-		function zoomed()
-		{
-			svg.selectAll(".charts").attr("transform", d3.event.transform);
-			//gY.call(yAxis.scale(d3.event.transform.rescaleY(y)));
-			gX.call(xAxis.scale(d3.event.transform.rescaleX(x)));
-		}
+        let tooltip = d3.select("#charts")
+            .append("div")
+                .style("opacity", 0)
+                .style("position", "absolute")
+                .style("visibility", "hidden")
+                .style("background-color", "white")
+                .style("z-index", 1)
+                .style("cursor", "pointer")
+        let mouseover = function() {
+            tooltip
+                .style("opacity", 0.7)
+                .style("visibility", "visible")
+        }
+        let mousemove = function() {
+            let coordinates = d3.mouse(this);
+            let x = coordinates[0];
 
-		// Add the zoom rectangle.
-		var zoomy = g.append("rect")
-			.attr("class", "zoom")
-			.attr("width", width)
-			.attr("height", height)
-			.attr("fill", "transparent")
-			.call(zoom);
+            if (x < data.length)
+            {
+                tooltip
+                    .html("<b>" + data[x].value.toFixed(2) + " " + "</b>")
+                    .style("top", (event.pageY)+"px")
+                    .style("left", (event.pageX)+"px")
+            }
+        }
+        let mouseleave = function() {
+        }
 
-		// Define the clipping rectangle.
-		var clippy = g.append("defs").append("clipPath")
-			.attr("id", "clip")
-			.append("rect")
-				.attr("width", width)
-				.attr("height", height);
+        let margin = { top: 20, right: 20, bottom: 20, left: 50 },
+            width = $("#charts").width() - margin.left - margin.right,
+            height = 250 - margin.top - margin.bottom;
 
-		// Scale the range of the data.
-		var x = d3.scaleTime()
-			.domain(d3.extent(data, function(d) { return d.date; }))
-			.range([0, width]);
-		var y = d3.scaleLinear()
-			.domain([0, d3.max(data, function(d) { return d.value; })])
-			.range([height, 0]);
+        let svg = d3.select("#charts")
+            .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .on('mouseover', mousemove)
+                .on('mousemove', mouseover)
+                .on('mouseleave', mouseleave)
+            .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-		// Add the X axis.
-		var xAxis = d3.axisBottom(x).tickFormat(d3.timeFormat("%Y-%m-%d %H:%M:%S"));
-		var gX = g.append("g")
-			.attr("class", "axis axis--x")
-			.attr("transform", "translate(0," + height + ")") // Puts the x-axis at the bottom of the graph
-		    .call(xAxis);
+        // Add the title
+        svg.append("text")
+            .attr("transform", "translate(" + (width/2) + " ," + 0 + ")")
+            .style("text-anchor", "middle")
+            .text(title);
 
-		// Add the Y axis.
-		var yAxis = d3.axisLeft(y);
-		var gY = g.append("g")
-			.attr("class", "axis axis--y")
-			.call(yAxis);
+        // Add X axis --> it is a date format
+        let x = d3.scaleTime()
+            .domain(d3.extent(data, function(d) { return d.date; }))
+            .range([ 0, width ]);
+        let xAxis = svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
 
-		// Add the line.
-		var valueline = d3.line()
-			.x(function(d) { return x(d.date); })
-			.y(function(d) { return y(d.value); });
-		var chartBody = g.append("g")
-			.attr("class", "charts")
-			.append("path")
-				.datum(data)
-				.attr("class", "line")
-				.attr("d", function(d) { return valueline(d); })
-				.attr("clip-path", "url(#clip)")
-				.style("stroke", color);
+        // Add Y axis
+        let y = d3.scaleLinear()
+            .domain([0, d3.max(data, function(d) { return +d.value; })])
+            .range([ height, 0 ]);
+        let yAxis = svg.append("g")
+            .call(d3.axisLeft(y));
 
-		// Add the title.
-		svg.append("text")
-			.attr("x", (width / 2))
-			.attr("y", 0 - (margin.top / 2.75))
-			.attr("text-anchor", "middle")
-			.style("font-size", "16px")
-			.text(title);
-	}
+        // Add a clipPath: everything out of this area won't be drawn.
+        let clip = svg.append("defs").append("svg:clipPath")
+            .attr("id", "clip")
+            .append("svg:rect")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("x", 0)
+            .attr("y", 0);
 
+        // Add brushing.
+        let brush = d3.brushX()                   // Add the brush feature using the d3.brush function
+            .extent( [ [0,0], [width, height] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+            .on("end", updateChart)               // Each time the brush selection changes, trigger the 'updateChart' function
+
+        let line = svg.append('g')
+            .attr("clip-path", "url(#clip)");
+
+        // Add the line
+        line.append("path")
+            .datum(data)
+            .attr("class", "line")  // I add the class line to be able to modify this line later on.
+            .attr("fill", color)
+            .attr("stroke", color)
+            .attr("stroke-width", 1.5)
+            .attr("d", d3.line()
+                .x(function(d) { return x(d.date) })
+                .y(function(d) { return y(d.value) })
+            )
+
+        // Add the brushing
+        line.append("g")
+            .attr("class", "brush")
+            .call(brush);
+
+        // A function that set idleTimeOut to null
+        var idleTimeout
+        function idled() { idleTimeout = null; }
+
+        // A function that update the chart for given boundaries
+        function updateChart() {
+
+            // What are the selected boundaries?
+            extent = d3.event.selection
+
+            // If no selection, back to initial coordinate. Otherwise, update X axis domain
+            if (!extent)
+            {
+                if (!idleTimeout)
+                    return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
+                x.domain([4,8])
+            }
+            else
+            {
+                x.domain([ x.invert(extent[0]), x.invert(extent[1]) ]);
+                line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done
+            }
+
+            // Update axis and line position
+            xAxis.transition().duration(1000).call(d3.axisBottom(x))
+            line.select('.line')
+                .transition()
+                .duration(1000)
+                .attr("d", d3.line()
+                    .x(function(d) { return x(d.date) })
+                    .y(function(d) { return y(d.value) }))
+        }
+
+        // If user double click, reinitialize the chart
+        svg.on("dblclick",function() {
+            x.domain(d3.extent(data, function(d) { return d.date; }))
+            xAxis.transition().call(d3.axisBottom(x))
+            line.select('.line')
+                .transition()
+                .attr("d", d3.line()
+                .x(function(d) { return x(d.date) })
+                .y(function(d) { return y(d.value) })
+            )
+        });
+    }
+
+    /// @function on_color_selection_changed
 	function on_color_selection_changed(event)
 	{
 		var selected_obj = event.target
@@ -207,11 +268,12 @@ ${nav}
 		dict.push({["attribute"] : selected_obj.id});
         dict.push({["device_id"] : "${device_id}"});
 		if (send_post_request(the_url, dict, result_text))
-			alert("Color changed!");
+            window.location.reload(false);
 		else
 			alert("An error occurred!");
 	}
 
+    /// @function add_color_selection_cb
 	function add_color_selection_cb(key, default_color)
 	{
 		var sel = document.createElement("select");
@@ -245,6 +307,7 @@ ${nav}
 		charts_div.appendChild(sel);
 	}
 
+    /// @function add_sep
 	function add_sep()
 	{
 		var sep = document.createElement("hr");
@@ -252,6 +315,7 @@ ${nav}
 		charts_div.appendChild(sep);
 	}
 
+    /// @function retrieve_printable_name
 	function retrieve_printable_name(ugly_name)
 	{
         ugly_name = ugly_name.replace("cpu", "CPU");
@@ -266,6 +330,7 @@ ${nav}
         return ugly_name;
 	}
 
+    /// @function retrieve_graph_color
 	function retrieve_graph_color(attribute_str)
 	{
 		var the_url = "${root_url}/api/1.0/retrieve_graph_color?device_id=".concat("${device_id}", "&attribute=", attribute_str);
@@ -279,6 +344,7 @@ ${nav}
 		return result;
 	}
 
+    /// @function retrieve_graph_data
 	function retrieve_graph_data(attributes_str)
 	{
 		var the_url = "${root_url}/api/1.0/retrieve_graph_data?device_id=".concat("${device_id}", "&attributes=", attributes_str, "&start_time=0");
@@ -322,9 +388,8 @@ ${nav}
 					var key = attributes[attribute_index]
 					var chart_color = retrieve_graph_color(key)
 
-					draw_chart(graphs[attribute_index], retrieve_printable_name(key), chart_color);
+					draw_graph(graphs[attribute_index], retrieve_printable_name(key), chart_color);
 					add_color_selection_cb(key, chart_color);
-					add_sep();
 				}
 			}
 		}
