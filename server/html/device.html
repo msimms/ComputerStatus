@@ -151,13 +151,7 @@ ${nav}
             .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        // Add the title
-        svg.append("text")
-            .attr("transform", "translate(" + (width/2) + " ," + 0 + ")")
-            .style("text-anchor", "middle")
-            .text(title);
-
-        // Add X axis --> it is a date format
+        // Add X axis --> it is a date format.
         let x = d3.scaleTime()
             .domain(d3.extent(data, function(d) { return d.date; }))
             .range([ 0, width ]);
@@ -165,12 +159,19 @@ ${nav}
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x));
 
-        // Add Y axis
+        // Add Y axis.
         let y = d3.scaleLinear()
-            .domain([0, d3.max(data, function(d) { return +d.value; })])
+            .domain(d3.extent(data, function(d) { return d.value; }))
             .range([ height, 0 ]);
         let yAxis = svg.append("g")
             .call(d3.axisLeft(y));
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 0-margin.left)
+            .attr("x", 0 - (height / 2))
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text(title);
 
         // Add a clipPath: everything out of this area won't be drawn.
         let clip = svg.append("defs").append("svg:clipPath")
