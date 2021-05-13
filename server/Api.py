@@ -251,9 +251,9 @@ class Api(object):
             raise Exception("Unknown device ID.")
 
         # Add the device id to the database.
-        self.database.create_device_name(device_id, name)
+        result = self.database.create_device_name(device_id, name)
 
-        return True, ""
+        return result, ""
 
     def handle_set_device_attribute_color(self, values):
         """Associates a color with a device."""
@@ -283,10 +283,9 @@ class Api(object):
             raise Exception("Unknown device ID.")
 
         # Add the device id to the database.
-        self.database.create_device_attribute_color(device_id, attribute, color)
+        result = self.database.create_device_attribute_color(device_id, attribute, color)
 
-        # Refresh the dashboard page.
-        return True, ""
+        return result, ""
     
     def handle_claim_device(self, values):
         """Associates a device with a user."""
@@ -306,10 +305,9 @@ class Api(object):
             raise Exception('Unknown device ID')
 
         # Add the device id to the database.
-        self.database.claim_device(self.user_id, device_id)
+        result = self.database.claim_device(self.user_id, device_id)
 
-        # Refresh the dashboard page.
-        return True, ""
+        return result, ""
 
     def handle_delete_device(self, values):
         """Deletes the device with the specified ID, assuming it is owned by the current user."""
@@ -333,7 +331,6 @@ class Api(object):
         self.database.delete_device_attributes(device_id)
         self.database.unclaim_device(self.user_id, device_id)
 
-        # Refresh the dashboard page.
         return True, ""
 
     def handle_trim(self, values):
@@ -360,10 +357,9 @@ class Api(object):
         trim_date = values['trim']
 
         # Delete the device.
-        self.database.delete_status_before_date(device_id, trim_date)
+        result = self.database.delete_status_before_date(device_id, trim_date)
 
-        # Refresh the dashboard page.
-        return True, ""
+        return result, ""
 
     def handle_api_1_0_request(self, args, values):
         """Called to parse a version 1.0 API message."""

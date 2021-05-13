@@ -211,10 +211,10 @@ class MongoDatabase(Database.Database):
         """Associates a name with a device."""
         if device_id is None:
             self.log_error(MongoDatabase.create_device_name.__name__ + "Unexpected empty object: device_id")
-            return None
+            return False
         if name is None:
             self.log_error(MongoDatabase.create_device_name.__name__ + "Unexpected empty object: name")
-            return None
+            return False
 
         try:
             device = self.devices_collection.find_one({"device_id": device_id})
@@ -228,19 +228,19 @@ class MongoDatabase(Database.Database):
         except:
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])
-        return None
+        return False
 
     def create_device_attribute_color(self, device_id, attribute, color):
         """Associates a color with a device attribute."""
         if device_id is None:
             self.log_error(MongoDatabase.create_device_attribute_color.__name__ + "Unexpected empty object: device_id")
-            return None
+            return False
         if attribute is None:
             self.log_error(MongoDatabase.create_device_attribute_color.__name__ + "Unexpected empty object: attribute")
-            return None
+            return False
         if color is None:
             self.log_error(MongoDatabase.create_device_attribute_color.__name__ + "Unexpected empty object: color")
-            return None
+            return False
 
         try:
             device = self.devices_collection.find_one({"device_id": device_id})
@@ -258,7 +258,7 @@ class MongoDatabase(Database.Database):
         except:
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])
-        return None
+        return False
 
     def retrieve_device_name(self, device_id):
         """Returns the name of the device with the specified device ID."""
