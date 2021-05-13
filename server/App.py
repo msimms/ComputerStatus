@@ -29,10 +29,8 @@ import markdown
 import os
 import sys
 import Api
-import InputChecker
 import StatusDb
 
-from mako.lookup import TemplateLookup
 from mako.template import Template
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -190,9 +188,6 @@ class App(object):
         if user_id is None:
             self.log_error('Unknown user ID')
             raise RedirectException(LOGIN_URL)
-
-        # Get the user's devices.
-        devices = self.database.retrieve_user_devices(user_id)
 
         # Render the dashboard page.
         dashboard_html_file = os.path.join(self.root_dir, HTML_DIR, 'dashboard.html')
