@@ -49,11 +49,9 @@ ${nav}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.0/themes/smoothness/jquery-ui.css" integrity="sha256-wiYwAtNSF3nuWFREDO5vx5cwSmngwE1pGg59NQURCUY=" crossorigin="anonymous" />
 
 <script type="text/javascript" src="${root_url}/js/all.js"></script>
-
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.0/d3.js" integrity="sha256-WTp2ccWeyvNJn44PKZ0I9sfZ3vY6qmpWT0C/L4fU7yU=" crossorigin="anonymous"></script>
-
 <script type="text/javascript">
 
     window.onorientationchange = function()
@@ -298,6 +296,11 @@ ${nav}
 		sel.appendChild(opt);
 
 		var opt = document.createElement("option");
+		opt.value = "Gray";
+		opt.text = "Gray";
+		sel.appendChild(opt);
+
+		var opt = document.createElement("option");
 		opt.value = "Black";
 		opt.text = "Black";
 		sel.appendChild(opt);
@@ -335,7 +338,7 @@ ${nav}
 	function retrieve_graph_color(attribute_str)
 	{
 		var the_url = "${root_url}/api/1.0/retrieve_graph_color?device_id=".concat("${device_id}", "&attribute=", attribute_str);
-		var result = "Black"
+		var result = "Gray"
 		var result_text = {};
 
 		if (send_get_request(the_url, result_text))

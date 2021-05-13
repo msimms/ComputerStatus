@@ -124,7 +124,7 @@ class Api(object):
 
         # If there was nothing in the database then set it to the default of 'black'.
         if device_color is None:
-            device_color = "Black"
+            device_color = "Gray"
         return True, device_color
 
     def handle_update_email(self, values):
