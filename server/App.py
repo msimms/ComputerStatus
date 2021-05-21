@@ -119,6 +119,11 @@ class App(object):
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
 
+        # Make sure the user owns the device.
+        device_ids = self.database.retrieve_user_devices(user_id)
+        if device_id not in device_ids:
+            raise Exception("Device not owned by the logged in user.")
+
         # Name of the device.
         title_str = self.database.retrieve_device_name(device_id)
         if title_str is None:

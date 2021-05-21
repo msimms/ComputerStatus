@@ -275,6 +275,11 @@ class Api(object):
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
 
+        # Make sure the user owns the device.
+        device_ids = self.database.retrieve_user_devices(self.user_id)
+        if device_id not in device_ids:
+            raise Exception("Device not owned by the logged in user.")
+
         # Validate the device name.
         name = urllib.unquote_plus(values['name'])
         if not InputChecker.is_valid_decoded_str(name):
@@ -301,6 +306,11 @@ class Api(object):
         device_id = values['device_id']
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
+
+        # Make sure the user owns the device.
+        device_ids = self.database.retrieve_user_devices(self.user_id)
+        if device_id not in device_ids:
+            raise Exception("Device not owned by the logged in user.")
 
         # Get the attribute name.
         attribute = urllib.unquote_plus(values['attribute'])
@@ -356,10 +366,10 @@ class Api(object):
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
 
-        # Get the user's devices.
-        devices = self.database.retrieve_user_devices(self.user_id)
-        if not device_id in devices:
-            raise Exception('Unknown device ID')
+        # Make sure the user owns the device.
+        device_ids = self.database.retrieve_user_devices(self.user_id)
+        if device_id not in device_ids:
+            raise Exception("Device not owned by the logged in user.")
 
         # Delete the device.
         self.database.delete_status(device_id)
@@ -383,10 +393,10 @@ class Api(object):
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
 
-        # Get the user's devices.
-        devices = self.database.retrieve_user_devices(self.user_id)
-        if not device_id in devices:
-            raise Exception('Unknown device ID')
+        # Make sure the user owns the device.
+        device_ids = self.database.retrieve_user_devices(self.user_id)
+        if device_id not in device_ids:
+            raise Exception("Device not owned by the logged in user.")
 
         # Get the trim date.
         trim_date = values['trim']
