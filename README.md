@@ -35,6 +35,8 @@ Example 2: HTTPS
 python StatusWeb.py --cert cert.pem --privkey key.pem --https
 ```
 
+Note: Passing the `--debug` flag will prevent the server from daemonizing.
+
 ## Major Features
 * Support for Nvidia GPUs (utilization and temperature)
 * Ability to read CPU utilization and temperature
