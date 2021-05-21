@@ -24,11 +24,11 @@
 
 import inspect
 import logging
-import mako
 import markdown
 import os
 import sys
 import Api
+import InputChecker
 import StatusDb
 
 from mako.template import Template
@@ -104,76 +104,30 @@ class App(object):
     def device(self, device_id):
         """Page for displaying graphs about a particular device."""
 
+        # Get the logged in user.
+        username = self.user_mgr.get_logged_in_user()
+        if username is None:
+            raise RedirectException(LOGIN_URL)
+
+        # Get the details of the logged in user.
+        user_id, _, _ = self.user_mgr.retrieve_user(username)
+        if user_id is None:
+            self.log_error('Unknown user ID')
+            raise RedirectException(LOGIN_URL)
+
+        # Validate the device ID.
+        if not InputChecker.is_uuid(device_id):
+            raise Exception("Invalid device ID.")
+
+        # Name of the device.
         title_str = self.database.retrieve_device_name(device_id)
         if title_str is None:
             title_str = "Device ID: " + str(device_id)
 
-        table_str = "\t<table>\n"
-        degree_sign = u'\N{DEGREE SIGN}'
-
-        keys_to_graph = []
-        statuses = self.database.retrieve_status(device_id, 1)
-        if statuses is not None and len(statuses) > 0:
-            last_status = statuses[len(statuses) - 1]
-
-            # Latest CPU values.
-            if keys.KEY_CPU_PERCENT in last_status:
-                table_str += "\t\t<td>Current CPU Utilization</td><td>" + str(last_status[keys.KEY_CPU_PERCENT]) + "%</td><tr>\n"
-                keys_to_graph.append(keys.KEY_CPU_PERCENT)
-            if keys.KEY_CPU_TEMPERATURE in last_status:
-                table_str += "\t\t<td>Current CPU Temperature</td><td>" + str(last_status[keys.KEY_CPU_TEMPERATURE]) + degree_sign + "C</td><tr>\n"
-                keys_to_graph.append(keys.KEY_CPU_TEMPERATURE)
-
-            # Latest memory value.
-            if keys.KEY_VIRTUAL_MEM_PERCENT in last_status:
-                table_str += "\t\t<td>Current RAM Utilization</td><td>" + str(last_status[keys.KEY_VIRTUAL_MEM_PERCENT]) + "%</td><tr>\n"
-                keys_to_graph.append(keys.KEY_VIRTUAL_MEM_PERCENT)
-
-            # Latest GPU value (single GPU).
-            if keys.KEY_GPU_PERCENT in last_status:
-                table_str += "\t\t<td>Current GPU Utilization</td><td>" + str(last_status[keys.KEY_GPU_PERCENT]) + "%</td><tr>\n"
-                keys_to_graph.append(keys.KEY_GPU_PERCENT)
-            if keys.KEY_GPU_TEMPERATURE in last_status:
-                table_str += "\t\t<td>Current GPU Temperature</td><td>" + str(last_status[keys.KEY_GPU_TEMPERATURE]) + degree_sign + "C</td><tr>\n"
-                keys_to_graph.append(keys.KEY_GPU_TEMPERATURE)
-
-            # Latest GPU values (multiple GPUs).
-            found_gpu = True
-            gpu_index = 1
-            while found_gpu:
-
-                # Utilization.
-                gpu_key_name = keys.KEY_GPUX_PERCENT.replace('X', str(gpu_index))
-                found_gpu = gpu_key_name in last_status
-                if found_gpu:
-                    table_str += "\t\t<td>Current GPU " + str(gpu_index) + " Utilization</td><td>" + str(last_status[gpu_key_name]) + "%</td><tr>\n"
-                    keys_to_graph.append(gpu_key_name)
-                
-                # Temperature.
-                gpu_key_name = keys.KEY_GPUX_TEMPERATURE.replace('X', str(gpu_index))
-                found_gpu = gpu_key_name in last_status
-                if found_gpu:
-                    table_str += "\t\t<td>Current GPU " + str(gpu_index) + " Temperature</td><td>" + str(last_status[gpu_key_name]) + degree_sign + "C</td><tr>\n"
-                    keys_to_graph.append(gpu_key_name)
-
-                gpu_index = gpu_index + 1
-
-            # Latest network values.            
-            if keys.KEY_NETWORK_BYTES_SENT in last_status:
-                table_str += "\t\t<td>Bytes Sent</td><td>" + str(last_status[keys.KEY_NETWORK_BYTES_SENT]) + " Bytes </td><tr>\n"
-                keys_to_graph.append(keys.KEY_NETWORK_BYTES_SENT)
-            if keys.KEY_NETWORK_BYTES_RECEIVED in last_status:
-                table_str += "\t\t<td>Bytes Received</td><td>" + str(last_status[keys.KEY_NETWORK_BYTES_RECEIVED]) + " Bytes </td><tr>\n"
-                keys_to_graph.append(keys.KEY_NETWORK_BYTES_RECEIVED)
-
-        table_str += "\t</table>\n"
-        keys_to_graph = str(keys_to_graph).replace('\', \'', ',')
-        keys_to_graph = keys_to_graph.replace('[', '')
-        keys_to_graph = keys_to_graph.replace(']', '')
-
+        # Render the device page.
         device_html_file = os.path.join(self.root_dir, HTML_DIR, 'device.html')
         my_template = Template(filename=device_html_file, module_directory=self.tempmod_dir)
-        return my_template.render(nav=self.create_navbar(), root_url=self.root_url, title=title_str, device_id=device_id, table=table_str, keys_to_graph=keys_to_graph)
+        return my_template.render(nav=self.create_navbar(), root_url=self.root_url, title=title_str, device_id=device_id)
 
     def dashboard(self, *args, **kw):
         """Page for displaying the devices owned by a particular user."""

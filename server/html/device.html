@@ -11,31 +11,31 @@
 <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
 <meta content="utf-8" http-equiv="encoding">
-	
+    
 <link rel="shortcut icon" href="${root_url}/media/favicon.ico" >
 
 </head>
 
 <style type="text/css">
-	html { height: 100% }
-	body { height: 100%; margin: 0; padding: 0 }
+    html { height: 100% }
+    body { height: 100%; margin: 0; padding: 0 }
 
-	div.bar
-	{
-		display: inline-block;
-		width: 20px;
-		height: 75px;	/* Gets overriden by D3-assigned height below */
-		background-color: teal;
-	}
+    div.bar
+    {
+        display: inline-block;
+        width: 20px;
+        height: 75px;	/* Gets overriden by D3-assigned height below */
+        background-color: teal;
+    }
 
-	.axis path,
-	.axis line
-	{
-		fill: none;
-		stroke: #000;
-		stroke-width: 1;
-		shape-rendering: crispEdges;
-	}
+    .axis path,
+    .axis line
+    {
+        fill: none;
+        stroke: #000;
+        stroke-width: 1;
+        shape-rendering: crispEdges;
+    }
 </style>
 
 <body>
@@ -60,40 +60,42 @@ ${nav}
     };
 
     /// @function set_device_name
-	function set_device_name()
-	{
-		var the_url = "${root_url}/api/1.0/set_device_name";
-		var name = document.getElementById("name").value;
-		var dict = [];
-		var result_text = {};
+    function set_device_name()
+    {
+        let the_url = "${root_url}/api/1.0/set_device_name";
+        let name = document.getElementById("name").value;
+        let dict = [];
+        let result_text = {};
 
-		dict.push({["name"] : name});
+        dict.push({["name"] : name});
         dict.push({["device_id"] : "${device_id}"});
-		if (send_post_request(the_url, dict, result_text))
-			alert("Name updated!");
-		else
-			alert("An error occurred!");
-	}
+
+        if (send_post_request(the_url, dict, result_text))
+            alert("Name updated!");
+        else
+            alert("An error occurred!");
+    }
 
     /// @function trim_data
-	function trim_data()
-	{
-		if (confirm('Are you sure you want to do this?'))
-		{
-			var the_url = "${root_url}/api/1.0/trim_data";
-		    var trim_date = document.getElementById("trim").value;
-			var dict = [];
-		    var result_text = {};
-            var n = new Date(trim_date)
+    function trim_data()
+    {
+        if (confirm('Are you sure you want to do this?'))
+        {
+            let the_url = "${root_url}/api/1.0/trim_data";
+            let trim_date = document.getElementById("trim").value;
+            let dict = [];
+            let result_text = {};
+            let n = new Date(trim_date)
 
-			dict.push({["device_id"] : "${device_id}"});
-			dict.push({["trim"] : n.getTime()});
-			if (send_post_request(the_url, dict, result_text))
-			    alert("Data trimmed!");
-			else
-				alert("An error occurred!");
-		}
-	}
+            dict.push({["device_id"] : "${device_id}"});
+            dict.push({["trim"] : n.getTime()});
+
+            if (send_post_request(the_url, dict, result_text))
+                alert("Data trimmed!");
+            else
+                alert("An error occurred!");
+        }
+    }
 
     /// @function draw_graph
     function draw_graph(data, title, color)
@@ -206,7 +208,7 @@ ${nav}
             .call(brush);
 
         // A function that set idleTimeOut to null
-        var idleTimeout
+        let idleTimeout
         function idled() { idleTimeout = null; }
 
         // A function that update the chart for given boundaries
@@ -216,16 +218,16 @@ ${nav}
             extent = d3.event.selection
 
             // If no selection, back to initial coordinate. Otherwise, update X axis domain
-            if (!extent)
+            if (extent)
+            {
+                x.domain([ x.invert(extent[0]), x.invert(extent[1]) ]);
+                line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done
+            }
+            else
             {
                 if (!idleTimeout)
                     return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
                 x.domain([4,8])
-            }
-            else
-            {
-                x.domain([ x.invert(extent[0]), x.invert(extent[1]) ]);
-                line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done
             }
 
             // Update axis and line position
@@ -252,76 +254,77 @@ ${nav}
     }
 
     /// @function on_color_selection_changed
-	function on_color_selection_changed(event)
-	{
-		var selected_obj = event.target
-		var selected_index = selected_obj.selectedIndex
-		var selected_value = selected_obj.options[selected_index].value; 
+    function on_color_selection_changed(event)
+    {
+        let selected_obj = event.target
+        let selected_index = selected_obj.selectedIndex
+        let selected_value = selected_obj.options[selected_index].value; 
 
-		var the_url = "${root_url}/api/1.0/set_device_attribute_color";
-		var name = document.getElementById("name").value;
-		var dict = [];
-		var result_text = {};
+        let the_url = "${root_url}/api/1.0/set_device_attribute_color";
+        let name = document.getElementById("name").value;
+        let dict = [];
+        let result_text = {};
 
-		dict.push({["color"] : selected_value});
-		dict.push({["attribute"] : selected_obj.id});
+        dict.push({["color"] : selected_value});
+        dict.push({["attribute"] : selected_obj.id});
         dict.push({["device_id"] : "${device_id}"});
-		if (send_post_request(the_url, dict, result_text))
+
+        if (send_post_request(the_url, dict, result_text))
             window.location.reload(false);
-		else
-			alert("An error occurred!");
-	}
+        else
+            alert("An error occurred!");
+    }
 
     /// @function add_color_selection_cb
-	function add_color_selection_cb(key, default_color)
-	{
-		var sel = document.createElement("select");
-		sel.align = "right";
-		sel.id = key;
-		sel.onchange = on_color_selection_changed;
+    function add_color_selection_cb(key, default_color)
+    {
+        let sel = document.createElement("select");
+        sel.align = "right";
+        sel.id = key;
+        sel.onchange = on_color_selection_changed;
 
-		var opt = document.createElement("option");
-		opt.value = "Red";
-		opt.text = "Red";
-		sel.appendChild(opt);
+        let opt = document.createElement("option");
+        opt.value = "Red";
+        opt.text = "Red";
+        sel.appendChild(opt);
 
-		var opt = document.createElement("option");
-		opt.value = "ForestGreen";
-		opt.text = "Green";
-		sel.appendChild(opt);
+        opt = document.createElement("option");
+        opt.value = "ForestGreen";
+        opt.text = "Green";
+        sel.appendChild(opt);
 
-		var opt = document.createElement("option");
-		opt.value = "DodgerBlue";
-		opt.text = "Blue";
-		sel.appendChild(opt);
+        opt = document.createElement("option");
+        opt.value = "DodgerBlue";
+        opt.text = "Blue";
+        sel.appendChild(opt);
 
-		var opt = document.createElement("option");
-		opt.value = "Gray";
-		opt.text = "Gray";
-		sel.appendChild(opt);
+        opt = document.createElement("option");
+        opt.value = "Gray";
+        opt.text = "Gray";
+        sel.appendChild(opt);
 
-		var opt = document.createElement("option");
-		opt.value = "Black";
-		opt.text = "Black";
-		sel.appendChild(opt);
+        opt = document.createElement("option");
+        opt.value = "Black";
+        opt.text = "Black";
+        sel.appendChild(opt);
 
-		sel.value = default_color
+        sel.value = default_color
 
-		var charts_div = document.getElementById("charts");
-		charts_div.appendChild(sel);
-	}
+        let charts_div = document.getElementById("charts");
+        charts_div.appendChild(sel);
+    }
 
     /// @function add_sep
-	function add_sep()
-	{
-		var sep = document.createElement("hr");
-		var charts_div = document.getElementById("charts");
-		charts_div.appendChild(sep);
-	}
+    function add_sep()
+    {
+        let sep = document.createElement("hr");
+        let charts_div = document.getElementById("charts");
+        charts_div.appendChild(sep);
+    }
 
     /// @function retrieve_printable_name
-	function retrieve_printable_name(ugly_name)
-	{
+    function retrieve_printable_name(ugly_name)
+    {
         ugly_name = ugly_name.replace("cpu", "CPU");
         ugly_name = ugly_name.replace("gpu", "GPU");
         ugly_name = ugly_name.replace("percent", "%");
@@ -332,103 +335,129 @@ ${nav}
         ugly_name = ugly_name.replace("bytes received", "Bytes Received");
         ugly_name = ugly_name.replace("per sample", "Per Sample");
         return ugly_name;
-	}
+    }
 
     /// @function retrieve_graph_color
-	function retrieve_graph_color(attribute_str)
-	{
-		var the_url = "${root_url}/api/1.0/retrieve_graph_color?device_id=".concat("${device_id}", "&attribute=", attribute_str);
-		var result = "Gray"
-		var result_text = {};
+    function retrieve_graph_color(attribute_str)
+    {
+        let the_url = "${root_url}/api/1.0/retrieve_graph_color?device_id=".concat("${device_id}", "&attribute=", attribute_str);
+        let result = "Gray"
+        let result_text = {};
 
-		if (send_get_request(the_url, result_text))
+        if (send_get_request(the_url, result_text))
         {
             result = result_text.value;
         }
-		return result;
-	}
+        return result;
+    }
 
     /// @function retrieve_graph_data
-	function retrieve_graph_data(attributes_str)
-	{
-		var the_url = "${root_url}/api/1.0/retrieve_graph_data?device_id=".concat("${device_id}", "&attributes=", attributes_str, "&start_time=0");
-		var xml_http = new XMLHttpRequest();
+    function retrieve_graph_data(attributes_str)
+    {
+        let the_url = "${root_url}/api/1.0/retrieve_graph_data?device_id=".concat("${device_id}", "&attributes=", attributes_str, "&start_time=0");
+        let xml_http = new XMLHttpRequest();
 
-		xml_http.onreadystatechange = function()
-		{
-			if (xml_http.readyState == XMLHttpRequest.DONE)
-			{
-				var attributes = attributes_str.split(",");
-				var json_str = xml_http.responseText;
-				var json_data = JSON.parse(json_str);
-				var graphs = new Array();
+        xml_http.onreadystatechange = function()
+        {
+            if (xml_http.readyState == XMLHttpRequest.DONE)
+            {
+                if (xml_http.status == 200)
+                {
+                    let attributes = attributes_str.split(",");
+                    let json_str = xml_http.responseText;
+                    let json_data = JSON.parse(json_str);
+                    let graphs = new Array();
 
-				// Create an array of data points for each graph.
-				for (var attribute_index = 0; attribute_index < attributes.length; ++attribute_index)
-				{
-					var graph = new Array();
-					graphs.push(graph);
-				}
+                    // Create an array of data points for each graph.
+                    for (let attribute_index = 0; attribute_index < attributes.length; ++attribute_index)
+                    {
+                        let graph = new Array();
+                        graphs.push(graph);
+                    }
 
-				// Parse the returned JSON data and add points to each graph.
-				for (var point_index = 0; point_index < json_data.points.length; ++point_index)
-				{
-					var point = json_data.points[point_index];
-					var datetime_str = point["datetime"];
+                    // Parse the returned JSON data and add points to each graph.
+                    for (let point_index = 0; point_index < json_data.points.length; ++point_index)
+                    {
+                        let point = json_data.points[point_index];
+                        let datetime_str = point["datetime"];
 
-					// Each point may contain data for multiple graphs.
-					for (var attribute_index = 0; attribute_index < attributes.length; ++attribute_index)
-					{
-						var key = attributes[attribute_index]
-						var value = point[key]
-						var element = { date: parseInt(datetime_str), value: parseFloat(value) };
-						graphs[attribute_index].push(element);
-					}
-				}
+                        // Each point may contain data for multiple graphs.
+                        for (let attribute_index = 0; attribute_index < attributes.length; ++attribute_index)
+                        {
+                            let key = attributes[attribute_index]
+                            let value = point[key]
+                            let element = { date: parseInt(datetime_str), value: parseFloat(value) };
 
-				// Draw each of the graphs.
-				for (var attribute_index = 0; attribute_index < attributes.length; ++attribute_index)
-				{
-					var key = attributes[attribute_index]
-					var chart_color = retrieve_graph_color(key)
+                            graphs[attribute_index].push(element);
+                        }
+                    }
 
-					draw_graph(graphs[attribute_index], retrieve_printable_name(key), chart_color);
-					add_color_selection_cb(key, chart_color);
-				}
-			}
-		}
+                    // Draw each of the graphs.
+                    for (let attribute_index = 0; attribute_index < attributes.length; ++attribute_index)
+                    {
+                        let key = attributes[attribute_index]
+                        let chart_color = retrieve_graph_color(key)
 
-		xml_http.open("GET", the_url, false);
-	    xml_http.send(null);
-	}
+                        draw_graph(graphs[attribute_index], retrieve_printable_name(key), chart_color);
+                        add_color_selection_cb(key, chart_color);
+                    }
+                }
+            }
+        }
 
-	retrieve_graph_data(${keys_to_graph});
+        xml_http.open("GET", the_url, false);
+        xml_http.send(null);
+    }
 
-	$(function()
-	{
-		$('#trim').datepicker({
+    /// @function retrieve_device_status
+    function retrieve_device_status()
+    {
+        let the_url = "${root_url}/api/1.0/retrieve_status?device_id=${device_id}";
+        let xml_http = new XMLHttpRequest();
+
+        xml_http.onreadystatechange = function()
+        {
+            if (xml_http.readyState == XMLHttpRequest.DONE)
+            {
+                if (xml_http.status == 200)
+                {
+                    let json_str = xml_http.responseText;
+                    let json_data = JSON.parse(json_str);
+                    let json_keys = Object.keys(json_data);
+                    let attributes_str = json_keys.join();
+
+                    retrieve_graph_data(attributes_str);
+                }
+            }
+        }
+
+        xml_http.open("GET", the_url, false);
+        xml_http.send(null);
+    }
+
+    retrieve_device_status();
+
+    $(function()
+    {
+        $('#trim').datepicker({
             changeYear: true,
             changeMonth: true
         });
 
-		var n = new Date();
-		document.getElementsByName('trim')[0].placeholder=n.toLocaleDateString();
-	});
+        let n = new Date();
+        document.getElementsByName('trim')[0].placeholder=n.toLocaleDateString();
+    });
 </script>
 
 </div>
 
-<div>
-${table}
-</div>
-
 <div align="center">
-	<h3>Name this device</h3>
-	<p><input type="text" name="name" id="name" value="${title}"></p>
-	<p><button type="button" onclick="return set_device_name()">Name</button></p>
-	<h3>Delete data before</h3>
-	<p><input type="text" name="trim" id="trim"></p>
-	<p><button type="button" onclick="return trim_data()">Trim</button></p>
+    <h3>Name this device</h3>
+    <p><input type="text" name="name" id="name" value="${title}"></p>
+    <p><button type="button" onclick="return set_device_name()">Name</button></p>
+    <h3>Delete data before</h3>
+    <p><input type="text" name="trim" id="trim"></p>
+    <p><button type="button" onclick="return trim_data()">Trim</button></p>
 </div>
 
 </body>

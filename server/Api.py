@@ -22,11 +22,20 @@
 """API request handlers"""
 
 import fractions
+import inspect
 import json
+import os
+import sys
 import urllib
 import uuid
 import InputChecker
 import StatusDb
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+clientdir = os.path.join(parentdir, 'client')
+sys.path.insert(0, clientdir)
+import keys
 
 class Api(object):
     """Class for managing API messages."""
@@ -83,21 +92,23 @@ class Api(object):
         num_results = 1000
         graph_data = []
 
-        statuses = self.database.retrieve_status(device_id, num_results)
-        if statuses is not None:
-            for status in statuses:
-                if "datetime" in status:
-                    datetime_num = int(status["datetime"])
-                    if datetime_num > start_time:
-                        point_data = {}
-                        point_data['datetime'] = datetime_num
-                        for attribute in attributes:
-                            # If the attribute doesn't exist for this timeslice then insert a zero
-                            if attribute in status:
-                                point_data[attribute] = status[attribute]
-                            else:
-                                point_data[attribute] = 0
-                        graph_data.append(point_data)
+        device_status = self.database.retrieve_status(device_id, num_results)
+        if device_status is None or len(device_status) == 0:
+            raise Exception('Unknown device ID')
+
+        for status in device_status:
+            if "datetime" in status:
+                datetime_num = int(status["datetime"])
+                if datetime_num > start_time:
+                    point_data = {}
+                    point_data['datetime'] = datetime_num
+                    for attribute in attributes:
+                        # If the attribute doesn't exist for this timeslice then insert a zero
+                        if attribute in status:
+                            point_data[attribute] = status[attribute]
+                        else:
+                            point_data[attribute] = 0
+                    graph_data.append(point_data)
 
         graph_str = "{\"points\":" + json.dumps(graph_data) + "}"
         return True, graph_str
@@ -126,6 +137,30 @@ class Api(object):
         if device_color is None:
             device_color = "Gray"
         return True, device_color
+
+    def handle_status_request(self, values):
+        """Called when a request for the device status received."""
+        if 'device_id' not in values:
+            raise Exception("device_id not specified.")
+
+        # Get the device ID.
+        device_id = values['device_id']
+        if not InputChecker.is_uuid(device_id):
+            raise Exception("Invalid device ID.")
+
+        device_status = self.database.retrieve_status(device_id, 1)
+        if device_status is None or len(device_status) == 0:
+            raise Exception('Unknown device ID')
+
+        first_device_status = device_status[0]
+        first_device_status.pop("_id") # Leaving this in will cause all sorts of trouble
+        first_device_status.pop(keys.KEY_DEVICE_ID)
+        first_device_status.pop(keys.KEY_DATETIME)
+        first_device_status.pop(keys.KEY_VIRTUAL_MEM_TOTAL)
+
+        # Convert to JSON and return.
+        print(first_device_status)
+        return True, json.dumps(first_device_status)
 
     def handle_update_email(self, values):
         """Updates the user's email address."""
@@ -373,6 +408,8 @@ class Api(object):
             return self.handle_graph_data_request(values)
         elif request == 'retrieve_graph_color':
             return self.handle_graph_color_request(values)
+        elif request == 'retrieve_status':
+            return self.handle_status_request(values)
         elif request == 'update_email':
             return self.handle_update_email(values)
         elif request == 'update_password':

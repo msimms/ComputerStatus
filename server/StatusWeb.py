@@ -271,7 +271,7 @@ class StatusWeb(object):
                     method = args[1:]
                     handled, response = self.app.api(user_id, method, params)
                     if not handled:
-                        self.log_error("Failed to handle request: " + method)
+                        self.log_error("Failed to handle request: " + method[0])
                         cherrypy.response.status = 400
                     else:
                         cherrypy.response.status = 200
