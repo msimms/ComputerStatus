@@ -46,6 +46,8 @@ ${nav}
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.0/d3.js" integrity="sha256-WTp2ccWeyvNJn44PKZ0I9sfZ3vY6qmpWT0C/L4fU7yU=" crossorigin="anonymous"></script>
 <script type="text/javascript">
 
+    let zoom_level = 1000;
+
     window.onorientationchange = function()
     { 
         document.location.reload(); 
@@ -143,7 +145,7 @@ ${nav}
             .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        // Add X axis --> it is a date format.
+        // Add X axis --> it is in date format.
         let x = d3.scaleTime()
             .domain(d3.extent(data, function(d) { return d.date; }))
             .range([ 0, width ]);
@@ -176,13 +178,13 @@ ${nav}
 
         // Add brushing.
         let brush = d3.brushX()                   // Add the brush feature using the d3.brush function
-            .extent( [ [0,0], [width, height] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+            .extent( [ [0,0], [width, height] ] ) // Initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
             .on("end", updateChart)               // Each time the brush selection changes, trigger the 'updateChart' function
 
         let line = svg.append('g')
             .attr("clip-path", "url(#clip)");
 
-        // Add the line
+        // Add the line.
         line.append("path")
             .datum(data)
             .attr("class", "line")  // I add the class line to be able to modify this line later on.
@@ -194,35 +196,35 @@ ${nav}
                 .y(function(d) { return y(d.value) })
             )
 
-        // Add the brushing
+        // Add the brushing.
         line.append("g")
             .attr("class", "brush")
             .call(brush);
 
-        // A function that set idleTimeOut to null
+        // A function that set idleTimeOut to null.
         let idleTimeout
         function idled() { idleTimeout = null; }
 
-        // A function that update the chart for given boundaries
+        // A function that update the chart for given boundaries.
         function updateChart() {
 
             // What are the selected boundaries?
             extent = d3.event.selection
 
-            // If no selection, back to initial coordinate. Otherwise, update X axis domain
+            // If no selection, back to initial coordinate. Otherwise, update X axis domain.
             if (extent)
             {
                 x.domain([ x.invert(extent[0]), x.invert(extent[1]) ]);
-                line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done
+                line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done.
             }
             else
             {
                 if (!idleTimeout)
-                    return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
+                    return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit.
                 x.domain([4,8])
             }
 
-            // Update axis and line position
+            // Update axis and line position.
             x_axis.transition().duration(1000).call(d3.axisBottom(x))
             line.select('.line')
                 .transition()
@@ -232,7 +234,7 @@ ${nav}
                     .y(function(d) { return y(d.value) }))
         }
 
-        // If user double click, reinitialize the chart
+        // If user double clicks, re-initialize the chart.
         svg.on("dblclick",function() {
             x.domain(d3.extent(data, function(d) { return d.date; }))
             x_axis.transition().call(d3.axisBottom(x))
@@ -262,9 +264,13 @@ ${nav}
         dict.push({["device_id"] : "${device_id}"});
 
         if (send_post_request(the_url, dict, result_text))
-            window.location.reload(false);
+        {
+            redraw_div();
+        }
         else
+        {
             alert("An error occurred!");
+        }
     }
 
     /// @function add_color_selection_cb
@@ -276,7 +282,7 @@ ${nav}
         sel.onchange = on_color_selection_changed;
 
         let opt = document.createElement("option");
-        opt.value = "Red";
+        opt.value = "FireBrick";
         opt.text = "Red";
         sel.appendChild(opt);
 
@@ -291,7 +297,7 @@ ${nav}
         sel.appendChild(opt);
 
         opt = document.createElement("option");
-        opt.value = "Gray";
+        opt.value = "LightGray";
         opt.text = "Gray";
         sel.appendChild(opt);
 
@@ -307,17 +313,17 @@ ${nav}
     }
 
     /// @function add_scale_btns
-    function add_scale_btns(attribute_name)
+    function add_scale_btns()
     {
         let btn_up = document.createElement("button");
         btn_up.data = "+";
         btn_up.innerHTML = '+';
-        btn_up.onclick = function() {};
+        btn_up.onclick = function() { zoom_level = zoom_level / 2; redraw_div(); };
 
         let btn_down = document.createElement("button");
         btn_down.data = "+";
         btn_down.innerHTML = '-';
-        btn_down.onclick = function() {};
+        btn_down.onclick = function() { zoom_level = zoom_level * 2; redraw_div(); };
 
         let charts_div = document.getElementById("charts");
         charts_div.appendChild(btn_up);
@@ -363,9 +369,9 @@ ${nav}
     }
 
     /// @function retrieve_graph_data
-    function retrieve_graph_data(attributes_str)
+    function retrieve_graph_data(attributes_str, max_num_results)
     {
-        let the_url = "${root_url}/api/1.0/retrieve_graph_data?device_id=".concat("${device_id}", "&attributes=", attributes_str, "&start_time=0");
+        let the_url = "${root_url}/api/1.0/retrieve_graph_data?device_id=".concat("${device_id}", "&attributes=", attributes_str, "&start_time=0", "&num_results=", max_num_results);
         let xml_http = new XMLHttpRequest();
 
         xml_http.onreadystatechange = function()
@@ -383,6 +389,7 @@ ${nav}
                     for (let attribute_index = 0; attribute_index < attributes.length; ++attribute_index)
                     {
                         let graph = new Array();
+
                         graphs.push(graph);
                     }
 
@@ -411,7 +418,6 @@ ${nav}
 
                         draw_graph(graphs[attribute_index], retrieve_printable_name(key), chart_color);
                         add_color_selection_cb(key, chart_color);
-                        //add_scale_btns(key);
                     }
                 }
             }
@@ -422,7 +428,7 @@ ${nav}
     }
 
     /// @function retrieve_device_status
-    function retrieve_device_status()
+    function retrieve_device_status(max_num_results)
     {
         let the_url = "${root_url}/api/1.0/retrieve_status?device_id=${device_id}";
         let xml_http = new XMLHttpRequest();
@@ -438,7 +444,7 @@ ${nav}
                     let json_keys = Object.keys(json_data);
                     let attributes_str = json_keys.join();
 
-                    retrieve_graph_data(attributes_str);
+                    retrieve_graph_data(attributes_str, max_num_results);
                 }
             }
         }
@@ -447,7 +453,24 @@ ${nav}
         xml_http.send(null);
     }
 
-    retrieve_device_status();
+    /// @function clear_charts
+    function clear_charts()
+    {
+        let div = document.getElementById('charts');
+        while(div.firstChild){
+            div.removeChild(div.firstChild);
+        }
+    }
+
+    /// @function redraw_div
+    function redraw_div()
+    {
+        clear_charts();
+        add_scale_btns();
+        retrieve_device_status(zoom_level);
+    }
+
+    redraw_div();
 
     $(function()
     {
