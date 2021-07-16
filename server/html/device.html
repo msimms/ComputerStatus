@@ -167,7 +167,7 @@ ${nav}
             .call(d3.axisLeft(y));
         svg.append("text")
             .attr("transform", "rotate(-90)")
-            .attr("y", 0-margin.left)
+            .attr("y", 0 - (margin.left))
             .attr("x", 0 - (height / 2))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
@@ -247,8 +247,8 @@ ${nav}
             line.select('.line')
                 .transition()
                 .attr("d", d3.line()
-                .x(function(d) { return x(d.date) })
-                .y(function(d) { return y(d.value) })
+                    .x(function(d) { return x(d.date) })
+                    .y(function(d) { return y(d.value) })
             )
         });
     }
@@ -386,7 +386,7 @@ ${nav}
                         {
                             let key = attributes[attribute_index]
                             let value = point[key]
-                            let element = { date: parseInt(datetime_str), value: parseFloat(value) };
+                            let element = { date: parseInt(datetime_str) * 1000, value: parseFloat(value) };
 
                             graphs[attribute_index].push(element);
                         }
