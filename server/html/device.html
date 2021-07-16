@@ -20,14 +20,6 @@
     html { height: 100% }
     body { height: 100%; margin: 0; padding: 0 }
 
-    div.bar
-    {
-        display: inline-block;
-        width: 20px;
-        height: 75px;	/* Gets overriden by D3-assigned height below */
-        background-color: teal;
-    }
-
     .axis path,
     .axis line
     {
@@ -44,7 +36,7 @@
 ${nav}
 </section>
 
-<div id="charts"/>
+<div class="charts" id="charts"/>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.0/themes/smoothness/jquery-ui.css" integrity="sha256-wiYwAtNSF3nuWFREDO5vx5cwSmngwE1pGg59NQURCUY=" crossorigin="anonymous" />
 
@@ -155,7 +147,7 @@ ${nav}
         let x = d3.scaleTime()
             .domain(d3.extent(data, function(d) { return d.date; }))
             .range([ 0, width ]);
-        let xAxis = svg.append("g")
+        let x_axis = svg.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x));
 
@@ -163,7 +155,7 @@ ${nav}
         let y = d3.scaleLinear()
             .domain(d3.extent(data, function(d) { return d.value; }))
             .range([ height, 0 ]);
-        let yAxis = svg.append("g")
+        let y_axis = svg.append("g")
             .call(d3.axisLeft(y));
         svg.append("text")
             .attr("transform", "rotate(-90)")
@@ -231,7 +223,7 @@ ${nav}
             }
 
             // Update axis and line position
-            xAxis.transition().duration(1000).call(d3.axisBottom(x))
+            x_axis.transition().duration(1000).call(d3.axisBottom(x))
             line.select('.line')
                 .transition()
                 .duration(1000)
@@ -243,7 +235,7 @@ ${nav}
         // If user double click, reinitialize the chart
         svg.on("dblclick",function() {
             x.domain(d3.extent(data, function(d) { return d.date; }))
-            xAxis.transition().call(d3.axisBottom(x))
+            x_axis.transition().call(d3.axisBottom(x))
             line.select('.line')
                 .transition()
                 .attr("d", d3.line()
@@ -276,11 +268,11 @@ ${nav}
     }
 
     /// @function add_color_selection_cb
-    function add_color_selection_cb(key, default_color)
+    function add_color_selection_cb(attribute_name, default_color)
     {
         let sel = document.createElement("select");
         sel.align = "right";
-        sel.id = key;
+        sel.id = attribute_name;
         sel.onchange = on_color_selection_changed;
 
         let opt = document.createElement("option");
@@ -314,11 +306,30 @@ ${nav}
         charts_div.appendChild(sel);
     }
 
+    /// @function add_scale_btns
+    function add_scale_btns(attribute_name)
+    {
+        let btn_up = document.createElement("button");
+        btn_up.data = "+";
+        btn_up.innerHTML = '+';
+        btn_up.onclick = function() {};
+
+        let btn_down = document.createElement("button");
+        btn_down.data = "+";
+        btn_down.innerHTML = '-';
+        btn_down.onclick = function() {};
+
+        let charts_div = document.getElementById("charts");
+        charts_div.appendChild(btn_up);
+        charts_div.appendChild(btn_down);
+    }
+
     /// @function add_sep
     function add_sep()
     {
         let sep = document.createElement("hr");
         let charts_div = document.getElementById("charts");
+
         charts_div.appendChild(sep);
     }
 
@@ -400,6 +411,7 @@ ${nav}
 
                         draw_graph(graphs[attribute_index], retrieve_printable_name(key), chart_color);
                         add_color_selection_cb(key, chart_color);
+                        //add_scale_btns(key);
                     }
                 }
             }
@@ -454,10 +466,10 @@ ${nav}
 <div align="center">
     <h3>Name this device</h3>
     <p><input type="text" name="name" id="name" value="${title}"></p>
-    <p><button type="button" onclick="return set_device_name()">Name</button></p>
+    <p class="devices"><button type="button" id="set_device_name" onclick="return set_device_name()">Name</button></p>
     <h3>Delete data before</h3>
     <p><input type="text" name="trim" id="trim"></p>
-    <p><button type="button" onclick="return trim_data()">Trim</button></p>
+    <p class="devices"><button type="button" id="trim_data" onclick="return trim_data()">Trim</button></p>
 </div>
 
 </body>

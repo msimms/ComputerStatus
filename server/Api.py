@@ -87,9 +87,17 @@ class Api(object):
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
 
-        attributes = urllib.unquote_plus(values["attributes"]).split(',')
-        start_time = int(values["start_time"])
+        # Maximum number of results.
         num_results = 1000
+        if 'num_results' in values:
+            num_results = int(values['num_results'])
+
+        # List of attributes whose graph data is requested.
+        attributes = urllib.unquote_plus(values["attributes"]).split(',')
+
+        # Do not include results before this time.
+        start_time = int(values["start_time"])
+
         graph_data = []
 
         device_status = self.database.retrieve_status(device_id, num_results)
@@ -135,7 +143,7 @@ class Api(object):
 
         # If there was nothing in the database then set it to the default of 'black'.
         if device_color is None:
-            device_color = "Gray"
+            device_color = "LightGray"
         return True, device_color
 
     def handle_status_request(self, values):
