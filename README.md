@@ -52,6 +52,7 @@ Note: Passing the `--debug` flag will prevent the server from daemonizing.
 This software uses these projects to work properly:
 
 * [pymongo](https://github.com/mongodb/mongo-python-driver) - Python interface to mongodb.
+* [cherrypy](https://cherrypy.github.io/) - A framework for python-based web apps.
 
 ## License
 This is open source software and is released under the MIT license.
