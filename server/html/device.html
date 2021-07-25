@@ -247,7 +247,8 @@ ${nav}
         }
 
         // Add the y axis.
-        let y_axis = svg.append("g");
+        let y_axis = svg.append("g")
+            .call(d3.axisLeft(y_scale));
 
         // Create the line.
         let line = svg.append('g')
