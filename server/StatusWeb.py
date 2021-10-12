@@ -35,8 +35,6 @@ import App
 import UserMgr
 
 from cherrypy.process.plugins import Daemonizer
-from mako.lookup import TemplateLookup
-from mako.template import Template
 
 ACCESS_LOG = 'access.log'
 ERROR_LOG = 'error.log'

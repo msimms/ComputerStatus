@@ -24,7 +24,6 @@
 
 import cherrypy
 
-
 SESSION_KEY = '_computerstatus_username'
 
 class SessionMgr(object):

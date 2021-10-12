@@ -26,8 +26,7 @@ import bcrypt
 import SessionMgr
 import StatusDb
 
-
-MIN_PASSWORD_LEN  = 8
+MIN_PASSWORD_LEN = 8
 
 class UserMgr(object):
     """Class for managing users"""
