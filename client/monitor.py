@@ -24,6 +24,8 @@
 import argparse
 import logging
 import os
+import platform
+import re
 import signal
 import subprocess
 import sys
@@ -51,7 +53,7 @@ def signal_handler(signal, frame):
         g_monitor_thread.terminate()
 
 class MonitorThread(threading.Thread):
-    def __init__(self, interval, server, id_file, post_file, verbose, do_cpu_check, do_mem_check, do_net_check, do_gpu_check):
+    def __init__(self, interval, server, id_file, post_file, verbose, do_cpu_check, do_mem_check, do_net_check, ping_host, do_gpu_check):
         threading.Thread.__init__(self)
         self.stopped = threading.Event()
         self.interval = interval
@@ -61,6 +63,7 @@ class MonitorThread(threading.Thread):
         self.do_cpu_check = do_cpu_check
         self.do_mem_check = do_mem_check
         self.do_net_check = do_net_check
+        self.ping_host = ping_host
         self.do_gpu_check = do_gpu_check
         self.last_net_io = None
         self.post_module = None
@@ -167,6 +170,35 @@ class MonitorThread(threading.Thread):
         except:
             logging.error("Error collecting network stats.")
 
+    def check_ping(self, values, hostname):
+        """Runs a ping test and appends the result to the 'values' dictionary."""
+        try:
+            # Different count flags for Windows vs everyone else.
+            target = platform.system()
+            if target == 'Windows':
+                flag = "-n"
+            else:
+                flag = "-c"
+
+            # Run the command.
+            p = subprocess.Popen(["ping", flag, "1", hostname], stdout=subprocess.PIPE)
+            response = p.stdout.read()
+
+            # Find the part of the response text that has the time (different for Windows).
+            if target == 'Windows':
+                end_str = "ms"
+            else:
+                end_str = " ms"
+            match = re.search("time=.*" + end_str, str(response))
+
+            # If we have a match then extract the timestamp.
+            if match:
+                match = match.group()
+                submatch = match[5:match.find(end_str)]
+                values[keys.KEY_PING_TIME_MS] = float(submatch)
+        except:
+            logging.error("Error performing ping test.")
+
     def execute_post_file(self, values):
         """Executes the post process file. This is where the user can specify logic to run after each check."""
         try:
@@ -186,6 +218,8 @@ class MonitorThread(threading.Thread):
                 self.check_mem(values)
             if self.do_net_check:
                 self.check_net(values)
+            if len(self.ping_host) > 0:
+                self.check_ping(values, self.ping_host)
             if self.do_gpu_check:
                 self.check_gpu(values)
             if self.server:
@@ -213,6 +247,7 @@ def main():
     parser.add_argument("--cpu", action="store_true", default=True, help="TRUE if sampling the CPU", required=False)
     parser.add_argument("--net", action="store_true", default=True, help="TRUE if sampling network I/O", required=False)
     parser.add_argument("--mem", action="store_true", default=True, help="TRUE if sampling memory", required=False)
+    parser.add_argument("--ping", type=str, action="store", default="", help="Supply the hostname if sampling ping times (ex: --ping 1.1.1.1)", required=False)
     parser.add_argument("--gpu", action="store_true", default=False, help="TRUE if sampling the GPU (Nvidia only)", required=False)
 
     try:
@@ -233,7 +268,7 @@ def main():
         logging.basicConfig(filename=args.log,level=logging.DEBUG)
 
     # Start the monitor thread.
-    g_monitor_thread = MonitorThread(args.interval, server, args.id_file, args.post, args.verbose, args.cpu, args.mem, args.net, args.gpu)
+    g_monitor_thread = MonitorThread(args.interval, server, args.id_file, args.post, args.verbose, args.cpu, args.mem, args.net, args.ping, args.gpu)
     g_monitor_thread.start()
 
     # Wait for it to finish. We do it like this so that the main thread isn't blocked and can execute the signal handler.
