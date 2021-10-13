@@ -82,7 +82,7 @@ class Api(object):
         if 'start_time' not in values:
             raise Exception("start_time not specified.")
 
-        # Get the device ID.
+        # Get the device ID and make sure it is a valid UUID.
         device_id = values['device_id']
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
@@ -128,7 +128,7 @@ class Api(object):
         if 'attribute' not in values:
             raise Exception("attribute not specified.")
 
-        # Get the device ID.
+        # Get the device ID and make sure it is a valid UUID.
         device_id = values['device_id']
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
@@ -151,7 +151,7 @@ class Api(object):
         if 'device_id' not in values:
             raise Exception("device_id not specified.")
 
-        # Get the device ID.
+        # Get the device ID and make sure it is a valid UUID.
         device_id = values['device_id']
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
@@ -278,7 +278,7 @@ class Api(object):
         if 'name' not in values:
             raise Exception("name not specified.")
 
-        # Get the device ID.
+        # Get the device ID and make sure it is a valid UUID.
         device_id = values['device_id']
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
@@ -310,7 +310,7 @@ class Api(object):
         if 'device_id' not in values:
             raise Exception("device_id not specified.")
 
-        # Get the device ID.
+        # Get the device ID and make sure it is a valid UUID.
         device_id = values['device_id']
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
@@ -347,7 +347,7 @@ class Api(object):
         if 'device_id' not in values:
             raise Exception("device_id not specified.")
 
-        # Get the device ID.
+        # Get the device ID and make sure it is a valid UUID.
         device_id = values['device_id']
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
@@ -369,7 +369,7 @@ class Api(object):
         if 'device_id' not in values:
             raise Exception("device_id not specified.")
 
-        # Get the device ID.
+        # Get the device ID and make sure it is a valid UUID.
         device_id = values['device_id']
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
@@ -395,7 +395,7 @@ class Api(object):
         if 'trim' not in values:
             raise Exception("trim date not specified.")
 
-        # Get the device ID.
+        # Get the device ID and make sure it is a valid UUID.
         device_id = values['device_id']
         print(device_id)
         if not InputChecker.is_uuid(device_id):
