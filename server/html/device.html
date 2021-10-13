@@ -146,8 +146,10 @@ ${nav}
             .range([ 0, width ]);
 
         // Create the y axis.
+        let min_y = d3.min(data, function(d) { return d.value; });
+        let max_y = d3.max(data, function(d) { return d.value; });
         let y_scale = d3.scaleLinear()
-            .domain(d3.extent(data, function(d) { return d.value; }))
+            .domain([ min_y, max_y ])
             .range([ height, 0 ]);
 
         let svg = d3.select("#charts")
@@ -198,7 +200,7 @@ ${nav}
         // Add the title.
         svg.append("text")
             .attr("transform", "rotate(-90)")
-            .attr("y", 0 - (margin.left))
+            .attr("y", width)
             .attr("x", 0 - (height / 2))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
@@ -379,7 +381,8 @@ ${nav}
         ugly_name = ugly_name.replace("network", "Network");
         ugly_name = ugly_name.replace("bytes sent", "Bytes Sent");
         ugly_name = ugly_name.replace("bytes received", "Bytes Received");
-        ugly_name = ugly_name.replace("per sample", "Per Sample");
+        ugly_name = ugly_name.replace("per sample", "/ Sample");
+        ugly_name = ugly_name.replace("user times", "User Times");
         ugly_name = ugly_name.replace("ping time", "Ping Time");
         return ugly_name;
     }
@@ -487,7 +490,7 @@ ${nav}
     function clear_charts()
     {
         let div = document.getElementById('charts');
-        while(div.firstChild){
+        while (div.firstChild){
             div.removeChild(div.firstChild);
         }
     }
@@ -516,12 +519,12 @@ ${nav}
 
 </div>
 
-<div align="center">
+<div class="settings" align="center">
     <h3>Name this device</h3>
-    <p><input type="text" name="name" id="name" value="${title}"></p>
+    <p><input type="text" name="name" id="name" style="width:50%" value="${title}"></p>
     <p class="devices"><button type="button" id="set_device_name" onclick="return set_device_name()">Name</button></p>
     <h3>Delete data before</h3>
-    <p><input type="text" name="trim" id="trim"></p>
+    <p><input type="text" name="trim" id="trim" style="width:25%"></p>
     <p class="devices"><button type="button" id="trim_data" onclick="return trim_data()">Trim</button></p>
 </div>
 

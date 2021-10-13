@@ -84,11 +84,13 @@ tr:hover {
 }
 
 .charts select {
+    -webkit-appearance: none;
     width: 125px;
     margin: 5px 5px 5px 5px;
+    background-color: #D3D3D3;
     border: 0px;
-    background-color: "LightGray";
-    color: "DarkGray";
+    border-radius: 0px;
+    padding: 5px;
     text-decoration: none;
     font-family: arial, sans-serif;
     opacity: 0.8;
