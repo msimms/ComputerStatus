@@ -68,6 +68,8 @@
         cell.appendChild(a);
 
         // Create a cell for the name.
+        if (device_name == null)
+            device_name = "Unnamed";
         cell = new_row.insertCell();
         text = document.createTextNode(device_name);
         cell.appendChild(text);
