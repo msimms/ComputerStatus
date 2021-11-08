@@ -39,6 +39,18 @@ h2 {
     background: var(--theme);
 }
 
+.devices a:link {
+    text-decoration: none;
+    background-color: var(--theme);
+    color: var(--text);
+}
+
+.devices a:visited {
+    text-decoration: none;
+    background-color: var(--theme);
+    color: var(--text);
+}
+
 section {
     color: var(--theme);
     background: var(--text);
@@ -154,6 +166,10 @@ tr:hover {
     text-decoration: none;
     font-family: arial, sans-serif;
     opacity: 0.8;
+}
+
+.settings input {
+    width: 50%;
 }
 
 .axis path,
