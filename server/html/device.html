@@ -19,20 +19,6 @@
 <style type="text/css">
     html { height: 100% }
     body { height: 100%; margin: 0; padding: 0 }
-
-    .axis path,
-    .axis line
-    {
-        fill: none;
-        stroke: #000;
-        stroke-width: 1;
-        shape-rendering: crispEdges;
-    }
-    .axis-grid line {
-        fill: none;
-        stroke: #def;
-        stroke-width: 1;
-    }
 </style>
 
 <body>
@@ -97,12 +83,20 @@ ${nav}
     }
 
     /// @function draw_graph
+    /// If existing_graph is provided, a new line will be appended to that graph.
     function draw_graph(data, title, units, color)
     {
         if (data.length <= 1)
         {
             return;
         }
+
+        let first_point = data[0];
+        let last_point = data[data.length - 1];
+
+        // If the y axis extents were not provided then calculate them now.
+        let min_y = d3.min(data, function(d) { return d.value; }) * 0.9;
+        let max_y = d3.max(data, function(d) { return d.value; });
 
         // Need to zero out the first and last points or else the fill will look silly.
         data[0].value = 0.0;
@@ -113,7 +107,6 @@ ${nav}
                 .style("opacity", 0)
                 .style("position", "absolute")
                 .style("visibility", "hidden")
-                .style("background-color", "white")
                 .style("z-index", 1)
                 .style("cursor", "pointer")
         let mouseover = function() {
@@ -146,8 +139,6 @@ ${nav}
             .range([ 0, width ]);
 
         // Create the y axis.
-        let min_y = d3.min(data, function(d) { return d.value; });
-        let max_y = d3.max(data, function(d) { return d.value; });
         let y_scale = d3.scaleLinear()
             .domain([ min_y, max_y ])
             .range([ height, 0 ]);
@@ -183,6 +174,7 @@ ${nav}
 
         // Add the x axis.
         let x_axis = svg.append("g")
+            .attr("class", "axis")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x_scale));
 
@@ -199,6 +191,7 @@ ${nav}
 
         // Add the title.
         svg.append("text")
+            .attr("class", "axis")
             .attr("transform", "rotate(-90)")
             .attr("y", width)
             .attr("x", 0 - (height / 2))
@@ -216,7 +209,7 @@ ${nav}
                 .attr("y", 0);
 
         // A function that set idle_time_out to null.
-        var idle_time_out;
+        var idle_time_out = null;
         function idled() { idle_time_out = null; }
 
         // A function that update the chart for given boundaries.
@@ -250,6 +243,7 @@ ${nav}
 
         // Add the y axis.
         let y_axis = svg.append("g")
+            .attr("class", "axis")
             .call(d3.axisLeft(y_scale));
 
         // Create the line.
@@ -490,7 +484,7 @@ ${nav}
     function clear_charts()
     {
         let div = document.getElementById('charts');
-        while (div.firstChild){
+        while (div.firstChild) {
             div.removeChild(div.firstChild);
         }
     }

@@ -1,5 +1,32 @@
+/* Light mode */
+@media (prefers-color-scheme: light) {
+    body {
+        --theme: #FFFFFF;
+        --text: #000000;
+        --navbkgnd: #333;
+        --navtext: #FFFFFF;
+        --navhover: #111;
+    }
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    body {
+        --theme: #000000;
+        --text: #FFFFFF;
+        --navbkgnd: #000000;
+        --navtext: #FFFFFF;
+        --navhover: #EEE;
+    }
+}
+
+body {
+    background-color: var(--theme);
+    color: var(--text);
+}
+
 h1 {
-    color: #000000;
+    color: var(--text);
     text-transform: uppercase;
     text-align: left;
     font-size: 250%;
@@ -8,13 +35,13 @@ h1 {
 }
 
 h2 {
-    color: #000000;
-    background: #FFFFFF;
+    color: var(--text);
+    background: var(--theme);
 }
 
 section {
-    color: #000000;
-    background: #FFFFFF;
+    color: var(--theme);
+    background: var(--text);
     vertical-align: top;
     margin: 0px;
     padding: 0px;
@@ -33,7 +60,7 @@ table {
 
 th {
     padding: 5px;
-    border-bottom: 5px solid #000000;
+    border-bottom: 5px solid var(--text);
     border-radius: 10px 10px 0px 0px;
     text-transform: uppercase;
 }
@@ -43,10 +70,10 @@ tr {
 }
 
 td {
-    border: 1px solid #FFFFFF;
+    border: 1px solid var(--theme);
     border-radius: 2px;
     padding: 2px;
-    text-shadow: 1px 1px #FFFFFF;
+    text-shadow: 1px 1px var(--text);
     text-align: center;
 }
 
@@ -57,7 +84,7 @@ tr:hover {
 .nav ul {
     list-style-type: none;
     overflow: hidden;
-    background-color: #333;
+    background-color: var(--navbkgnd);
     margin: 0px;
     padding: 0px;
 }
@@ -68,7 +95,7 @@ tr:hover {
 
 .nav li a {
     display: inline-block;
-    color: white;
+    color: var(--navtext);
     text-align: center;
     margin: 0px;
     padding: 14px 16px;
@@ -76,7 +103,7 @@ tr:hover {
 }
 
 .nav li a:hover {
-    background-color: #111;
+    background-color: var(--navhover);
 }
 
 .active {
@@ -127,4 +154,20 @@ tr:hover {
     text-decoration: none;
     font-family: arial, sans-serif;
     opacity: 0.8;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: var(--text);
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+}
+.axis-grid line {
+    fill: none;
+    stroke: var(--theme);
+    stroke-width: 1;
+}
+.axis {
+    stroke: var(--text);
 }
