@@ -272,7 +272,11 @@ def main():
     g_monitor_thread.start()
 
     # Wait for it to finish. We do it like this so that the main thread isn't blocked and can execute the signal handler.
-    while g_monitor_thread.isAlive():
+if sys.version_info[0] < 3:
+    alive_func = g_monitor_thread.isAlive
+else:
+    alive_func = g_monitor_thread.is_alive
+    while alive_func():
         time.sleep(1)
     g_monitor_thread.join()
 
