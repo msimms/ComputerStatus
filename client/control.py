@@ -138,10 +138,10 @@ if __name__ == "__main__":
     g_control_thread.start()
 
     # Wait for it to finish. We do it like this so that the main thread isn't blocked and can execute the signal handler.
-if sys.version_info[0] < 3:
-    alive_func = g_control_thread.isAlive
-else:
-    alive_func = g_control_thread.is_alive
+    if sys.version_info[0] < 3:
+        alive_func = g_control_thread.isAlive
+    else:
+        alive_func = g_control_thread.is_alive
     while alive_func():
         time.sleep(1)
     g_control_thread.join()
