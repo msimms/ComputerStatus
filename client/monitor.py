@@ -260,7 +260,7 @@ def main():
     server = args.server
     if server is not None and len(server) > 0:
         parsed_server = urlparse.urlparse(server)
-        if parsed_server.scheme is '':
+        if parsed_server.scheme == '':
             server = "http://" + server
 
     # Configure the log file, if applicable.
