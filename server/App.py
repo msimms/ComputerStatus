@@ -55,10 +55,11 @@ class RedirectException(Exception):
 class App(object):
     """Class containing the URL handlers."""
 
-    def __init__(self, user_mgr, root_dir, root_url):
+    def __init__(self, user_mgr, root_dir, root_url, disable_new_logins):
         self.user_mgr = user_mgr
         self.root_dir = root_dir
         self.root_url = root_url
+        self.disable_new_logins = disable_new_logins
         self.tempfile_dir = os.path.join(self.root_dir, 'tempfile')
         self.tempmod_dir = os.path.join(self.root_dir, 'tempmod')
         self.database = StatusDb.MongoDatabase(root_dir)
@@ -85,7 +86,7 @@ class App(object):
             my_template = Template(filename=error_html_file, module_directory=self.tempmod_dir)
             if error_str is None:
                 error_str = "Internal Error."
-            return my_template.render(error=error_str)
+            return my_template.render(root_url=self.root_url, error=error_str)
         except:
             pass
         return ""
@@ -214,6 +215,11 @@ class App(object):
 
     def create_login(self):
         """Renders the create login page."""
+        # Make sure this is allowed.
+        # Creating a new login can be disabled for security reasons, testing, etc.
+        if self.disable_new_logins:
+            raise Exception("Login creation is currently disabled.")
+
         create_login_html_file = os.path.join(self.root_dir, HTML_DIR, 'create_login.html')
         my_template = Template(filename=create_login_html_file, module_directory=self.tempmod_dir)
         return my_template.render(nav=self.create_navbar(False), root_url=self.root_url)

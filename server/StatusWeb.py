@@ -223,6 +223,10 @@ class StatusWeb(object):
         """Renders the create login page."""
         try:
             return self.app.create_login()
+        except Exception as e:
+            error_msg = str(e.args[0])
+            self.log_error(error_msg)
+            return self.error(error_msg)
         except:
             return self.error()
         return self.error()
@@ -297,6 +301,7 @@ def main():
     # Parse command line options.
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true", default=False, help="Prevents the app from going into the background", required=False)
+    parser.add_argument("--disable_new_logins", action="store_true", default=False, help="Used to disable new login creation", required=False)
     parser.add_argument("--port", type=int, default=8282, help="Port on which to listen", required=False)
     parser.add_argument("--https", action="store_true", default=False, help="Runs the app as HTTPS", required=False)
     parser.add_argument("--cert", default="cert.pem", help="Certificate file for HTTPS", required=False)
@@ -336,7 +341,7 @@ def main():
 
     root_dir = os.path.dirname(os.path.abspath(__file__))
     user_mgr = UserMgr.UserMgr(root_dir)
-    backend = App.App(user_mgr, root_dir, root_url)
+    backend = App.App(user_mgr, root_dir, root_url, args.disable_new_logins)
     g_app = StatusWeb(backend)
 
     # The direcory for session objects.
