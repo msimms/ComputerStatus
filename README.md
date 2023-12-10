@@ -27,12 +27,20 @@ When you run the client script on your machine, it will generate a file with the
 
 Example 1: HTTP
 ```
-python server/StatusWeb.py
+python server/start_cherrypy.py
+```
+or
+```
+python server/start_flask.py
 ```
 
 Example 2: HTTPS
 ```
-python StatusWeb.py --cert cert.pem --privkey key.pem --https
+python start_cherrypy.py --cert cert.pem --privkey key.pem --https
+```
+or
+```
+python server/start_flask.py
 ```
 
 Note: Passing the `--debug` flag will prevent the server from daemonizing.

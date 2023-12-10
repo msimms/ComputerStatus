@@ -26,10 +26,10 @@ import inspect
 import json
 import os
 import sys
-import urllib
 import uuid
 import InputChecker
 import StatusDb
+from urllib.parse import unquote_plus
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -93,7 +93,7 @@ class Api(object):
             num_results = int(values['num_results'])
 
         # List of attributes whose graph data is requested.
-        attributes = urllib.unquote_plus(values["attributes"]).split(',')
+        attributes = unquote_plus(values["attributes"]).split(',')
 
         # Do not include results before this time.
         start_time = int(values["start_time"])
@@ -134,7 +134,7 @@ class Api(object):
             raise Exception("Invalid device ID.")
 
         # Get the attribute name.
-        attribute = urllib.unquote_plus(values['attribute'])
+        attribute = unquote_plus(values['attribute'])
         if not InputChecker.is_valid_decoded_str(attribute):
             raise Exception("Invalid attribute name.")
 
@@ -183,7 +183,7 @@ class Api(object):
             raise Exception("Empty username.")
 
         # Decode the parameter.
-        new_username = urllib.unquote_plus(values['email'])
+        new_username = unquote_plus(values['email'])
         if not InputChecker.is_email_address(new_username):
             raise Exception("Invalid username.")
 
@@ -215,9 +215,9 @@ class Api(object):
         user_id, _, user_realname = self.database.retrieve_user(username)
 
         # The the old and new passwords from the request.
-        old_password = urllib.unquote_plus(values["old_password"])
-        new_password1 = urllib.unquote_plus(values["new_password1"])
-        new_password2 = urllib.unquote_plus(values["new_password2"])
+        old_password = unquote_plus(values["old_password"])
+        new_password1 = unquote_plus(values["new_password1"])
+        new_password2 = unquote_plus(values["new_password2"])
 
         # Reauthenticate the user.
         if not self.user_mgr.authenticate_user(username, old_password):
@@ -241,7 +241,7 @@ class Api(object):
             raise Exception("Empty username.")
 
         # Reauthenticate the user.
-        password = urllib.unquote_plus(values['password'])
+        password = unquote_plus(values['password'])
         if not self.user_mgr.authenticate_user(username, password):
             raise Exception("Authentication failed.")
 
@@ -289,7 +289,7 @@ class Api(object):
             raise Exception("Device not owned by the logged in user.")
 
         # Validate the device name.
-        name = urllib.unquote_plus(values['name'])
+        name = unquote_plus(values['name'])
         if not InputChecker.is_valid_decoded_str(name):
             raise Exception("Invalid device name.")
 
@@ -321,12 +321,12 @@ class Api(object):
             raise Exception("Device not owned by the logged in user.")
 
         # Get the attribute name.
-        attribute = urllib.unquote_plus(values['attribute'])
+        attribute = unquote_plus(values['attribute'])
         if not InputChecker.is_valid_decoded_str(attribute):
             raise Exception("Invalid attribute name.")
 
         # Get the attribute color.
-        color = urllib.unquote_plus(values['color'])
+        color = unquote_plus(values['color'])
         if not InputChecker.is_valid_decoded_str(color):
             raise Exception("Invalid color.")
 

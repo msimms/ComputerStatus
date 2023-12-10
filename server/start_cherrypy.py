@@ -21,7 +21,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-"""Main application, contains all web page handlers"""
+"""Main application, contains all web page handlers, written for CherryPy"""
 
 import argparse
 import json
@@ -32,18 +32,16 @@ import signal
 import sys
 import cherrypy
 import App
+import SessionMgr
 import UserMgr
 
 from cherrypy.process.plugins import Daemonizer
 
 ACCESS_LOG = 'access.log'
 ERROR_LOG = 'error.log'
-
 LOGIN_URL = '/login'
 
-
 g_app = None
-
 
 def signal_handler(signal, frame):
     global g_app
@@ -52,7 +50,6 @@ def signal_handler(signal, frame):
     if g_app is not None:
         g_app.terminate()
     sys.exit(0)
-
 
 @cherrypy.tools.register('before_finalize', priority=60)
 def secureheaders():
@@ -87,7 +84,6 @@ def check_auth(*args, **kwargs):
         else:
             raise cherrypy.HTTPRedirect(LOGIN_URL)
 
-
 def require(*conditions):
     # A decorator that appends conditions to the auth.require config variable.
     def decorate(f):
@@ -98,7 +94,6 @@ def require(*conditions):
         f._cp_config['auth.require'].extend(conditions)
         return f
     return decorate
-
 
 class StatusWeb(object):
     """Class containing the URL handlers."""
@@ -294,7 +289,6 @@ class StatusWeb(object):
             cherrypy.response.status = 500
         return response
 
-
 def main():
     global g_app
 
@@ -340,7 +334,7 @@ def main():
     mako.directories = "templates"
 
     root_dir = os.path.dirname(os.path.abspath(__file__))
-    user_mgr = UserMgr.UserMgr(root_dir)
+    user_mgr = UserMgr.UserMgr(root_dir, SessionMgr.CherryPySessionMgr())
     backend = App.App(user_mgr, root_dir, root_url, args.disable_new_logins)
     g_app = StatusWeb(backend)
 

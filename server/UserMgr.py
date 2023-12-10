@@ -23,7 +23,6 @@
 # SOFTWARE.
 
 import bcrypt
-import SessionMgr
 import StatusDb
 
 MIN_PASSWORD_LEN = 8
@@ -31,9 +30,9 @@ MIN_PASSWORD_LEN = 8
 class UserMgr(object):
     """Class for managing users"""
 
-    def __init__(self, root_dir):
+    def __init__(self, root_dir, session_mgr):
         self.database = StatusDb.MongoDatabase(root_dir)
-        self.session_mgr = SessionMgr.SessionMgr()
+        self.session_mgr = session_mgr
         super(UserMgr, self).__init__()
 
     def terminate(self):
@@ -42,11 +41,11 @@ class UserMgr(object):
 
     def get_logged_in_user(self):
         """Returns the username associated with the current session."""
-        return self.session_mgr.get_logged_in_user()
+        return self.session_mgr.get_logged_in_username()
 
     def get_logged_in_user_from_cookie(self, auth_cookie):
         """Returns the username associated with the specified authentication cookie."""
-        return self.session_mgr.get_logged_in_user_from_cookie(auth_cookie)
+        return self.session_mgr.get_logged_in_username_from_cookie(auth_cookie)
 
     def create_new_session(self, username):
         """Starts a new session."""
@@ -65,13 +64,17 @@ class UserMgr(object):
         if len(password) < MIN_PASSWORD_LEN:
             raise Exception("The password is too short.")
 
+        # Get the exsting password hash for the user.
         _, db_hash1, _ = self.database.retrieve_user(email)
         if db_hash1 is None:
-            raise Exception("The user could not be found.")
-        db_hash2 = bcrypt.hashpw(password.encode('utf-8'), db_hash1.encode('utf-8'))
-        if db_hash1 != db_hash2:
-            raise Exception("The password is invalid.")
-        return True
+            raise Exception("The user (" + email + ") could not be found.")
+
+        # Validate the provided password against the hash from the database.
+        if isinstance(password, str):
+            password = password.encode()
+        if isinstance(db_hash1, str):
+            db_hash1 = db_hash1.encode()
+        return bcrypt.checkpw(password, db_hash1)
 
     def create_user(self, email, realname, password1, password2):
         """Adds a user to the database."""
