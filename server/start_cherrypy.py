@@ -270,7 +270,7 @@ class StatusWeb(object):
                 api_version = args[0]
                 if api_version == '1.0':
                     method = args[1:]
-                    handled, response = self.app.api(user_id, method, params)
+                    handled, response = self.app.api(user_id, method[0], params)
                     if not handled:
                         self.log_error("Failed to handle request: " + method[0])
                         cherrypy.response.status = 400

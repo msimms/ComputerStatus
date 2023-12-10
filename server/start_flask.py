@@ -135,8 +135,8 @@ def error(error_str=None):
         pass
     return g_app.error("")
 
-@g_flask_app.route('/device')
-def device(device_id, *args, **kw):
+@g_flask_app.route('/device/<device_id>')
+def device(device_id):
     """Page for displaying graphs about a particular device."""
     try:
         global g_app
@@ -149,7 +149,7 @@ def device(device_id, *args, **kw):
 
 @g_flask_app.route('/dashboard')
 @login_required
-def dashboard(*args, **kw):
+def dashboard():
     """Page for displaying the devices owned by a particular user."""
     try:
         global g_app
@@ -162,7 +162,7 @@ def dashboard(*args, **kw):
 
 @g_flask_app.route('/settings')
 @login_required
-def settings(*args, **kw):
+def settings():
     """Renders the user's settings page."""
     try:
         global g_app
@@ -173,13 +173,13 @@ def settings(*args, **kw):
         log_error('Unhandled exception in ' + settings.__name__)
     return error()
 
-@g_flask_app.route('/submit_login')
-def submit_login(*args, **kw):
+@g_flask_app.route('/submit_login', methods=(['POST']))
+def submit_login():
     """Processes a login."""
     try:
         global g_app
-        email = cherrypy.request.params.get("email")
-        password = cherrypy.request.params.get("password")
+        email = flask.request.form["email"]
+        password = flask.request.form["password"]
         return g_app.submit_login(email, password)
     except App.RedirectException as e:
         return flask.redirect(e.url, code=302)
@@ -192,7 +192,7 @@ def submit_login(*args, **kw):
     return error()
 
 @g_flask_app.route('/submit_new_login')
-def submit_new_login(email, realname, password1, password2, *args, **kw):
+def submit_new_login(email, realname, password1, password2):
     """Creates a new login."""
     try:
         global g_app

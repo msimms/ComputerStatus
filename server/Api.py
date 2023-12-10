@@ -414,12 +414,11 @@ class Api(object):
 
         return result, ""
 
-    def handle_api_1_0_request(self, args, values):
+    def handle_api_1_0_request(self, request, values):
         """Called to parse a version 1.0 API message."""
-        if args is None or len(args) <= 0:
+        if request is None:
             return False, ""
 
-        request = args[0]
         if request == 'upload':
             return self.handle_create_status(values)
         elif request == 'retrieve_graph_data':
