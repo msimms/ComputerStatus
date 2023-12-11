@@ -301,6 +301,11 @@ def main():
     global g_app
     global g_flask_app
 
+    # Make sure we have a compatible version of python.
+    if sys.version_info[0] < 3:
+        print("This application requires python 3.")
+        sys.exit(1)
+
     # Parse command line options.
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true", default=False, help="Prevents the app from going into the background", required=False)
