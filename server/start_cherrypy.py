@@ -294,7 +294,7 @@ def main():
 
     # Make sure we have a compatible version of python.
     if sys.version_info[0] < 3:
-        print("This application requires python 3.")
+        print("This application requires python3.")
         sys.exit(1)
 
     # Parse command line options.

@@ -129,9 +129,8 @@ def media(file_name):
 def error(env, start_response):
     """Renders the error page."""
     try:
-        global g_app
-        content = g_app.error(error_str).encode('utf-8')
-        start_response('200 OK', [('Content-Type', 'text/html')])
+        content = g_app.render_error().encode('utf-8')
+        start_response('500', [('Content-Type', 'text/html')])
         return [content]
     except:
         pass
@@ -321,7 +320,7 @@ def main():
 
     # Make sure we have a compatible version of python.
     if sys.version_info[0] < 3:
-        print("This application requires python 3.")
+        print("This application requires python3.")
         sys.exit(1)
 
     # Parse command line options.
