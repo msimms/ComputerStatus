@@ -79,15 +79,15 @@ class SessionMgr(object):
 class CustomSessionMgr(SessionMgr):
     """Custom session manager, avoids the logic provided by the framework. Goal is a high performance session manager."""
 
-    def __init__(self, config):
+    def __init__(self, root_dir):
         super(SessionMgr, self).__init__()
-        assert config is not None
         self.current_session_cookie = None
-        self.database = StatusDb.MongoDatabase()
-        self.database.connect(config)
+        self.database = StatusDb.MongoDatabase(root_dir)
 
     def get_logged_in_username(self):
         """Returns the username associated with the current session."""
+        if self.current_session_cookie is None:
+            return None
         return self.get_logged_in_username_from_cookie(self.current_session_cookie)
 
     def get_logged_in_username_from_cookie(self, session_cookie):

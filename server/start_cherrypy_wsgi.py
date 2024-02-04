@@ -11,6 +11,8 @@ import traceback
 
 import App
 import InputChecker
+import SessionMgr
+import UserMgr
 
 from urllib.parse import parse_qs
 
@@ -134,7 +136,7 @@ def handle_error(start_response, error_code):
     """Renders the error page."""
     global g_app
 
-    content = g_app.error.encode('utf-8')
+    content = g_app.error().encode('utf-8')
     headers = [('Content-type', 'text/html; charset=utf-8')]
     start_response(str(error_code), headers)
     g_session_mgr.clear_current_session() # Housekeeping
@@ -397,6 +399,9 @@ def create_server(port_num):
     return server
 
 def main():
+    global g_app
+    global g_session_mgr
+
     # Make sure we have a compatible version of python.
     if sys.version_info[0] < 3:
         print("This application requires python3.")
@@ -418,12 +423,26 @@ def main():
         parser.error(e)
         sys.exit(1)
 
+    if args.debug:
+        if args.https:
+            root_url = "https://127.0.0.1:" + str(args.port)
+        else:
+            root_url = "http://127.0.0.1:" + str(args.port)
+    else:
+        if args.https:
+            root_url = 'https://' + args.url
+        else:
+            root_url = 'http://' + args.url
+
     # Register the signal handler.
     signal.signal(signal.SIGINT, signal_handler)
 
     try:
         # Create all the objects that actually implement the functionality.
         root_dir = os.path.dirname(os.path.abspath(__file__))
+        g_session_mgr = SessionMgr.CustomSessionMgr(root_dir)
+        user_mgr = UserMgr.UserMgr(root_dir, g_session_mgr)
+        g_app = App.App(user_mgr, root_dir, root_url, args.disable_new_logins)
 
         # The directory for session objects.
         session_dir = os.path.join(root_dir, 'sessions')

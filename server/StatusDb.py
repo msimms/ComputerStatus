@@ -28,6 +28,19 @@ import Database
 from bson.objectid import ObjectId
 import pymongo
 
+# Keys associated with session management.
+SESSION_TOKEN_KEY = "cookie"
+SESSION_USER_KEY = "user"
+SESSION_EXPIRY_KEY = "expiry"
+
+def insert_into_collection(collection, doc):
+    """Handles differences in document insertion between pymongo 3 and 4."""
+    if int(pymongo.__version__[0]) < 4:
+        result = collection.insert(doc)
+    else:
+        result = collection.insert_one(doc)
+    return result is not None and result.inserted_id is not None 
+
 class MongoDatabase(Database.Database):
     conn = None
     database = None
@@ -35,9 +48,9 @@ class MongoDatabase(Database.Database):
 
     def __init__(self, rootDir):
         Database.Database.__init__(self, rootDir)
-        self.create()
+        self.connect()
 
-    def create(self):
+    def connect(self):
         """Connects/creates the database"""
         try:
             self.conn = pymongo.MongoClient('localhost:27017')
@@ -49,6 +62,10 @@ class MongoDatabase(Database.Database):
         except pymongo.errors.ConnectionFailure as e:
             self.log_error("Could not connect to MongoDB: %s" % e)
         return False
+
+    #
+    # User management methods
+    #
 
     def create_user(self, username, realname, hash):
         """Create method for a user."""
@@ -127,6 +144,10 @@ class MongoDatabase(Database.Database):
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])
         return False
+
+    #
+    # Device management methods
+    #
 
     def retrieve_user_devices(self, user_id):
         """Retrieve method for a device."""
@@ -286,6 +307,10 @@ class MongoDatabase(Database.Database):
             self.log_error(sys.exc_info()[0])
         return False
 
+    #
+    # Status management methods
+    #
+
     def create_status(self, status):
         if status is None:
             raise Exception("Unexpected empty object: status")
@@ -339,5 +364,54 @@ class MongoDatabase(Database.Database):
             return True
         except:
             traceback.print_exc(file=sys.stdout)
+            self.log_error(sys.exc_info()[0])
+        return False
+
+    #
+    # Session token management methods
+    #
+
+    def create_session_token(self, token, user, expiry):
+        """Create method for a session token."""
+        if token is None:
+            raise Exception("Unexpected empty object: token")
+        if user is None:
+            raise Exception("Unexpected empty object: user")
+        if expiry is None:
+            raise Exception("Unexpected empty object: expiry")
+
+        try:
+            post = { SESSION_TOKEN_KEY: token, SESSION_USER_KEY: user, SESSION_EXPIRY_KEY: expiry }
+            return insert_into_collection(self.sessions_collection, post)
+        except:
+            self.log_error(traceback.format_exc())
+            self.log_error(sys.exc_info()[0])
+        return False
+
+    def retrieve_session_data(self, token):
+        """Retrieve method for session data."""
+        if token is None:
+            raise Exception("Unexpected empty object: token")
+
+        try:
+            session_data = self.sessions_collection.find_one({ SESSION_TOKEN_KEY: token })
+            if session_data is not None:
+                return session_data[SESSION_USER_KEY], session_data[SESSION_EXPIRY_KEY]
+        except:
+            self.log_error(traceback.format_exc())
+            self.log_error(sys.exc_info()[0])
+        return (None, None)
+
+    def delete_session_token(self, token):
+        """Delete method for a session token."""
+        if token is None:
+            raise Exception("Unexpected empty object: token")
+
+        try:
+            deleted_result = self.sessions_collection.delete_one({ SESSION_TOKEN_KEY: token })
+            if deleted_result is not None:
+                return True
+        except:
+            self.log_error(traceback.format_exc())
             self.log_error(sys.exc_info()[0])
         return False
