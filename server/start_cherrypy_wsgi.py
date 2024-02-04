@@ -16,15 +16,15 @@ from urllib.parse import parse_qs
 
 SESSION_COOKIE = 'session_cookie'
 
-g_front_end = None
+g_app = None
 g_session_mgr = None
 
 def signal_handler(signal, frame):
-    global g_front_end
+    global g_app
 
     print("Exiting...")
-    if g_front_end is not None:
-        g_front_end.terminate()
+    if g_app is not None:
+        g_app.terminate()
     sys.exit(0)
 
 @cherrypy.tools.register('before_finalize', priority=60)
@@ -99,10 +99,10 @@ def do_auth_check(f):
 
         # User does not have a valid session token, redirect to the login page.
         else:
-            global g_front_end
+            global g_app
 
             start_response = args[1]
-            content = g_front_end.backend.login()
+            content = g_app.login()
             start_response('401 Unauthorized', [])
             response = [content.encode('utf-8')]
  
@@ -132,9 +132,9 @@ def do_session_check(f):
 
 def handle_error(start_response, error_code):
     """Renders the error page."""
-    global g_front_end
+    global g_app
 
-    content = g_front_end.error().encode('utf-8')
+    content = g_app.error.encode('utf-8')
     headers = [('Content-type', 'text/html; charset=utf-8')]
     start_response(str(error_code), headers)
     g_session_mgr.clear_current_session() # Housekeeping
@@ -263,12 +263,12 @@ def error(env, start_response):
 @do_session_check
 def device(env, start_response):
     """Renders the map page for a single device."""
-    global g_front_end
+    global g_app
 
     try:
         device_str = env['PATH_INFO']
         device_str = device_str[1:]
-        return handle_dynamic_page_request(env, start_response, g_front_end.backend.device(device_str))
+        return handle_dynamic_page_request(env, start_response, g_app.device(device_str))
     except App.RedirectException as e:
         return handle_redirect_exception(e.url, start_response)
     except:
@@ -280,10 +280,10 @@ def device(env, start_response):
 @do_auth_check
 def dashboard(env, start_response):
     """Renders the user's dashboard page."""
-    global g_front_end
+    global g_app
 
     try:
-        return handle_dynamic_page_request(env, start_response, g_front_end.backend.profile())
+        return handle_dynamic_page_request(env, start_response, g_app.profile())
     except App.RedirectException as e:
         return handle_redirect_exception(e.url, start_response)
     except:
@@ -295,10 +295,10 @@ def dashboard(env, start_response):
 @do_auth_check
 def settings(env, start_response):
     """Renders the user's settings page."""
-    global g_front_end
+    global g_app
 
     try:
-        return handle_dynamic_page_request(env, start_response, g_front_end.backend.settings())
+        return handle_dynamic_page_request(env, start_response, g_app.settings())
     except App.RedirectException as e:
         return handle_redirect_exception(e.url, start_response)
     except:
@@ -310,10 +310,10 @@ def settings(env, start_response):
 @do_session_check
 def login(env, start_response):
     """Renders the login page."""
-    global g_front_end
+    global g_app
 
     try:
-        return handle_dynamic_page_request(env, start_response, g_front_end.backend.login())
+        return handle_dynamic_page_request(env, start_response, g_app.login())
     except App.RedirectException as e:
         return handle_redirect_exception(e.url, start_response)
     except:
@@ -325,10 +325,10 @@ def login(env, start_response):
 @do_session_check
 def create_login(env, start_response):
     """Renders the create login page."""
-    global g_front_end
+    global g_app
 
     try:
-        return handle_dynamic_page_request(env, start_response, g_front_end.backend.create_login())
+        return handle_dynamic_page_request(env, start_response, g_app.create_login())
     except:
         # Log the error and then fall through to the error page response.
         log_error(traceback.format_exc())
@@ -337,15 +337,16 @@ def create_login(env, start_response):
 
 def logout(env, start_response):
     """Ends the logged in session."""
+    global g_app
     global g_session_mgr
 
     _, _, _, cookie = get_verb_path_params_and_cookie(env)
     g_session_mgr.invalidate_session_token(cookie)
-    return handle_dynamic_page_request(env, start_response, g_front_end.backend.login())
+    return handle_dynamic_page_request(env, start_response, g_app.login())
 
 def api(env, start_response):
     """Endpoint for API calls."""
-    global g_front_end
+    global g_app
 
     try:
         # Extract the things we need from the request.
@@ -353,7 +354,7 @@ def api(env, start_response):
         g_session_mgr.set_current_session(cookie)
 
         # Handle the API request.
-        content, response_code = g_front_end.api_internal(verb, tuple(path), params, cookie)
+        content, response_code = g_app.api_internal(verb, tuple(path), params, cookie)
 
         # Housekeeping.
         g_session_mgr.clear_current_session()
@@ -433,15 +434,15 @@ def main():
             '/':
             {
                 'tools.staticdir.root': root_dir,
-                'tools.statusweb_auth.on': True,
                 'tools.sessions.on': True,
                 'tools.sessions.httponly': True,
-                'tools.sessions.name': 'statusweb_auth',
+                'tools.sessions.name': 'web_auth',
                 'tools.sessions.storage_type': 'file',
                 'tools.sessions.storage_path': session_dir,
                 'tools.sessions.timeout': 129600,
                 'tools.sessions.locking': 'early',
-                'tools.secureheaders.on': True
+                'tools.secureheaders.on': True,
+                'error_page.404': handle_error_404,
             },
             '/css':
             {
@@ -488,7 +489,7 @@ def main():
 
         # Create the cherrypy object.
         cherrypy.config.update(conf)
-        app = cherrypy.tree.mount(g_front_end, '/')
+        app = cherrypy.tree.mount(g_app, '/')
         app.merge(conf)
 
         # Instantiate a new server object.
