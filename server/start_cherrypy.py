@@ -343,7 +343,7 @@ def main():
     backend = App.App(user_mgr, root_dir, root_url, args.disable_new_logins)
     g_app = StatusWeb(backend)
 
-    # The direcory for session objects.
+    # The directory for session objects.
     session_dir = os.path.join(root_dir, 'sessions')
     if not os.path.exists(session_dir):
         os.makedirs(session_dir)
