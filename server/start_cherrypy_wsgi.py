@@ -491,8 +491,6 @@ def main():
         }
 
         # Mount the application.
-        cherrypy.tree.graft(css, "/css")
-        cherrypy.tree.graft(js, "/js")
         cherrypy.tree.graft(media, "/media")
         cherrypy.tree.graft(device, "/device")
         cherrypy.tree.graft(dashboard, "/dashboard")
