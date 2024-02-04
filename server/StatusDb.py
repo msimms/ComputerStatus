@@ -53,23 +53,17 @@ class MongoDatabase(Database.Database):
     def create_user(self, username, realname, hash):
         """Create method for a user."""
         if username is None:
-            self.log_error(MongoDatabase.create_user.__name__ + "Unexpected empty object: username")
-            return False
+            raise Exception("Unexpected empty object: username")
         if realname is None:
-            self.log_error(MongoDatabase.create_user.__name__ + "Unexpected empty object: realname")
-            return False
+            raise Exception("Unexpected empty object: realname")
         if hash is None:
-            self.log_error(MongoDatabase.create_user.__name__ + "Unexpected empty object: hash")
-            return False
+            raise Exception("Unexpected empty object: hash")
         if len(username) == 0:
-            self.log_error(MongoDatabase.create_user.__name__ + "username too short")
-            return False
+            raise Exception("username too short")
         if len(realname) == 0:
-            self.log_error(MongoDatabase.create_user.__name__ + "realname too short")
-            return False
+            raise Exception("realname too short")
         if len(hash) == 0:
-            self.log_error(MongoDatabase.create_user.__name__ + "hash too short")
-            return False
+            raise Exception("hash too short")
 
         try:
             post = {"username": username, "realname": realname, "hash": hash, "devices": []}
@@ -83,11 +77,9 @@ class MongoDatabase(Database.Database):
     def retrieve_user(self, username):
         """Create method for a user."""
         if username is None:
-            self.log_error(MongoDatabase.retrieve_user.__name__ + "Unexpected empty object: username")
-            return None, None, None
+            raise Exception("Unexpected empty object: username")
         if len(username) == 0:
-            self.log_error(MongoDatabase.retrieve_user.__name__ + "username is empty")
-            return None, None, None
+            raise Exception("username is empty")
 
         try:
             user = self.users_collection.find_one({"username": username})
@@ -102,8 +94,7 @@ class MongoDatabase(Database.Database):
     def update_user(self, user_id, username, realname, passhash):
         """Update method for a user."""
         if user_id is None:
-            self.log_error(MongoDatabase.update_user.__name__ + "Unexpected empty object: user_id")
-            return False
+            raise Exception("Unexpected empty object: user_id")
 
         try:
             user_id_obj = ObjectId(user_id)
@@ -125,8 +116,7 @@ class MongoDatabase(Database.Database):
     def delete_user(self, user_id):
         """Delete method for a user."""
         if user_id is None:
-            self.log_error(MongoDatabase.delete_user.__name__ + "Unexpected empty object: user_id")
-            return False
+            raise Exception("Unexpected empty object: user_id")
 
         try:
             user_id_obj = ObjectId(user_id)
@@ -141,8 +131,7 @@ class MongoDatabase(Database.Database):
     def retrieve_user_devices(self, user_id):
         """Retrieve method for a device."""
         if user_id is None:
-            self.log_error(MongoDatabase.retrieve_user_devices.__name__ + "Unexpected empty object: user_id")
-            return None
+            raise Exception("Unexpected empty object: user_id")
 
         try:
             user_id_obj = ObjectId(user_id)
@@ -158,11 +147,9 @@ class MongoDatabase(Database.Database):
     def claim_device(self, user_id, device_id):
         """Associates a device with a user."""
         if user_id is None:
-            self.log_error(MongoDatabase.claim_device.__name__ + "Unexpected empty object: user_id")
-            return False
+            raise Exception("Unexpected empty object: user_id")
         if device_id is None:
-            self.log_error(MongoDatabase.claim_device.__name__ + "Unexpected empty object: device_id")
-            return False
+            raise Exception("Unexpected empty object: device_id")
 
         try:
             user_id_obj = ObjectId(user_id)
@@ -184,11 +171,9 @@ class MongoDatabase(Database.Database):
     def unclaim_device(self, user_id, device_id):
         """Disassociates a device with a user."""
         if user_id is None:
-            self.log_error(MongoDatabase.unclaim_device.__name__ + "Unexpected empty object: user_id")
-            return False
+            raise Exception("Unexpected empty object: user_id")
         if device_id is None:
-            self.log_error(MongoDatabase.unclaim_device.__name__ + "Unexpected empty object: device_id")
-            return False
+            raise Exception("Unexpected empty object: device_id")
 
         try:
             user_id_obj = ObjectId(user_id)
@@ -210,11 +195,9 @@ class MongoDatabase(Database.Database):
     def create_device_name(self, device_id, name):
         """Associates a name with a device."""
         if device_id is None:
-            self.log_error(MongoDatabase.create_device_name.__name__ + "Unexpected empty object: device_id")
-            return False
+            raise Exception("Unexpected empty object: device_id")
         if name is None:
-            self.log_error(MongoDatabase.create_device_name.__name__ + "Unexpected empty object: name")
-            return False
+            raise Exception("Unexpected empty object: name")
 
         try:
             device = self.devices_collection.find_one({"device_id": device_id})
@@ -233,14 +216,11 @@ class MongoDatabase(Database.Database):
     def create_device_attribute_color(self, device_id, attribute, color):
         """Associates a color with a device attribute."""
         if device_id is None:
-            self.log_error(MongoDatabase.create_device_attribute_color.__name__ + "Unexpected empty object: device_id")
-            return False
+            raise Exception("Unexpected empty object: device_id")
         if attribute is None:
-            self.log_error(MongoDatabase.create_device_attribute_color.__name__ + "Unexpected empty object: attribute")
-            return False
+            raise Exception("Unexpected empty object: attribute")
         if color is None:
-            self.log_error(MongoDatabase.create_device_attribute_color.__name__ + "Unexpected empty object: color")
-            return False
+            raise Exception("Unexpected empty object: color")
 
         try:
             device = self.devices_collection.find_one({"device_id": device_id})
@@ -263,8 +243,7 @@ class MongoDatabase(Database.Database):
     def retrieve_device_name(self, device_id):
         """Returns the name of the device with the specified device ID."""
         if device_id is None:
-            self.log_error(MongoDatabase.retrieve_device_name.__name__ + "Unexpected empty object: device_id")
-            return None
+            raise Exception("Unexpected empty object: device_id")
 
         try:
             device = self.devices_collection.find_one({"device_id": device_id})
@@ -278,11 +257,9 @@ class MongoDatabase(Database.Database):
     def retrieve_device_color(self, device_id, attribute):
         """Returns the color associated with the specified device attribute."""
         if device_id is None:
-            self.log_error(MongoDatabase.retrieve_device_color.__name__ + "Unexpected empty object: device_id")
-            return None
+            raise Exception("Unexpected empty object: device_id")
         if attribute is None:
-            self.log_error(MongoDatabase.retrieve_device_color.__name__ + "Unexpected empty object: attribute")
-            return None
+            raise Exception("Unexpected empty object: attribute")
 
         try:
             device = self.devices_collection.find_one({"device_id": device_id})
@@ -299,8 +276,7 @@ class MongoDatabase(Database.Database):
     def delete_device_attributes(self, device_id):
         """Deletes the device attributes (name, color, etc.) for the device with the specified ID."""
         if device_id is None:
-            self.log_error(MongoDatabase.delete_device_attributes.__name__ + "Unexpected empty object: device_id")
-            return False
+            raise Exception("Unexpected empty object: device_id")
 
         try:
             self.devices_collection.remove({"device_id": device_id})
@@ -312,8 +288,7 @@ class MongoDatabase(Database.Database):
 
     def create_status(self, status):
         if status is None:
-            self.log_error(MongoDatabase.create_status.__name__ + "Unexpected empty object: status")
-            return False
+            raise Exception("Unexpected empty object: status")
 
         try:
             post = {}
@@ -329,8 +304,7 @@ class MongoDatabase(Database.Database):
     def retrieve_status(self, device_id, num_results):
         """Retrieves num_results statuses from the device with the specified ID."""
         if device_id is None:
-            self.log_error(MongoDatabase.retrieve_status.__name__ + "Unexpected empty object: device_id")
-            return None
+            raise Exception("Unexpected empty object: device_id")
 
         try:
             statuses = list(self.status_collection.find({"device_id": device_id}).sort("_id", -1).skip(0).limit(num_results))
@@ -343,8 +317,7 @@ class MongoDatabase(Database.Database):
     def delete_status(self, device_id):
         """Deletes all statuses from the device with the specified ID."""
         if device_id is None:
-            self.log_error(MongoDatabase.delete_status.__name__ + "Unexpected empty object: device_id")
-            return False
+            raise Exception("Unexpected empty object: device_id")
 
         try:
             self.status_collection.remove({"device_id": device_id})
@@ -357,11 +330,9 @@ class MongoDatabase(Database.Database):
     def delete_status_before_date(self, device_id, trim_date):
         """Deletes all statuses from the device with the specified ID."""
         if device_id is None:
-            self.log_error(MongoDatabase.delete_status_before_date.__name__ + "Unexpected empty object: device_id")
-            return False
+            raise Exception("Unexpected empty object: device_id")
         if trim_date is None:
-            self.log_error(MongoDatabase.delete_status_before_date.__name__ + "Unexpected empty object: trim_date")
-            return False
+            raise Exception("Unexpected empty object: trim_date")
 
         try:
             self.status_collection.remove({"device_id": device_id, "datetime": { "$lt": trim_date }})
