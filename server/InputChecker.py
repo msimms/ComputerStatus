@@ -23,6 +23,7 @@
 # SOFTWARE.
 """Checks strings for basic compliance and sanity. Can be a partial defense against XSS attacks."""
 
+import os
 import re
 from unidecode import unidecode
 
@@ -75,3 +76,7 @@ def is_valid_decoded_str(test_str):
     except:
         pass
     return False
+
+def is_safe_path(path):
+    """Sanity checks the path to make sure it doesn't contain any tricks to access higher level directories."""
+    return os.path.abspath(path) == path
