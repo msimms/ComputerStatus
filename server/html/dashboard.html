@@ -22,36 +22,37 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js" integrity="sha512-n/4gHW3atM3QqRcbCn6ewmpxcLAHGaDjpEBu4xZd47N0W2oQ+6q7oc3PXstrJYXcbNU1OHdQ1T7pAP+gi5Yu8g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
-	function on_delete(device_id)
-	{
-		if (confirm('Are you sure you want to do this?'))
-		{
-			let the_url = "${root_url}/api/1.0/delete_device";
-			let dict = [];
-		    let result_text = {};
+    function on_delete(device_id)
+    {
+        if (confirm('Are you sure you want to do this?')) {
+            let api_url = "${root_url}/api/1.0/delete_device";
+            let dict = [];
+            let result_text = {};
 
-			dict.push({["device_id"] : device_id});
-			if (send_post_request(the_url, dict, result_text))
-				window.location.replace("${root_url}/dashboard");
-			else
-				alert("An error occurred!");
-		}
-	}
+            dict.push({["device_id"] : device_id});
 
-	function on_claim()
-	{
-        let the_url = "${root_url}/api/1.0/claim_device";
+            send_post_request_async(api_url, dict, function(status, response) {
+                if (status != 200)
+                    window.location.replace("${root_url}/dashboard");
+            });
+        }
+    }
+
+    function on_claim()
+    {
+        let api_url = "${root_url}/api/1.0/claim_device";
         let dict = [];
         let result_text = {};
-		let device_id_obj = document.getElementById("device_id");
-		let device_id = device_id_obj.value;
+        let device_id_obj = document.getElementById("device_id");
+        let device_id = device_id_obj.value;
 
         dict.push({["device_id"] : device_id});
-        if (send_post_request(the_url, dict, result_text))
-            window.location.replace("${root_url}/dashboard");
-        else
-            alert("An error occurred!");
-	}
+
+        send_post_request_async(api_url, dict, function(status, response) {
+            if (status != 200)
+                window.location.replace("${root_url}/dashboard");
+        });
+    }
 
     function append_to_devices_table(table, device_id, device_name)
     {
@@ -86,17 +87,16 @@
 
     var process_device_list = function(records)
     {
-		var device_table = document.getElementById("devices");
+        var device_table = document.getElementById("devices");
 
-        for (var record of records)
-        {
+        for (var record of records) {
             append_to_devices_table(device_table, record.id, record.name);
         }
     }
 
     function get_device_list()
     {
-		$.ajax({ type: 'GET', url: "${root_url}/api/1.0/list_devices", cache: false, success: process_device_list, dataType: "json" });
+        $.ajax({ type: 'GET', url: "${root_url}/api/1.0/list_devices", cache: false, success: process_device_list, dataType: "json" });
     }
 
     get_device_list();

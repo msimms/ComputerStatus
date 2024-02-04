@@ -40,11 +40,8 @@ function send_get_request(url, result_text)
 
 	xml_http.open("GET", url, false);
 	xml_http.setRequestHeader('Content-Type', content_type);
-
-	xml_http.onreadystatechange = function()
-	{
-		if (xml_http.readyState == XMLHttpRequest.DONE)
-		{
+	xml_http.onreadystatechange = function() {
+		if (xml_http.readyState == XMLHttpRequest.DONE) {
 			result_text.value = xml_http.responseText;
 		}
 		result = (xml_http.status == 200);
@@ -53,25 +50,51 @@ function send_get_request(url, result_text)
 	return result;
 }
 
-/// @function Sends an HTTP POST request and waits for the response.
-function send_post_request(url, params, result_text)
+/// @function Sends an HTTP GET request and waits for the response.
+function send_get_request_async(url, callback)
 {
-	var result = false;
+    let xml_http = new XMLHttpRequest();
+    let content_type = "application/json; charset=utf-8";
 
-	var xml_http = new XMLHttpRequest();
-	var content_type = "application/json; charset=utf-8";
+    xml_http.open("GET", url, true);
+    xml_http.setRequestHeader('Content-Type', content_type);
+    xml_http.onreadystatechange = function() {
+        if (xml_http.readyState == XMLHttpRequest.DONE) {
+            callback(xml_http.status, xml_http.responseText);
+        }
+    }
+    xml_http.send();
+}
 
-	xml_http.open("POST", url, false);
-	xml_http.setRequestHeader('Content-Type', content_type);
+/// @function Sends an HTTP POST request and waits for the response.
+function send_post_request_async(url, params, callback)
+{
+    let xml_http = new XMLHttpRequest();
+    let content_type = "application/json; charset=utf-8";
 
-	xml_http.onreadystatechange = function()
-	{
-		if (xml_http.readyState == XMLHttpRequest.DONE)
-		{
-			result_text.value = xml_http.responseText;
-		}
-		result = (xml_http.status == 200);
-	}
-	xml_http.send(serialize_to_json(params));
-	return result;
+    xml_http.open("POST", url, false);
+    xml_http.setRequestHeader('Content-Type', content_type);
+    xml_http.onreadystatechange = function() {
+        if (xml_http.readyState == XMLHttpRequest.DONE) {
+            callback(xml_http.status, xml_http.responseText);
+        }
+    }
+    json_data = JSON.stringify(params);
+    xml_http.send(json_data);
+}
+
+/// @function Sends an HTTP DELETE request and waits for the response.
+function send_delete_request_async(url, callback)
+{
+    let xml_http = new XMLHttpRequest();
+    let content_type = "application/json; charset=utf-8";
+
+    xml_http.open("DELETE", url, false);
+    xml_http.setRequestHeader('Content-Type', content_type);
+    xml_http.onreadystatechange = function() {
+        if (xml_http.readyState == XMLHttpRequest.DONE) {
+            callback(xml_http.status, xml_http.responseText);
+        }
+    }
+    xml_http.send();
 }

@@ -16,38 +16,83 @@
 </head>
 
 <body>
-	<section class="nav">
-	${nav}
-	</section>
 
-	<section class="loginbackground">
-		<section class="loginform cf" style="width: 480px">
-			<form name="login" action="${root_url}/submit_login" method="post" accept-charset="utf-8">
-				<ul>
-					<li>
-						<label for="username" style="width: 440px">Email</label>
-						<input type="email" name="email" style="width: 440px" placeholder="yourname@email.com" required>
-					</li>
-					<li>
-						<label for="password" style="width: 440px">Password</label>
-						<input type="password" name="password"  style="width: 440px" placeholder="password" required>
-					</li>
-					<li>
-						<input type="submit" value="Login">
-						<a href="${root_url}/create_login">Create Login</a>
-					</li>
-				</ul>
-			</form>
-		</section>
-	</section>
+<script src="${root_url}/js/all.js"></script>
+<script>
 
-	<section>
+    /// @function submit_login
+    function submit_login()
+    {
+        let api_url = "/api/1.0/login";
+        let username = document.getElementById("username").value;
+        let password = document.getElementById("password").value;
+        let dict = [];
+
+        dict.push({["username"] : username});
+        dict.push({["password"] : password});
+
+        send_post_request_async(api_url, dict, function(status, response) {
+            if (status == 200) {
+                if (response.length > 0) {
+                    let obj_list = JSON.parse(response);
+                    document.cookie = "session_cookie=" + obj_list.cookie + "; ";
+                }
+                window.location.replace("${root_url}/all_activities");
+            }
+            else {
+                alert("Authentication failed!");
+            }
+        });
+    }
+
+    /// @function create_login
+    function create_login()
+    {
+        window.location.replace("${root_url}/create_login");
+    }
+
+</script>
+
+<section class="nav">
+${nav}
+</section>
+
+<section class="loginbackground">
+    <section class="loginform cf" style="width: 480px">
+        <form name="create_login" action="javascript:submit_login()" accept-charset="utf-8" autocomplete="on">
+            <ul>
+                <li>
+                    <label for="username">Email</label>
+                    <input type="email" name="username" id="username" style="width: 460px" placeholder="yourname@email.com" required>
+                </li>
+                <li>
+                    <label for="password">Password</label>
+                    <input type="password" name="password" id="password" style="width: 460px" placeholder="password" required>
+                </li>
+                <li>
+                    <input type="submit" value="Login">
+                    <a href="${root_url}/create_login">Create Login</a>
+                </li>
+            </ul>
+        </form>
+    </section>
+</section>
+
+<section style="margin: 30px">
+
+    <div class="readme">
 ${readme}
-		<h2>Source Code</h2>
-		<p>
-			The source code is stored on <a href="https://github.com">GitHub</a> at <a href="https://github.com/msimms/ComputerStatus">this</a> location.
-		</p>
-	</section>
+    </div>
+
+    <div>
+        <h2>Source Code</h2>
+        <p>
+            The source code is stored on <a href="https://github.com">GitHub</a> at <a href="https://github.com/msimms/OpenWorkoutWeb">this</a> location.
+        </p>
+    </div>
+
+</section>
+
 </body>
 
 </html>

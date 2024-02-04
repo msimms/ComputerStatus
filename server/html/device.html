@@ -45,7 +45,7 @@ ${nav}
     /// @function set_device_name
     function set_device_name()
     {
-        let the_url = "${root_url}/api/1.0/set_device_name";
+        let api_url = "${root_url}/api/1.0/set_device_name";
         let name = document.getElementById("name").value;
         let dict = [];
         let result_text = {};
@@ -53,18 +53,19 @@ ${nav}
         dict.push({["name"] : name});
         dict.push({["device_id"] : "${device_id}"});
 
-        if (send_post_request(the_url, dict, result_text))
-            alert("Name updated!");
-        else
-            alert("An error occurred!");
+        send_post_request_async(api_url, dict, function(status, response) {
+            if (status != 200)
+                alert("Name updated!");
+            else
+                alert("An error occurred!");
+        });
     }
 
     /// @function trim_data
     function trim_data()
     {
-        if (confirm('Are you sure you want to do this?'))
-        {
-            let the_url = "${root_url}/api/1.0/trim_data";
+        if (confirm('Are you sure you want to do this?')) {
+            let api_url = "${root_url}/api/1.0/trim_data";
             let trim_date = document.getElementById("trim").value;
             let dict = [];
             let result_text = {};
@@ -73,10 +74,12 @@ ${nav}
             dict.push({["device_id"] : "${device_id}"});
             dict.push({["trim"] : n.getTime()});
 
-            if (send_post_request(the_url, dict, result_text))
-                alert("Data trimmed!");
-            else
-                alert("An error occurred!");
+            send_post_request_async(api_url, dict, function(status, response) {
+                if (status != 200)
+                    alert("Data trimmed!");
+                else
+                    alert("An error occurred!");
+            });
         }
     }
 
@@ -84,8 +87,7 @@ ${nav}
     /// If existing_graph is provided, a new line will be appended to that graph.
     function draw_graph(data, title, units, color)
     {
-        if (data.length <= 1)
-        {
+        if (data.length <= 1) {
             return;
         }
 
@@ -116,8 +118,7 @@ ${nav}
             let coordinates = d3.mouse(this);
             let x = coordinates[0];
 
-            if (x < data.length)
-            {
+            if (x < data.length) {
                 tooltip
                     .html("<b>" + data[x].value.toFixed(2) + " " + units + "</b>")
                     .style("top", (event.pageY)+"px")
@@ -217,13 +218,11 @@ ${nav}
             let extent = d3.event.selection;
 
             // If no selection, back to initial coordinate. Otherwise, update x axis domain.
-            if (extent)
-            {
+            if (extent) {
                 x_scale.domain([ x_scale.invert(extent[0]), x_scale.invert(extent[1]) ]);
                 line.select(".brush").call(brush.move, null); // This removes the grey brush area as soon as the selection has been done.
             }
-            else
-            {
+            else {
                 if (!idle_time_out)
                     return idle_time_out = setTimeout(idled, 350); // This allows to wait a little bit.
                 x_scale.domain([4,8])
@@ -277,7 +276,7 @@ ${nav}
         let selected_index = selected_obj.selectedIndex
         let selected_value = selected_obj.options[selected_index].value; 
 
-        let the_url = "${root_url}/api/1.0/set_device_attribute_color";
+        let api_url = "${root_url}/api/1.0/set_device_attribute_color";
         let name = document.getElementById("name").value;
         let dict = [];
         let result_text = {};
@@ -286,12 +285,10 @@ ${nav}
         dict.push({["attribute"] : selected_obj.id});
         dict.push({["device_id"] : "${device_id}"});
 
-        if (send_post_request(the_url, dict, result_text))
-        {
+        if (send_post_request(api_url, dict, result_text)) {
             redraw_div();
         }
-        else
-        {
+        else {
             alert("An error occurred!");
         }
     }
@@ -386,8 +383,7 @@ ${nav}
         let result = "Gray"
         let result_text = {};
 
-        if (send_get_request(the_url, result_text))
-        {
+        if (send_get_request(the_url, result_text)) {
             result = result_text.value;
         }
         return result;
@@ -399,34 +395,28 @@ ${nav}
         let the_url = "${root_url}/api/1.0/retrieve_graph_data?device_id=".concat("${device_id}", "&attributes=", attributes_str, "&start_time=0", "&num_results=", max_num_results);
         let xml_http = new XMLHttpRequest();
 
-        xml_http.onreadystatechange = function()
-        {
-            if (xml_http.readyState == XMLHttpRequest.DONE)
-            {
-                if (xml_http.status == 200)
-                {
+        xml_http.onreadystatechange = function() {
+            if (xml_http.readyState == XMLHttpRequest.DONE) {
+                if (xml_http.status == 200) {
                     let attributes = attributes_str.split(",");
                     let json_str = xml_http.responseText;
                     let json_data = JSON.parse(json_str);
                     let graphs = new Array();
 
                     // Create an array of data points for each graph.
-                    for (let attribute_index = 0; attribute_index < attributes.length; ++attribute_index)
-                    {
+                    for (let attribute_index = 0; attribute_index < attributes.length; ++attribute_index) {
                         let graph = new Array();
 
                         graphs.push(graph);
                     }
 
                     // Parse the returned JSON data and add points to each graph.
-                    for (let point_index = 0; point_index < json_data.points.length; ++point_index)
-                    {
+                    for (let point_index = 0; point_index < json_data.points.length; ++point_index) {
                         let point = json_data.points[point_index];
                         let datetime_str = point["datetime"];
 
                         // Each point may contain data for multiple graphs.
-                        for (let attribute_index = 0; attribute_index < attributes.length; ++attribute_index)
-                        {
+                        for (let attribute_index = 0; attribute_index < attributes.length; ++attribute_index) {
                             let key = attributes[attribute_index]
                             let value = point[key]
                             let element = { date: parseInt(datetime_str) * 1000, value: parseFloat(value) };
@@ -436,8 +426,7 @@ ${nav}
                     }
 
                     // Draw each of the graphs.
-                    for (let attribute_index = 0; attribute_index < attributes.length; ++attribute_index)
-                    {
+                    for (let attribute_index = 0; attribute_index < attributes.length; ++attribute_index) {
                         let key = attributes[attribute_index]
                         let chart_color = retrieve_graph_color(key)
 
@@ -458,12 +447,9 @@ ${nav}
         let the_url = "${root_url}/api/1.0/retrieve_status?device_id=${device_id}";
         let xml_http = new XMLHttpRequest();
 
-        xml_http.onreadystatechange = function()
-        {
-            if (xml_http.readyState == XMLHttpRequest.DONE)
-            {
-                if (xml_http.status == 200)
-                {
+        xml_http.onreadystatechange = function() {
+            if (xml_http.readyState == XMLHttpRequest.DONE) {
+                if (xml_http.status == 200) {
                     let json_str = xml_http.responseText;
                     let json_data = JSON.parse(json_str);
                     let json_keys = Object.keys(json_data);
