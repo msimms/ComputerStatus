@@ -20,16 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-function serialize_to_json(list)
-{
-	var str = [];
-    for (var i = 0; i < list.length; ++i)
-		for (var key in list[i])
-			str.push("\"" + encodeURIComponent(key) + "\": \"" + encodeURIComponent(list[i][key]) + "\"");
-	json_str = "{" + str.join(",") + "}"
-	return json_str
-}
-
 /// @function Sends an HTTP GET request and waits for the response.
 function send_get_request(url, result_text)
 {

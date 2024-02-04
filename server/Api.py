@@ -37,6 +37,26 @@ clientdir = os.path.join(parentdir, 'client')
 sys.path.insert(0, clientdir)
 import keys
 
+# Keys associated with session management.
+SESSION_TOKEN_KEY = "cookie"
+SESSION_USER_KEY = "user"
+SESSION_EXPIRY_KEY = "expiry"
+
+# Keys associated with user management.
+USERNAME_KEY = "username" # Login name for a user
+USER_ID_KEY = "user_id" # Unique identifier for a user
+PASSWORD_KEY = "password" # User's password
+PASSWORD1_KEY = "password1" # User's password when creating an account
+PASSWORD2_KEY = "password2" # User's confirmation password when creating an account
+REALNAME_KEY = "realname" # User's real name
+
+# For managing devices that report status.
+DEVICE_ID_KEY = "device_id"
+DEVICE_STATUS_TIMESTAMP_KEY = "datetime"
+DEVICE_ATTRIBUTE_KEY = "attribute"
+DEVICE_ATTRIBUTES_KEY = "attributes"
+DEVICE_NAME_KEY = "name"
+
 class Api(object):
     """Class for managing API messages."""
 
@@ -46,11 +66,120 @@ class Api(object):
         self.user_mgr = user_mgr
         self.user_id = user_id
 
+    def handle_login(self, values):
+        """Called when an API message to login is received."""
+        if self.user_id is not None:
+            return True, ""
+
+        # Required parameters.
+        if USERNAME_KEY not in values:
+            raise Exception("Username not specified.")
+        if PASSWORD_KEY not in values:
+            raise Exception("Password not specified.")
+
+        # Decode and validate the required parameters.
+        email = unquote_plus(values[USERNAME_KEY])
+        if not InputChecker.is_email_address(email):
+            raise Exception("Invalid email address.")
+        password = unquote_plus(values[PASSWORD_KEY])
+
+        # Validate the credentials.
+        try:
+            if not self.user_mgr.authenticate_user(email, password):
+                raise Exception("Authentication failed.")
+        except Exception as e:
+            raise Exception(str(e))
+
+        # Create session information for this new login.
+        cookie, expiry = self.user_mgr.create_new_session(email)
+        if not cookie:
+            raise Exception("Session cookie not generated.")
+        if not expiry:
+            raise Exception("Session expiry not generated.")
+
+        # Encode the session info.
+        session_data = {}
+        session_data[SESSION_TOKEN_KEY] = cookie
+        session_data[SESSION_EXPIRY_KEY] = expiry
+        session_data[USER_ID_KEY] = str(self.user_mgr.get_logged_in_user_id())
+        json_result = json.dumps(session_data, ensure_ascii=False)
+
+        return True, json_result
+
+    def handle_create_login(self, values):
+        """Called when an API message to create an account is received."""
+        if self.user_id is not None:
+            raise Exception("Already logged in.")
+
+        # Make sure this is allowed.
+        # Creating a new login can be disabled for security reasons, testing, etc.
+        if self.config.is_create_login_disabled():
+            raise Exception("Creating a new login is currently disabled.")
+
+        # Required parameters.
+        if USERNAME_KEY not in values:
+            raise Exception("Username not specified.")
+        if REALNAME_KEY not in values:
+            raise Exception("Real name not specified.")
+        if PASSWORD1_KEY not in values:
+            raise Exception("Password not specified.")
+        if PASSWORD2_KEY not in values:
+            raise Exception("Password confirmation not specified.")
+
+        # Decode and validate the required parameters.
+        email = unquote_plus(values[USERNAME_KEY])
+        if not InputChecker.is_email_address(email):
+            raise Exception("Invalid email address.")
+        realname = unquote_plus(values[REALNAME_KEY])
+        if not InputChecker.is_valid_decoded_str(realname):
+            raise Exception("Invalid name.")
+        password1 = unquote_plus(values[PASSWORD1_KEY])
+        password2 = unquote_plus(values[PASSWORD2_KEY])
+
+        # Add the user to the database, should fail if the user already exists.
+        try:
+            if not self.user_mgr.create_user(email, realname, password1, password2, device_str):
+                raise Exception("User creation failed.")
+        except:
+            raise Exception("User creation failed.")
+
+        # The new user should start in a logged-in state, so generate session info.
+        cookie, expiry = self.user_mgr.create_new_session(email)
+        if not cookie:
+            raise Exception("Session cookie not generated.")
+        if not expiry:
+            raise Exception("Session expiry not generated.")
+
+        # Encode the session info.
+        session_data = {}
+        session_data[SESSION_TOKEN_KEY] = cookie
+        session_data[SESSION_EXPIRY_KEY] = expiry
+        session_data[USER_ID_KEY] = str(self.user_mgr.get_logged_in_user_id())
+        json_result = json.dumps(session_data, ensure_ascii=False)
+
+        return True, json_result
+
+    def handle_login_status(self, values):
+        """Called when an API message to check the login status in is received."""
+        if self.user_id is None:
+            raise Exception("Not logged in")
+        return True, "Logged In"
+
+    def handle_logout(self, values):
+        """Ends the session for the specified user."""
+        if self.user_id is None:
+            raise Exception("Not logged in")
+
+        # End the session
+        self.user_mgr.clear_current_session()
+        self.user_id = None
+        return True, "Logged Out"
+
     def handle_create_status(self, status):
         """Called when new data is received. Sanitizes the data before storing it."""
-        if 'device_id' not in status:
+        if DEVICE_ID_KEY not in status:
             raise Exception("device_id not specified.")
-        if 'datetime' not in status:
+        if DEVICE_STATUS_TIMESTAMP_KEY not in status:
             raise Exception("datetime not specified.")
 
         result = ""
@@ -59,7 +188,7 @@ class Api(object):
             temp = status[status_item]
             try:
                 # If this is the device ID then make sure it is a UUID. Otherwise, make sure it's a number.
-                if status_item == 'device_id':
+                if status_item == DEVICE_ID_KEY:
                     uuid.UUID(temp, version=4)
                 else:
                     fractions.Fraction(temp)
@@ -75,15 +204,15 @@ class Api(object):
 
     def handle_graph_data_request(self, values):
         """Called when a request for data associated with an attribute is received."""
-        if 'device_id' not in values:
+        if DEVICE_ID_KEY not in values:
             raise Exception("device_id not specified.")
-        if 'attributes' not in values:
+        if DEVICE_ATTRIBUTES_KEY not in values:
             raise Exception("attributes not specified.")
         if 'start_time' not in values:
             raise Exception("start_time not specified.")
 
         # Get the device ID and make sure it is a valid UUID.
-        device_id = values['device_id']
+        device_id = values[DEVICE_ID_KEY]
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
 
@@ -93,7 +222,7 @@ class Api(object):
             num_results = int(values['num_results'])
 
         # List of attributes whose graph data is requested.
-        attributes = unquote_plus(values["attributes"]).split(',')
+        attributes = unquote_plus(values[DEVICE_ATTRIBUTES_KEY]).split(',')
 
         # Do not include results before this time.
         start_time = int(values["start_time"])
@@ -105,11 +234,11 @@ class Api(object):
             raise Exception('Unknown device ID')
 
         for status in device_status:
-            if "datetime" in status:
-                datetime_num = int(status["datetime"])
+            if DEVICE_STATUS_TIMESTAMP_KEY in status:
+                datetime_num = int(status[DEVICE_STATUS_TIMESTAMP_KEY])
                 if datetime_num > start_time:
                     point_data = {}
-                    point_data['datetime'] = datetime_num
+                    point_data[DEVICE_STATUS_TIMESTAMP_KEY] = datetime_num
                     for attribute in attributes:
                         # If the attribute doesn't exist for this timeslice then insert a zero
                         if attribute in status:
@@ -123,18 +252,18 @@ class Api(object):
 
     def handle_graph_color_request(self, values):
         """Called when a request for the graph color to use with an attribute is received."""
-        if 'device_id' not in values:
+        if DEVICE_ID_KEY not in values:
             raise Exception("device_id not specified.")
-        if 'attribute' not in values:
+        if DEVICE_ATTRIBUTE_KEY not in values:
             raise Exception("attribute not specified.")
 
         # Get the device ID and make sure it is a valid UUID.
-        device_id = values['device_id']
+        device_id = values[DEVICE_ID_KEY]
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
 
         # Get the attribute name.
-        attribute = unquote_plus(values['attribute'])
+        attribute = unquote_plus(values[DEVICE_ATTRIBUTE_KEY])
         if not InputChecker.is_valid_decoded_str(attribute):
             raise Exception("Invalid attribute name.")
 
@@ -148,11 +277,11 @@ class Api(object):
 
     def handle_status_request(self, values):
         """Called when a request for the device status received."""
-        if 'device_id' not in values:
+        if DEVICE_ID_KEY not in values:
             raise Exception("device_id not specified.")
 
         # Get the device ID and make sure it is a valid UUID.
-        device_id = values['device_id']
+        device_id = values[DEVICE_ID_KEY]
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
 
@@ -167,7 +296,6 @@ class Api(object):
         first_device_status.pop(keys.KEY_VIRTUAL_MEM_TOTAL)
 
         # Convert to JSON and return.
-        print(first_device_status)
         return True, json.dumps(first_device_status)
 
     def handle_update_email(self, values):
@@ -232,7 +360,7 @@ class Api(object):
         """Removes the user and all associated data."""
         if self.user_id is None:
             raise Exception("Not logged in.")
-        if 'password' not in values:
+        if PASSWORD_KEY not in values:
             raise Exception("Password not specified.")
 
         # Get the logged in user.
@@ -262,7 +390,7 @@ class Api(object):
         for device_id in device_ids:
             device_record = {}
             device_record['id'] = device_id
-            device_record['name'] = self.database.retrieve_device_name(device_id)
+            device_record[DEVICE_NAME_KEY] = self.database.retrieve_device_name(device_id)
             device_records.append(device_record)
 
         # Convert to JSON and return.
@@ -273,13 +401,13 @@ class Api(object):
         """Associates a name with a device's unique identifier."""
         if self.user_id is None:
             raise Exception("Not logged in.")
-        if 'device_id' not in values:
+        if DEVICE_ID_KEY not in values:
             raise Exception("device_id not specified.")
-        if 'name' not in values:
+        if DEVICE_NAME_KEY not in values:
             raise Exception("name not specified.")
 
         # Get the device ID and make sure it is a valid UUID.
-        device_id = values['device_id']
+        device_id = values[DEVICE_ID_KEY]
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
 
@@ -289,7 +417,7 @@ class Api(object):
             raise Exception("Device not owned by the logged in user.")
 
         # Validate the device name.
-        name = unquote_plus(values['name'])
+        name = unquote_plus(values[DEVICE_NAME_KEY])
         if not InputChecker.is_valid_decoded_str(name):
             raise Exception("Invalid device name.")
 
@@ -307,11 +435,11 @@ class Api(object):
         """Associates a color with a device."""
         if self.user_id is None:
             raise Exception("Not logged in.")
-        if 'device_id' not in values:
+        if DEVICE_ID_KEY not in values:
             raise Exception("device_id not specified.")
 
         # Get the device ID and make sure it is a valid UUID.
-        device_id = values['device_id']
+        device_id = values[DEVICE_ID_KEY]
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
 
@@ -344,11 +472,11 @@ class Api(object):
         """Associates a device with a user."""
         if self.user_id is None:
             raise Exception("Not logged in.")
-        if 'device_id' not in values:
+        if DEVICE_ID_KEY not in values:
             raise Exception("device_id not specified.")
 
         # Get the device ID and make sure it is a valid UUID.
-        device_id = values['device_id']
+        device_id = values[DEVICE_ID_KEY]
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
 
@@ -366,11 +494,11 @@ class Api(object):
         """Deletes the device with the specified ID, assuming it is owned by the current user."""
         if self.user_id is None:
             raise Exception("Not logged in.")
-        if 'device_id' not in values:
+        if DEVICE_ID_KEY not in values:
             raise Exception("device_id not specified.")
 
         # Get the device ID and make sure it is a valid UUID.
-        device_id = values['device_id']
+        device_id = values[DEVICE_ID_KEY]
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
 
@@ -390,14 +518,13 @@ class Api(object):
         """Deletes device data from before the given date."""
         if self.user_id is None:
             raise Exception("Not logged in.")
-        if 'device_id' not in values:
+        if DEVICE_ID_KEY not in values:
             raise Exception("device_id not specified.")
         if 'trim' not in values:
             raise Exception("trim date not specified.")
 
         # Get the device ID and make sure it is a valid UUID.
-        device_id = values['device_id']
-        print(device_id)
+        device_id = values[DEVICE_ID_KEY]
         if not InputChecker.is_uuid(device_id):
             raise Exception("Invalid device ID.")
 
@@ -445,4 +572,10 @@ class Api(object):
             return self.handle_delete_device(values)
         elif request == 'trim_data':
             return self.handle_trim(values)
+        elif request == 'login':
+            return self.handle_login(values)
+        elif request == 'logout':
+            return self.handle_logout(values)
+        elif request == 'create_login':
+            return self.handle_create_login(values)
         return False, ""

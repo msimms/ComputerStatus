@@ -188,10 +188,14 @@ class FlaskSessionMgr(SessionMgr):
         pass
 
     def create_new_session(self, username):
-        """Starts a new session."""
-        flask.session[SESSION_KEY] = username
+        """Starts a new session. Save the session info to the database."""
+        session_cookie = str(uuid.uuid4())
         expiry = int(time.time() + 90.0 * 86400.0)
-        return None, expiry
+        if self.database.create_session_token(session_cookie, username, expiry):
+            self.current_session_cookie = session_cookie
+            flask.session[SESSION_KEY] = username
+            return session_cookie, expiry
+        return None, None
 
     def clear_current_session(self):
         """Ends the current session."""

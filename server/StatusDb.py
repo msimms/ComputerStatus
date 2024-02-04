@@ -33,6 +33,9 @@ SESSION_TOKEN_KEY = "cookie"
 SESSION_USER_KEY = "user"
 SESSION_EXPIRY_KEY = "expiry"
 
+# Unique identifiers for a document in the database.
+DATABASE_ID_KEY = "_id"
+
 def insert_into_collection(collection, doc):
     """Handles differences in document insertion between pymongo 3 and 4."""
     if int(pymongo.__version__[0]) < 4:
@@ -40,6 +43,17 @@ def insert_into_collection(collection, doc):
     else:
         result = collection.insert_one(doc)
     return result is not None and result.inserted_id is not None 
+
+def update_collection(collection, doc):
+    """Handles differences in document updates between pymongo 3 and 4."""
+    if int(pymongo.__version__[0]) < 4:
+        collection.save(doc)
+        return True
+    else:
+        query = { DATABASE_ID_KEY: doc[DATABASE_ID_KEY] }
+        new_values = { "$set" : doc }
+        result = collection.update_one(query, new_values)
+        return result.matched_count > 0 
 
 class MongoDatabase(Database.Database):
     conn = None
@@ -84,8 +98,7 @@ class MongoDatabase(Database.Database):
 
         try:
             post = {"username": username, "realname": realname, "hash": hash, "devices": []}
-            self.users_collection.insert(post)
-            return True
+            return insert_into_collection(self.users_collection, post)
         except:
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])
@@ -182,8 +195,7 @@ class MongoDatabase(Database.Database):
                 if device_id not in device_list:
                     device_list.append(device_id)
                     user['devices'] = device_list
-                    self.users_collection.save(user)
-            return True
+                    return update_collection(self.users_collection, user)
         except:
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])
@@ -206,8 +218,7 @@ class MongoDatabase(Database.Database):
                 if device_id in device_list:
                     device_list.remove(device_id)
                     user['devices'] = device_list
-                    self.users_collection.save(user)
-            return True
+                    return update_collection(self.users_collection, user)
         except:
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])
@@ -224,11 +235,10 @@ class MongoDatabase(Database.Database):
             device = self.devices_collection.find_one({"device_id": device_id})
             if device is None:
                 post = {"device_id": device_id, "name": name}
-                self.devices_collection.insert(post)
-            else:
-                device['name'] = name
-                self.devices_collection.save(device)
-            return True
+                return insert_into_collection(self.devices_collection, post)
+
+            device['name'] = name
+            return update_collection(self.devices_collection, device)
         except:
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])
@@ -247,15 +257,14 @@ class MongoDatabase(Database.Database):
             device = self.devices_collection.find_one({"device_id": device_id})
             if device is None:
                 post = {"device_id": device_id, "colors": {attribute: color}}
-                self.devices_collection.insert(post)
-            else:
-                colors = {}
-                if "colors" in device:
-                    colors = device["colors"]
-                colors[attribute] = color
-                device['colors'] = colors
-                self.devices_collection.save(device)
-            return True
+                return insert_into_collection(self.devices_collection, post)
+
+            colors = {}
+            if "colors" in device:
+                colors = device["colors"]
+            colors[attribute] = color
+            device['colors'] = colors
+            return update_collection(self.devices_collection, device)
         except:
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])
@@ -319,8 +328,7 @@ class MongoDatabase(Database.Database):
             post = {}
             for status_item in status:
                 post[status_item] = status[status_item]
-            self.status_collection.insert(post)
-            return True
+            return insert_into_collection(self.status_collection, post)
         except:
             traceback.print_exc(file=sys.stdout)
             self.log_error(sys.exc_info()[0])

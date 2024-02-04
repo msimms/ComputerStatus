@@ -47,14 +47,14 @@ ${nav}
     {
         let api_url = "${root_url}/api/1.0/set_device_name";
         let name = document.getElementById("name").value;
-        let dict = [];
+        let dict = {};
         let result_text = {};
 
-        dict.push({["name"] : name});
-        dict.push({["device_id"] : "${device_id}"});
+        dict["name"] = name;
+        dict["device_id"] = "${device_id}";
 
         send_post_request_async(api_url, dict, function(status, response) {
-            if (status != 200)
+            if (status == 200)
                 alert("Name updated!");
             else
                 alert("An error occurred!");
@@ -67,15 +67,15 @@ ${nav}
         if (confirm('Are you sure you want to do this?')) {
             let api_url = "${root_url}/api/1.0/trim_data";
             let trim_date = document.getElementById("trim").value;
-            let dict = [];
+            let dict = {};
             let result_text = {};
             let n = new Date(trim_date)
 
-            dict.push({["device_id"] : "${device_id}"});
-            dict.push({["trim"] : n.getTime()});
+            dict["device_id"] = "${device_id}";
+            dict["trim"] = n.getTime();
 
             send_post_request_async(api_url, dict, function(status, response) {
-                if (status != 200)
+                if (status == 200)
                     alert("Data trimmed!");
                 else
                     alert("An error occurred!");
@@ -278,19 +278,21 @@ ${nav}
 
         let api_url = "${root_url}/api/1.0/set_device_attribute_color";
         let name = document.getElementById("name").value;
-        let dict = [];
+        let dict = {};
         let result_text = {};
 
-        dict.push({["color"] : selected_value});
-        dict.push({["attribute"] : selected_obj.id});
-        dict.push({["device_id"] : "${device_id}"});
+        dict["color"] = selected_value;
+        dict["attribute"] = selected_obj.id;
+        dict["device_id"] = "${device_id}";
 
-        if (send_post_request(api_url, dict, result_text)) {
-            redraw_div();
-        }
-        else {
-            alert("An error occurred!");
-        }
+        send_post_request_async(api_url, dict, function(status, response) {
+            if (status == 200) {
+                redraw_div();
+            }
+            else {
+                alert("An error occurred!");
+            }
+        });
     }
 
     /// @function add_color_selection_cb
@@ -494,8 +496,6 @@ ${nav}
         document.getElementsByName('trim')[0].placeholder=n.toLocaleDateString();
     });
 </script>
-
-</div>
 
 <div class="settings" align="center">
     <h3>Name this device</h3>

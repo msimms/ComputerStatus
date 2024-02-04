@@ -356,7 +356,7 @@ def api(env, start_response):
         g_session_mgr.set_current_session(cookie)
 
         # Handle the API request.
-        content, response_code = g_app.api_internal(verb, tuple(path), params, cookie)
+        content, response_code = g_app.api(verb, tuple(path), params)
 
         # Housekeeping.
         g_session_mgr.clear_current_session()

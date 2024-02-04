@@ -16,36 +16,69 @@
 </head>
 
 <body>
+
+    <script src="${root_url}/js/all.js"></script>
+    <script>
+
+        /// @function submit_create_login
+        function submit_create_login()
+        {
+            let api_url = "/api/1.0/create_login";
+            let username = document.getElementById("username").value;
+            let realname = document.getElementById("realname").value;
+            let password1 = document.getElementById("password1").value;
+            let password2 = document.getElementById("password2").value;
+            let dict = {};
+
+            dict["username"] = username;
+            dict["realname"] = realname;
+            dict["password1"] = password1;
+            dict["password2"] = password2;
+
+            send_post_request_async(api_url, dict, function(status, response) {
+                if (status == 200) {
+                    let obj_list = JSON.parse(response);
+                    document.cookie = "session_cookie=" + obj_list.cookie + "; ";
+                    window.location.replace("${root_url}/all_activities");
+                }
+                else {
+                    alert("Failed to create a new login!");
+                }
+            });
+        }
+
+    </script>
+
 	<section class="nav">
 	${nav}
 	</section>
 
 	<section class="loginbackground">
-		<section class="loginform cf" style="width: 480px">
-			<form name="create_login" action="${root_url}/submit_new_login" method="post" accept-charset="utf-8">
+		<div class="loginform cf">
+            <form name="create_login" action="javascript:submit_create_login()" accept-charset="utf-8">
 				<ul>
 					<li>
-						<label for="username" style="width: 440px">Email</label>
-						<input type="email" name="email" style="width: 440px"placeholder="yourname@email.com" required>
+						<label for="username">Email</label>
+						<input type="email" name="email" placeholder="yourname@email.com" required>
 					</li>
 					<li>
-						<label for="firstname" style="width: 440px">Name</label>
-						<input type="text" name="realname" style="width: 440px"placeholder="" required>
+						<label for="firstname">Name</label>
+						<input type="text" name="realname" placeholder="" required>
 					</li>
 					<li>
-						<label for="password" style="width: 440px">Password</label>
-						<input type="password" name="password1" style="width: 440px"placeholder="password" required>
+						<label for="password">Password</label>
+						<input type="password" name="password1" placeholder="password" required>
 					</li>
 					<li>
-						<label for="password" style="width: 440px">Confirm Password</label>
-						<input type="password" name="password2" style="width: 440px" placeholder="confirm password" required>
+						<label for="password">Confirm Password</label>
+						<input type="password" name="password2" placeholder="confirm password" required>
 					</li>
 					<li>
 						<input type="submit" value="Create">
 					</li>
 				</ul>
 			</form>
-		</section>
+		</div>
 	</section>
 </body>
 

@@ -182,44 +182,6 @@ def settings(env, start_response):
         log_error('Unhandled exception in ' + settings.__name__)
     return error(env, start_response)
 
-def submit_login(env, start_response):
-    """Processes a login."""
-    try:
-        global g_app
-        email = flask.request.form["email"]
-        password = flask.request.form["password"]
-        content = g_app.submit_login(email, password).encode('utf-8')
-        start_response('200 OK', [('Content-Type', 'text/html')])
-        return [content]
-    except App.RedirectException as e:
-        start_response('302 Found', [('Location', e.url)])
-        return []
-    except Exception as e:
-        error_msg = 'Unable to authenticate the user. ' + str(e.args[0])
-        log_error(error_msg)
-        return error(env, start_response)
-    except:
-        log_error('Unhandled exception in ' + submit_login.__name__)
-    return error(env, start_response)
-
-def submit_new_login(email, realname, password1, password2, env, start_response):
-    """Creates a new login."""
-    try:
-        global g_app
-        content = g_app.submit_new_login(email, realname, password1, password2).encode('utf-8')
-        start_response('200 OK', [('Content-Type', 'text/html')])
-        return [content]
-    except App.RedirectException as e:
-        start_response('302 Found', [('Location', e.url)])
-        return []
-    except Exception as e:
-        error_msg = 'Unable to create the user. ' + str(e.args[0])
-        log_error(error_msg)
-        return error(env, start_response)
-    except:
-        log_error('Unhandled exception in ' + submit_new_login.__name__)
-    return error(env, start_response)
-
 def login(env, start_response):
     """Renders the login page."""
     try:

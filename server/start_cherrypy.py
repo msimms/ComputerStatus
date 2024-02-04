@@ -165,42 +165,6 @@ class StatusWeb(object):
         return self.error()
 
     @cherrypy.expose
-    def submit_login(self, *args, **kw):
-        """Processes a login."""
-        try:
-            email = cherrypy.request.params.get("email")
-            password = cherrypy.request.params.get("password")
-            return self.app.submit_login(email, password)
-        except App.RedirectException as e:
-            raise cherrypy.HTTPRedirect(e.url)
-        except cherrypy.HTTPRedirect as e:
-            raise e
-        except Exception as e:
-            error_msg = 'Unable to authenticate the user. ' + str(e.args[0])
-            self.log_error(error_msg)
-            return self.error(error_msg)
-        except:
-            self.log_error('Unhandled exception in ' + StatusWeb.submit_login.__name__)
-        return self.error()
-
-    @cherrypy.expose
-    def submit_new_login(self, email, realname, password1, password2, *args, **kw):
-        """Creates a new login."""
-        try:
-            return self.app.submit_new_login(email, realname, password1, password2)
-        except App.RedirectException as e:
-            raise cherrypy.HTTPRedirect(e.url)
-        except cherrypy.HTTPRedirect as e:
-            raise e
-        except Exception as e:
-            error_msg = 'Unable to create the user. ' + str(e.args[0])
-            self.log_error(error_msg)
-            return self.error(error_msg)
-        except:
-            self.log_error('Unhandled exception in ' + StatusWeb.submit_new_login.__name__)
-        return self.error()
-
-    @cherrypy.expose
     def login(self):
         """Renders the login page."""
         try:
@@ -255,15 +219,17 @@ class StatusWeb(object):
             if username is not None:
                 user_id, _, _ = self.app.user_mgr.retrieve_user(username)
 
-            # The the API params.
-            if cherrypy.request.method == "GET":
+            # Things we need.
+            verb = cherrypy.request.method
+
+            # The API params.
+            if verb == "GET" or verb == "DELETE":
                 params = kw
-            elif len(kw) == 0:
-                cl = cherrypy.request.headers['Content-Length']
-                params = cherrypy.request.body.read(int(cl))
-                params = json.loads(params)
             else:
-                params = kw
+                content_len = int(cherrypy.request.headers['Content-Length'])
+                if content_len > 0:
+                    params = cherrypy.request.body.read(content_len)
+                    params = json.loads(params)
 
             # Process the API request.
             if len(args) > 0:

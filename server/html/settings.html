@@ -23,13 +23,13 @@
     {
         var api_url = "${root_url}/api/1.0/update_email";
         var new_email = document.getElementById("new_email").value;
-        var dict = [];
+        var dict = {};
         var result_text = {};
 
-        dict.push({["email"] : new_email});
+        dict["email"] = new_email;
 
         send_post_request_async(api_url, dict, function(status, response) {
-            if (status != 200)
+            if (status == 200)
                 alert("Email updated!");
             else
                 alert("An error occurred!");
@@ -42,15 +42,15 @@
         var current_pword = document.getElementById("current_password").value;
         var new_pword1 = document.getElementById("new_password1").value;
         var new_pword2 = document.getElementById("new_password2").value;
-        var dict = [];
+        var dict = {};
         var result_text = {};
 
-        dict.push({["old_password"] : current_pword});
-        dict.push({["new_password1"] : new_pword1});
-        dict.push({["new_password2"] : new_pword2});
+        dict["old_password"] = current_pword;
+        dict["new_password1"] = new_pword1;
+        dict["new_password2"] = new_pword2;
 
         send_post_request_async(api_url, dict, function(status, response) {
-            if (status != 200)
+            if (status == 200)
                 alert("Password updated!");
             else
                 alert("An error occurred!");
@@ -62,13 +62,13 @@
         if (confirm('Are you sure you want to do this?')) {
             var api_url = "${root_url}/api/1.0/delete_user";
             var pword = document.getElementById("password").value;
-            var dict = [];
+            var dict = {};
             var result_text = {};
 
-            dict.push({["password"] : pword});
+            dict["password"] = pword;
 
-            send_post_request_async(api_url, dict, function(status, response) {
-                if (status != 200)
+            send_delete_request_async(api_url, dict, function(status, response) {
+                if (status == 200)
                     window.location.replace("${root_url}");
                 else
                     alert("An error occurred!");

@@ -173,40 +173,6 @@ def settings():
         log_error('Unhandled exception in ' + settings.__name__)
     return error()
 
-@g_flask_app.route('/submit_login', methods=(['POST']))
-def submit_login():
-    """Processes a login."""
-    try:
-        global g_app
-        email = flask.request.form["email"]
-        password = flask.request.form["password"]
-        return g_app.submit_login(email, password)
-    except App.RedirectException as e:
-        return flask.redirect(e.url, code=302)
-    except Exception as e:
-        error_msg = 'Unable to authenticate the user. ' + str(e.args[0])
-        log_error(error_msg)
-        return error(error_msg)
-    except:
-        log_error('Unhandled exception in ' + submit_login.__name__)
-    return error()
-
-@g_flask_app.route('/submit_new_login')
-def submit_new_login(email, realname, password1, password2):
-    """Creates a new login."""
-    try:
-        global g_app
-        return g_app.submit_new_login(email, realname, password1, password2)
-    except App.RedirectException as e:
-        return flask.redirect(e.url, code=302)
-    except Exception as e:
-        error_msg = 'Unable to create the user. ' + str(e.args[0])
-        log_error(error_msg)
-        return error(error_msg)
-    except:
-        log_error('Unhandled exception in ' + submit_new_login.__name__)
-    return error()
-
 @g_flask_app.route('/login')
 def login():
     """Renders the login page."""

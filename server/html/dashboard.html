@@ -26,13 +26,13 @@
     {
         if (confirm('Are you sure you want to do this?')) {
             let api_url = "${root_url}/api/1.0/delete_device";
-            let dict = [];
+            let dict = {};
             let result_text = {};
 
-            dict.push({["device_id"] : device_id});
+            dict["device_id"] = device_id;
 
-            send_post_request_async(api_url, dict, function(status, response) {
-                if (status != 200)
+            send_delete_request_async(api_url, dict, function(status, response) {
+                if (status == 200)
                     window.location.replace("${root_url}/dashboard");
             });
         }
@@ -41,15 +41,15 @@
     function on_claim()
     {
         let api_url = "${root_url}/api/1.0/claim_device";
-        let dict = [];
+        let dict = {};
         let result_text = {};
         let device_id_obj = document.getElementById("device_id");
         let device_id = device_id_obj.value;
 
-        dict.push({["device_id"] : device_id});
+        dict["device_id"] = device_id;
 
         send_post_request_async(api_url, dict, function(status, response) {
-            if (status != 200)
+            if (status == 200)
                 window.location.replace("${root_url}/dashboard");
         });
     }
