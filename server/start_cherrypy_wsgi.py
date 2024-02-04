@@ -147,7 +147,7 @@ def handle_error_404(status, message, traceback, version):
     """Renders the error page."""
     return handle_error('404 Not Found')
 
-def handle_error_500(status, message, traceback, version):
+def handle_error_500(start_response):
     """Renders the error page."""
     return handle_error('500 Internal Server Error')
 
