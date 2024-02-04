@@ -132,27 +132,24 @@ def do_session_check(f):
 
     return session_check
 
-def handle_error(start_response, error_code):
+def handle_error(error_code):
     """Renders the error page."""
     global g_app
 
     content = g_app.error().encode('utf-8')
-    headers = [('Content-type', 'text/html; charset=utf-8')]
-    start_response(str(error_code), headers)
-    g_session_mgr.clear_current_session() # Housekeeping
-    return [content]
+    return content
 
-def handle_error_403(start_response):
+def handle_error_403(status, message, traceback, version):
     """Renders the error page."""
-    return handle_error(start_response, '403 Forbidden')
+    return handle_error('403 Forbidden')
 
-def handle_error_404(start_response):
+def handle_error_404(status, message, traceback, version):
     """Renders the error page."""
-    return handle_error(start_response, '404 Not Found')
+    return handle_error('404 Not Found')
 
-def handle_error_500(start_response):
+def handle_error_500(status, message, traceback, version):
     """Renders the error page."""
-    return handle_error(start_response, '500 Internal Server Error')
+    return handle_error('500 Internal Server Error')
 
 def handle_redirect_exception(url, start_response):
     """Returns the redirect response."""
@@ -491,6 +488,8 @@ def main():
         }
 
         # Mount the application.
+        cherrypy.tree.graft(css, "/css")
+        cherrypy.tree.graft(js, "/js")
         cherrypy.tree.graft(media, "/media")
         cherrypy.tree.graft(device, "/device")
         cherrypy.tree.graft(dashboard, "/dashboard")
