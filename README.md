@@ -1,7 +1,7 @@
 [![MIT license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 
 # ComputerStatus
-This software is for anyone that needs to monitor their computer usage. It consists of client and server components, however, the server software is only necessary if you wish to remotely monitor your computer.
+This software is for anyone that needs to monitor their computer usage. It consists of client and server components, however, the server software isn't really necessary. The client software can run completely standalone and simply print the results to the standard output or log directly to a mongo database.
 
 ## Running the client script
 
@@ -15,9 +15,9 @@ Example 2: Querying the GPU every 10 minutes and reporting the results to the ex
 python client/monitor.py --gpu --interval 600 --server https://homecomputerstatus.com
 ```
 
-Example 4: Querying the GPU every 10 minutes and reporting the results to a mongo db at 192.168.1.100:27017.
+Example 3: Querying the GPU and CPU every 10 minutes and reporting the results to a mongo db at 192.168.1.100:27017.
 ```
-python client/monitor.py --gpu --interval 600 --server 192.168.1.100:27017
+python client/monitor.py --gpu --cpu --interval 600 --server 192.168.1.100:27017
 ```
 
 When you run the client script on your machine, it will generate a file with the name device_id.txt. This file will contain a unique identifier for your machine. After logging in to the server, copy and paste the identifier into the Claim Device edit box to locate the data from your machine.
