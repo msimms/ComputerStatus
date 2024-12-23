@@ -25,6 +25,7 @@
 
 import argparse
 import logging
+import mongodb
 import os
 import platform
 import re
@@ -55,11 +56,12 @@ def signal_handler(signal, frame):
         g_monitor_thread.terminate()
 
 class MonitorThread(threading.Thread):
-    def __init__(self, interval, server, id_file, post_file, verbose, do_cpu_check, do_mem_check, do_net_check, ping_host, do_gpu_check):
+    def __init__(self, interval, server_url, mongo_url, id_file, post_file, verbose, do_cpu_check, do_mem_check, do_net_check, ping_host, do_gpu_check):
         threading.Thread.__init__(self)
         self.stopped = threading.Event()
         self.interval = interval
-        self.server = server
+        self.server_url = server_url
+        self.mongo_url = mongo_url
         self.post_file = post_file
         self.verbose = verbose
         self.do_cpu_check = do_cpu_check
@@ -75,7 +77,7 @@ class MonitorThread(threading.Thread):
             else:
                 self.post_module = mymodule = SourceFileLoader('modname', self.post_file).load_module()
 
-        if self.server:
+        if self.server_url or self.mongo_url:
             # Look for device ID file; generate one if not found.
             self.device_id = None
             if os.path.isfile(id_file):
@@ -94,15 +96,22 @@ class MonitorThread(threading.Thread):
     def send_to_server(self, values):
         """Sends the values to the server for archival."""
         try:
-            values[keys.KEY_DEVICE_ID] = self.device_id
-            values[keys.KEY_DATETIME] = str(int(time.time()))
-            url = self.server + "/api/1.0/upload"
+            url = self.server_url + "/api/1.0/upload"
             r = requests.post(url, data=values)
             logging.info("Server Response: " + str(r))
             if self.verbose:
                 print(r)
         except:
             logging.error("Error sending to the server.")
+
+    def send_to_mongo(self, values):
+        """Sends the values to a mongodb instance for archival."""
+        try:
+            db = mongodb.MongoDatabase()
+            db.connect(self.mongo_url)
+            db.create_status(values)
+        except:
+            logging.error("Error sending to mongodb.")    
 
     def check_gpu(self, values):
         """Appends GPU values to the 'values' dictionary."""
@@ -214,6 +223,7 @@ class MonitorThread(threading.Thread):
         while not self.stopped.wait(self.interval):
             values = {}
 
+            # Do the checks.
             if self.do_cpu_check:
                 self.check_cpu(values)
             if self.do_mem_check:
@@ -224,13 +234,23 @@ class MonitorThread(threading.Thread):
                 self.check_ping(values, self.ping_host)
             if self.do_gpu_check:
                 self.check_gpu(values)
-            if self.server:
-                self.send_to_server(values)
 
+            # Append the device id and timestamp.
+            values[keys.KEY_DEVICE_ID] = self.device_id
+            values[keys.KEY_DATETIME] = int(time.time())
+
+            # Post the results.
+            if self.server_url:
+                self.send_to_server(values)
+            if self.mongo_url:
+                self.send_to_mongo(values)
+
+            # Logging.
             logging.info(values)
             if self.verbose:
                 print(values)
 
+            # Do any post-check actions.
             if self.post_file is not None and len(self.post_file) > 0:
                 self.execute_post_file(values)
 
@@ -242,6 +262,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--interval", type=int, default=60, help="Frequency (in seconds) at which to sample.", required=False)
     parser.add_argument("--server", type=str, action="store", default="", help="Remote logging server (optional)", required=False)
+    parser.add_argument("--mongo_url", type=str, action="store", default="", help="Mongo DB URL (optional)", required=False)
     parser.add_argument("--id_file", type=str, action="store", default="device_id.txt", help="Name of the file containing the device's unique identifier (optional)", required=False)
     parser.add_argument("--post", type=str, action="store", default="", help="Post processing code module (optional)", required=False)
     parser.add_argument("--verbose", action="store_true", default=True, help="TRUE to enable verbose mode", required=False)
@@ -270,7 +291,7 @@ def main():
         logging.basicConfig(filename=args.log,level=logging.DEBUG)
 
     # Start the monitor thread.
-    g_monitor_thread = MonitorThread(args.interval, server, args.id_file, args.post, args.verbose, args.cpu, args.mem, args.net, args.ping, args.gpu)
+    g_monitor_thread = MonitorThread(args.interval, server, args.mongo_url, args.id_file, args.post, args.verbose, args.cpu, args.mem, args.net, args.ping, args.gpu)
     g_monitor_thread.start()
 
     # Wait for it to finish. We do it like this so that the main thread isn't blocked and can execute the signal handler.
